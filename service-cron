@@ -1,0 +1,24 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg}
+readonly log_file=${service_log}
+readonly log_facility="${service}-cron"
+. ${scripts_base}/common
+
+# install the cron jobs needed by this service
+
+readonly backup_cron_name=${service}-backup
+readonly backup_cron_path=${etc_dir}/cron/${backup_cron_name}
+
+if [ ! -s /etc/cron.d/${backup_cron_name} ]; then 
+    ln -s ${backup_cron_path} /etc/cron.d
+   if [ $? -eq 0 ]; then
+       log "${success} Cron installed"
+   else
+       log "${critical} Problem installing cron"
+   fi
+else
+    log "${warning} Cron already installed"
+fi
