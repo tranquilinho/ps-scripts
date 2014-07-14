@@ -1,0 +1,22 @@
+<Layout Portable>
+    prefix:        /services/default_service
+    exec_prefix:   ${prefix}
+    bindir:        ${exec_prefix}/bin
+    sbindir:       ${exec_prefix}/bin
+    libdir:        ${exec_prefix}/lib
+    libexecdir:    ${exec_prefix}/modules
+    mandir:        ${prefix}/man
+    sysconfdir:    ${localstatedir}/etc/apache2
+    datadir:       ${prefix}
+    installbuilddir: ${prefix}/apache-build
+    errordir:      ${datadir}/error
+    iconsdir:      ${datadir}/icons
+    htdocsdir:     ${datadir}/htdocs
+    manualdir:     ${datadir}/manual
+    cgidir:        ${datadir}/cgi-bin
+    includedir:    ${prefix}/include
+    localstatedir: ${prefix}
+    runtimedir:    ${localstatedir}/log/apache2
+    logfiledir:    ${localstatedir}/log/apache2
+    proxycachedir: ${datadir}/proxy
+</Layout>

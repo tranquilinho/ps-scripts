@@ -1,0 +1,8 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg} 
+
+echo Run this command:
+echo export GIT_SSH="${scripts_base}/ssh"

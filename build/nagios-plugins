@@ -1,0 +1,26 @@
+#!/bin/bash
+# we assume we are in the appropriate src/ directory
+
+. /services/monitoring/etc/scripts.cfg
+. ${scripts_base}/common
+
+
+readonly pkg_dir=nagios-plugins-2.0.3
+readonly pkg=${pkg_dir}.tar.gz
+readonly url="http://nagios-plugins.org/download/${pkg}"
+readonly expected_hash=29b6183ab9d796299dc17c395eef493415d1e9d6
+readonly hasher=sha1sum
+readonly prefix=${usr_prefix}/${pkg_dir}
+
+${scripts_base}/check_build_env || exit 3
+
+download_pkg
+verify_pkg
+
+tar xvfz ${pkg}
+cd ${pkg_dir}
+
+./configure --prefix=${prefix} --sysconfdir=${service_root}/etc --with-nagios-user=nagios --with-nagios-group=nagios --with-openssl=${usr_prefix}/openssl 
+make clean
+make -j 2 all
+make install

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=pcre
+readonly pkg_version=8.35
+readonly url_base=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
+readonly expected_hash=5a0efc7332c6741114372020a60acfed22befcb9
+
+build_preconditions
+
+# UTF support is required in some apps, like Wordpress
+./configure --prefix=${prefix} --enable-utf --enable-unicode-properties
+
+standard_install

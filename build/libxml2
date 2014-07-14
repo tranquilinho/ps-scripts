@@ -1,0 +1,18 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=libxml2
+readonly pkg_version=2.9.1
+readonly url_base="ftp://xmlsoft.org/libxml2/"
+readonly expected_hash=9c0cfef285d5c4a5c80d00904ddab380
+readonly hasher=md5sum
+
+build_preconditions
+
+./configure --prefix=${prefix} --without-python
+
+standard_install

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=apr
+readonly pkg_version=1.5.1
+readonly url_base=http://apache.rediris.es/apr/
+readonly expected_hash=d3538d67e6455f48cc935d8f0a50a1c3
+readonly hasher=md5sum
+
+build_preconditions
+
+./configure --prefix=${prefix} --with-installbuilddir=${usr_prefix}/apache-build
+
+standard_install

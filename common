@@ -1,0 +1,109 @@
+#!/bin/bash
+
+readonly info="    "
+readonly warning="WARN"
+readonly critical="CRIT"
+readonly success=" OK "
+
+readonly log_format='$(date +"%s %Y-%m-%d %H:%M:%S") $(hostname) ${log_facility}'
+readonly logalize="sed \"s/^/${log_format} ${info}/g\""
+
+
+log(){
+    [ -z "${log_file}" ] && readonly log_file=${log_dir}/build.log
+    [ -z "${log_facility}" ] && readonly log_facility=${service}-build
+    echo "$(eval echo ${log_format}) $1" >> ${log_file}
+}
+
+
+download_pkg(){
+    wget -c ${url}
+    if [ $? -ne 0 ]; then
+	echo Could not download package
+	exit 3
+    fi
+}
+
+verify_pkg(){
+    pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
+    if [ ${pkg_hash} != ${expected_hash} ]; then
+	echo Package integrity test failed
+	exit 4
+    fi
+}
+
+common_build_vars(){
+    [ -z "${pkg_name}" -o -z "${pkg_version}" ] && echo Package name undefined && exit 4
+    [ -z "${pkg_dir}" ] && readonly pkg_dir=${pkg_name}-${pkg_version}
+    [ -z "${pkg}" ] && readonly pkg=${pkg_dir}.tar.gz
+    [ -z "${prefix}" ] && readonly prefix=${usr_prefix}/${pkg_dir}
+    [ -z "${hasher}" ] && readonly hasher=sha1sum
+    [ -z "${url}" ] && readonly url=${url_base}/${pkg}
+}
+
+build_preconditions(){
+    [ -z "${build_dir}" ] && echo build_dir undefined && exit 6
+
+    ${scripts_base}/check_build_env || exit 3
+
+    [ -d ${build_dir} ] || mkdir -p ${build_dir}
+
+    cd ${build_dir}
+
+    common_build_vars 
+    log "${info} preconditions start ${pkg_name}"
+
+    download_pkg
+    verify_pkg
+
+    tar xvfz ${pkg}
+    cd ${pkg_dir}
+    log "${success} preconditions finish ${pkg_name}"
+}
+
+
+standard_install(){
+    log "${info} standard install start ${pkg_name}"
+    # make clean &&  
+    make -j 2 &&  make install
+    if [ $? -ne 0 ]; then
+	log "${critical} Problem installing ${pkg_name}"
+	exit 8
+    fi
+    ln -s ${prefix} ${usr_prefix}/${pkg_name}
+    log "${success} standard install finish ${pkg_name}"
+}
+
+install_prereq(){
+    prereq=$1
+    # by now, asume prereq is installed if both the directory and the symlink exist
+    local installed=1
+    link=${usr_prefix}/${prereq}
+    if [ -s ${link} ];then
+	ls  --dereference-command-line-symlink-to-dir ${link}
+	[ $? -eq 0 ] && installed=0
+    fi
+    if [ ${installed} -ne 0 ]; then
+	${scripts_base}/build/${prereq}
+	if [ $? -ne 0 ]; then
+	    log "${critical} Problem installing prereq ${prereq}"
+	    [ "k$2" == "kmandatory" ] && exit 7
+	fi
+    else
+	log "${warning} Prereq ${prereq} already installed"
+    fi
+}
+
+check_params(){
+    local parameters=$1
+    local program=$2
+    local spaces="${parameters//[^ ]/}"
+    local number_of_parameters=$(( ${#spaces} + 1 ))
+    shift
+    shift
+    if [ $# -ne ${number_of_parameters} ]; then
+	echo "Wrong number of parameters parameter"
+	echo "Syntax: ${program} ${parameters}"
+	exit 2
+    fi
+}

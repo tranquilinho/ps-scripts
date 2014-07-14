@@ -1,0 +1,43 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg}
+
+readonly backup_cfg_dir=${etc_dir}/backup
+
+readonly config_file=${backup_cfg_dir}/main.cfg
+readonly exclude_file=${backup_cfg_dir}/exclude.cfg
+# readonly private_key=${backup_cfg_dir}/id_rsa
+
+readonly log_file=${backup_log}
+readonly log_facility="${service}-backup"
+
+. ${scripts_base}/common
+
+if [ ! -f ${private_key} ];then
+        log "${critical} Service backup private key ${private_key} missing"
+        exit 3
+fi
+
+
+log "${info} BACKUP STARTED"
+
+# the service is only interested in backing up itself
+data_dirs=$(grep data= ${config_file})
+log "${info} Backing-up data..."
+
+line=$(grep backup= ${config_file})
+backup_host=$(expr match ${line} "backup=\(.*\):.*:.*:.*")
+backup_path=$(expr match ${line} "backup=.*:.*:.*:\(.*\)")
+for d in ${data_dirs}; do
+    dir="$(expr match "${d}" "data=\(.*\)")/"
+    backup_dest="${backup_host}:${backup_path}/"
+    # if ${DIR} does not end in /, we should append it...
+    snapshot_dir="/nas/snapshots/${service}/$(date +%Y%m%d)"
+    log "${info} Backing up ${dir} to ${backup_dest}"
+    rsync -av -e "ssh -i ${private_key}" --delete --backup --exclude-from=${exclude_file} --backup-dir=${snapshot_dir} ${dir} ${backup_dest} | eval ${logalize} >> ${log_file}
+    # touch ${dir}/.last_vmsbackup
+done
+
+log "${success} BACKUP FINISHED"

@@ -1,0 +1,28 @@
+#!/bin/bash
+# we assume we are in the appropriate src/ directory
+
+. /services/monitoring/etc/scripts.cfg
+. ${scripts_base}/common
+
+# http://optimate.dl.sourceforge.net/project/nagios/nagios-4.x/nagios-4.0.7/nagios-4.0.7.tar.gz
+readonly pkg_dir=nagios-4.0.7
+readonly pkg=${pkg_dir}.tar.gz
+readonly url="http://optimate.dl.sourceforge.net/project/nagios/nagios-4.x/nagios-4.0.7/${pkg}"
+readonly expected_hash=d2c4727ea34b4e1e865578c586aa128ce61f6a35
+readonly hasher=sha1sum
+readonly prefix=${usr_prefix}/${pkg_dir}
+
+${scripts_base}/check_build_env || exit 3
+
+download_pkg
+verify_pkg
+
+tar xvfz ${pkg}
+cd ${pkg_dir}
+
+${scripts_base}/nagios-user
+
+./configure --prefix=${prefix} --sysconfdir=${service_root}/etc --with-nagios-user=nagios --with-nagios-group=nagios
+make clean
+make -j 2 all
+make install

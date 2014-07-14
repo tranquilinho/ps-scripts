@@ -1,0 +1,17 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=apr-util
+readonly pkg_version=1.5.3
+readonly url_base=http://apache.rediris.es/apr/
+readonly expected_hash=71a11d037240b292f824ba1eb537b4e3
+readonly hasher=md5sum
+
+build_preconditions
+
+./configure --prefix=${prefix}  --with-apr=${usr_prefix}/apr
+
+standard_install
