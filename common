@@ -5,14 +5,20 @@ readonly warning="WARN"
 readonly critical="CRIT"
 readonly success=" OK "
 
-readonly log_format='$(date +"%s %Y-%m-%d %H:%M:%S") $(hostname) ${log_facility}'
-readonly logalize="sed \"s/^/${log_format} ${info}/g\""
+readonly log_format='$(date +"%s %Y-%m-%d %H:%M:%S") $(hostname) "$(printf "%20s" ${log_facility})"'
+
+logalize(){
+	local logalize_file=$1
+#readonly logalize="s/^/${log_format} ${info}/g"
+	local log_prefix=$(eval echo ${log_format})
+	cat - | sed "s/^/${log_prefix} ${info}/g" >> ${logalize_file}
+}
 
 
 log(){
     [ -z "${log_file}" ] && readonly log_file=${log_dir}/build.log
     [ -z "${log_facility}" ] && readonly log_facility=${service}-build
-    echo "$(eval echo ${log_format}) $1" >> ${log_file}
+    echo "$(eval echo "${log_format}") $1" >> ${log_file}
 }
 
 
@@ -61,11 +67,23 @@ build_preconditions(){
     log "${success} preconditions finish ${pkg_name}"
 }
 
-
+# Param: $1 (noinstall)
 standard_install(){
     log "${info} standard install start ${pkg_name}"
     # make clean &&  
-    make -j 2 &&  make install
+    make -j 2
+    if [ $? -ne 0 ]; then
+	log "${critical} Problem building ${pkg_name}"
+	exit 8
+    fi
+    if [ "a$1" != "anoinstall" ]; then
+	make install
+	if [ $? -ne 0 ]; then
+	    log "${critical} Problem building ${pkg_name}"
+	    exit 8
+	fi
+    fi
+
     if [ $? -ne 0 ]; then
 	log "${critical} Problem installing ${pkg_name}"
 	exit 8
@@ -106,4 +124,70 @@ check_params(){
 	echo "Syntax: ${program} ${parameters}"
 	exit 2
     fi
+}
+
+# It expects "$@" as its 1st argument
+parse_arguments(){
+  if [ "$#" -gt 0 ]; then
+    while getopts "u:k:b" options; do
+      case "${options}" in
+	b)
+	  readonly hex_options="od -x -N 129"
+	  ;;
+	u)
+	  readonly url="${OPTARG}"
+	  ;;
+	k)
+	  readonly keyphrase="${OPTARG}"
+	  ;;
+        *)
+          echo "Unknow option" 1>&2 
+          print_usage
+          ;;
+       esac
+     done
+     shift $((OPTIND-1))
+  else
+      print_usage
+  fi
+}
+
+
+watchdog(){
+    local -r timeout=$1
+    shift
+    local -r delay=1
+    local -r interval=1
+    (
+	$@ &
+	pid=$!
+	((t = timeout))
+
+	while ((t > 0)); do
+            sleep ${interval}
+            kill -0 ${pid} || exit
+            ((t -= interval))
+	done
+
+	kill -s SIGTERM ${pid} && kill -0 $$ || exit 1
+	sleep ${delay}
+	kill -s SIGKILL ${pid}
+	exit 2
+    ) 2> /dev/null &
+
+}
+
+daemon_stop(){
+    local pidfile=$1
+    local pid=$(cat ${pidfile})
+    kill ${pid}
+    local waited=0
+    while [ -n "$(ps -o pid= -o comm= -p ${pid} )" ]; do
+	waited=$(( waited + 1 ))
+	if [ ${waited} -gt 15 ]; then
+	    kill -9 ${pid}
+	    break
+	fi
+	sleep 1
+    done
 }
