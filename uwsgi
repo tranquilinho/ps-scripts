@@ -1,0 +1,59 @@
+#!/bin/bash
+
+readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+
+. ${scripts_cfg}
+
+readonly module="uwsgi"
+readonly log_file=${service_log}
+readonly log_facility="${service}-${module}"
+
+. ${scripts_base}/common
+. ${etc_dir}/uwsgi.cfg
+
+readonly pidfile=${run_dir}/${module}.pid
+readonly daemon=${usr_prefix}/uwsgi/uwsgi
+
+uwsgi_start(){
+    log "${info} Starting ${module}"
+
+    if [ ! -f ${daemon} ]; then
+        log "${info} Installing uwsgi"
+        ${scripts_base}/build/uwsgi
+    fi
+
+    # "ImportError: No module named site" -> add --no-site
+    # !!!! redirect log to proper file
+    ${daemon} --http 0.0.0.0:${uwsgi_port} --no-site --chdir ${uwsgi_cwd} --env DJANGO_SETTINGS_MODULE=pages.settings --module "django.core.handlers.wsgi:WSGIHandler()" --processes 4 --threads 2  -b 32768 ${uwsgi_python_paths} &
+    status=$? ; pid=$!
+    if [ ${status} -eq 0 ]; then
+        echo ${pid} > ${pidfile}
+        log "${success} ${module} started"
+    else
+        log "${critical} Problem starting ${module}"
+    fi
+}
+
+
+uwsgi_stop(){
+    log "${info} Stopping ${module}..."
+    daemon_stop ${pidfile}
+    log "${success} Stopped"
+}
+
+case "$1" in
+    "start")
+        uwsgi_start
+        ;;
+    "stop")
+        uwsgi_stop
+        ;;
+    "restart")
+        uwsgi_stop
+        uwsgi_start
+        ;;
+    *)
+        echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
