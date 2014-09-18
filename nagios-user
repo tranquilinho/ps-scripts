@@ -1,0 +1,7 @@
+#!/bin/bash
+
+readonly user=nagios
+grep ${user} /etc/group || groupadd -g 1102 ${user}
+grep ${user} /etc/passwd || useradd -u 1102 -g 1102 ${user}
+
+

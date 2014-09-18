@@ -1,0 +1,78 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="nagios"
+readonly log_facility="${service}-${module}"
+readonly nagios_cfg=${etc_dir}/nagios/nagios.cfg
+readonly daemon=${usr_prefix}/nagios/bin/nagios
+readonly pidfile=${run_dir}/${module}.pid
+
+. ${scripts_base}/common
+
+
+nagios_start(){
+    log "${info} Starting ${module}"
+
+    if [ ! -f ${daemon} ]; then
+	log "${info} Installing nagios"
+	${scripts_base}/build/nagios || exit 12
+    fi
+
+    if [ ! -f ${nagios_cfg} ]; then
+	log "${critical} Missing nagios config ${nagios_cfg}"
+	exit 3
+    else
+	${daemon} -d ${nagios_cfg}
+
+	 # echo $! > ${pidfile}
+    fi
+
+    status=$? 
+    if [ ${status} -eq 0 ]; then
+        # nagios saves its pid in the file by itself
+	# echo ${pid} > ${pidfile}
+	log "${success} ${module} started"
+    else
+	log "${critical} Problem starting ${module}"
+    fi
+}
+
+nagios_stop(){
+    log "${info} Stopping ${module}..."
+    daemon_stop ${pidfile}
+    log "${success} Stopped"
+}
+
+nagios_check_config(){
+    ${daemon} -v ${nagios_cfg}
+    local result=$?
+    if [ ${result} -eq 0 ]; then
+	log "${success} Nagios config is OK"
+    else
+	log "${critical} Problem in nagios config"
+    fi
+    return ${result}
+}
+
+case "$1" in
+    "start")
+	nagios_check_config || exit 2
+	nagios_start
+	;;
+    "stop")
+	nagios_stop
+	;;
+    "restart")
+	nagios_check_config || exit 2
+        nagios_stop
+	nagios_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
