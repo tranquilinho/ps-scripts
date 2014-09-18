@@ -1,0 +1,39 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="nfs"
+readonly log_facility="${service}-${module}"
+readonly pidfile_statd=${run_dir}/statd.pid
+readonly pidfile_idmapd=${run_dir}/idmapd.pid
+readonly pidfile_rpcbind=${run_dir}/rpcbind.pid
+
+. ${scripts_base}/common
+
+case "$1" in
+	"start")
+		log "${info} Starting ${module}"
+		[ ! -d  /run/rpc_pipefs/nfs ] &&  mkdir -p /run/rpc_pipefs/nfs
+		/sbin/rpcbind -w
+		echo $! > ${pidfile_rpcbind}
+		rpc.statd 
+		echo $! > ${pidfile_statd}
+		rpc.idmapd
+		echo $! > ${pidfile_idmapd}
+		log "${success} ${module} started"
+	;;
+	"stop")
+	        log "${info} Stopping ${module}..."
+		daemon_stop ${pidfile_idmapd}
+		daemon_stop ${pidfile_statd}
+		daemon_stop ${pidfile_rpcbind}
+		log "${success} Stopped"
+
+	;;
+	*)
+		echo "Syntax: $0 [start|stop]"
+esac
+exit 0
