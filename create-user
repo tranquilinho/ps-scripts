@@ -1,0 +1,26 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+readonly log_file=${service_log}
+readonly log_facility="${service}"
+. ${scripts_base}/common
+
+check_params "id login home" $0 $@
+
+readonly id=$1
+readonly user=$2
+readonly user_home=$3
+
+log "${info} Creating user account ${user}"
+
+
+grep ${user} /etc/group || groupadd -g ${id} ${user}
+grep ${user} /etc/passwd
+if [ $? -eq 0 ]; then
+    log "${info} User account ${user} already available"
+else
+    useradd -u ${id} -g ${id} -s /bin/bash -d ${user_home} ${user}
+    log "${success} User account ${user} created"
+fi
