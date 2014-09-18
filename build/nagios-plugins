@@ -1,26 +1,18 @@
 #!/bin/bash
-# we assume we are in the appropriate src/ directory
 
-. /services/monitoring/etc/scripts.cfg
-. ${scripts_base}/common
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
+. ${service_cfg} && . ${scripts_base}/common
 
-readonly pkg_dir=nagios-plugins-2.0.3
-readonly pkg=${pkg_dir}.tar.gz
-readonly url="http://nagios-plugins.org/download/${pkg}"
+readonly pkg_name=nagios-plugins
+readonly pkg_version=2.0.3
+readonly url_base="http://nagios-plugins.org/download/"
 readonly expected_hash=29b6183ab9d796299dc17c395eef493415d1e9d6
-readonly hasher=sha1sum
-readonly prefix=${usr_prefix}/${pkg_dir}
 
-${scripts_base}/check_build_env || exit 3
+build_preconditions
 
-download_pkg
-verify_pkg
+# !!!! check_ping fails while trying to spopen ping command. Running it with -vvv revelas that the command is empty (???)
 
-tar xvfz ${pkg}
-cd ${pkg_dir}
+./configure --prefix=${prefix} --sysconfdir=${etc_dir} --with-nagios-user=nagios --with-nagios-group=nagios --with-openssl=${usr_prefix}/openssl | logalize $(configure_log)
 
-./configure --prefix=${prefix} --sysconfdir=${service_root}/etc --with-nagios-user=nagios --with-nagios-group=nagios --with-openssl=${usr_prefix}/openssl 
-make clean
-make -j 2 all
-make install
+standard_install

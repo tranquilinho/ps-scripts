@@ -1,26 +1,16 @@
 #!/bin/bash
-# we assume we are in the appropriate src/ directory
 
-. /services/monitoring/etc/scripts.cfg
-. ${scripts_base}/common
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
+. ${service_cfg} && . ${scripts_base}/common
 
-readonly pkg_dir=nrpe-2.15
-readonly pkg=${pkg_dir}.tar.gz
-readonly url="http://optimate.dl.sourceforge.net/project/nagios/nrpe-2.x/nrpe-2.15/${pkg}"
+readonly pkg_name=nrpe
+readonly pkg_version=2.15
+readonly url_base="http://optimate.dl.sourceforge.net/project/nagios/nrpe-2.x/nrpe-2.15/"
 readonly expected_hash=45f434758c547c0af516e8b3324717f8dcd100a3
-readonly hasher=sha1sum
-readonly prefix=${usr_prefix}/${pkg_dir}
 
-${scripts_base}/check_build_env || exit 3
+build_preconditions
 
-download_pkg
-verify_pkg
+./configure --prefix=${prefix} --sysconfdir=${etc_dir} --with-nagios-user=nagios --with-nagios-group=nagios --with-ssl=${usr_prefix}/openssl --with-ssl-lib=${usr_prefix}/openssl/lib
 
-tar xvfz ${pkg}
-cd ${pkg_dir}
-
-./configure --prefix=${prefix} --sysconfdir=${service_root}/etc --with-nagios-user=nagios --with-nagios-group=nagios --with-ssl=${usr_prefix}/openssl --with-ssl-lib=${usr_prefix}/openssl/lib
-make clean
-make -j 2 all
-make install
+standard_install
