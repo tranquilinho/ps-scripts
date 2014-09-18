@@ -1,0 +1,19 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+log "${info} Installing git"
+
+apt-get install -y git
+if [ $? -eq 0 ]; then
+    log "${success} git installed"
+    exit 0
+else
+    log "${critical} problem installing git"
+    exit 2
+fi
+
+
+
