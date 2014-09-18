@@ -1,0 +1,35 @@
+#!/bin/bash
+# envvars - default environment variables for apache2ctl
+# copy to etc/apache2
+
+# this won't be correct after changing uid
+unset HOME
+
+# when envvars is sourced, /services/bcuweb/etc/scripts.cfg has been already sourced
+
+# for supporting multiple apache2 instances
+readonly APACHE_BASE=${usr_prefix}/httpd
+readonly APACHE_BIN=${APACHE_BASE}/bin
+
+export APACHE_RUN_USER=www-data
+export APACHE_RUN_GROUP=www-data
+export APACHE_PID_FILE=${run_dir}/apache2.pid
+export APACHE_RUN_DIR=${run_dir}/apache2
+export APACHE_LOCK_DIR=${run_dir}/lock/apache2
+export APACHE_LOG_DIR=${log_dir}/apache2
+
+## The locale used by some modules like mod_dav
+export LANG=C
+## Uncomment the following line to use the system default locale instead:
+#. /etc/default/locale
+
+export LANG
+
+## If you need a higher file descriptor limit, uncomment and adjust the
+## following line (default is 8192):
+#APACHE_ULIMIT_MAX_FILES='ulimit -n 65536'
+
+## If you would like to pass arguments to the web server, add them below
+## to the APACHE_ARGUMENTS environment.
+#export APACHE_ARGUMENTS=''
+

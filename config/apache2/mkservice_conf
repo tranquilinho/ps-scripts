@@ -1,0 +1,96 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+[ -z "${wordpress_enabled}" ] && readonly wordpress_enabled=0
+
+cat <<EOF
+#
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# ports, instead of the default. See also the <VirtualHost>
+# directive.
+#
+# Change this to Listen on specific IP addresses as shown below to 
+# prevent Apache from glomming onto all bound IP addresses.
+#
+#Listen 12.34.56.78:80
+
+Listen ${http_port}
+
+<VirtualHost *:${http_port}>
+   ServerName ${default_server}
+   
+   #
+   # DocumentRoot: The directory out of which you will serve your
+   # documents. By default, all requests are taken from this directory, but
+   # symbolic links and aliases may be used to point to other locations.
+   #
+   DocumentRoot "${web_home}"
+   
+   # Limit scripts to 2 mins & 100 MB
+   RLimitCPU 120
+   # unit: bytes
+   RLimitMEM  100000000
+   
+   
+   <Directory "${web_home}">
+       #
+       # Possible values for the Options directive are "None", "All",
+       # or any combination of:
+       #   Indexes Includes FollowSymLinks SymLinksifOwnerMatch ExecCGI MultiViews
+       #
+       # Note that "MultiViews" must be named *explicitly* --- "Options All"
+       # doesn't give it to you.
+       #
+       # The Options directive is both complicated and important.  Please see
+       # http://httpd.apache.org/docs/2.4/mod/core.html#options
+       # for more information.
+       #
+       Options FollowSymLinks
+       # DirectoryIndex index.php
+   
+       #
+       # AllowOverride controls what directives may be placed in .htaccess files.
+       # It can be "All", "None", or any combination of the keywords:
+       #   AllowOverride FileInfo AuthConfig Limit
+       #
+       AllowOverride None
+   
+       #
+       # Controls who can get stuff from this server.
+       #
+       Require all granted
+EOF
+
+if [ ${wordpress_enabled} -eq 1 ]; then
+cat <<EOF
+       # WORDPRESS
+       RewriteBase /
+   
+       RewriteRule ^index\.php$ - [L]
+       RewriteCond %{REQUEST_FILENAME} !-f
+       RewriteCond %{REQUEST_FILENAME} !-d
+       RewriteRule . /index.php [L]
+       # restrict xml-rpc
+       RewriteRule /xmlrpc.php - [F]
+EOF
+fi
+
+cat <<EOF
+   </Directory>
+   
+   RewriteEngine On
+   # RewriteLog "${log_dir}/apache2/rewrite.log"
+   # RewriteLogLevel 8
+   # LogLevel alert rewrite:trace3
+EOF
+
+cat ${etc_dir}/service.apache
+    
+cat <<EOF
+
+</VirtualHost>
+
+EOF

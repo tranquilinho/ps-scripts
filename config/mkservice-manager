@@ -1,0 +1,77 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+[ -z "${cron_enabled}" ] && readonly cron_enabled=1
+[ -z "${mysql_enabled}" ] && readonly mysql_enabled=0
+[ -z "${apache_enabled}" ]  && readonly apache_enabled=0
+
+# quote the delimiter in this here document section, so the variables are not replaced
+cat <<"EOF"
+#!/bin/bash
+
+readonly service_cfg=${0%/etc*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly log_facility="${service}"
+
+. ${scripts_base}/common
+
+service_start(){
+    log "${info} Starting ${service}"
+EOF
+[ ${mysql_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/mysql-service start
+EOF
+[ ${apache_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/apache-service start
+EOF
+[ ${cron_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/cron-service start
+EOF
+cat <<"EOF"
+    log "${info}  ${service} started"
+}
+
+service_stop(){
+    log "${info} Stopping ${service}"
+EOF
+
+[ ${cron_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/cron-service stop
+EOF
+
+[ ${apache_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/apache-service stop
+EOF
+
+[ ${mysql_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/mysql-service stop
+EOF
+
+cat <<"EOF"
+    log "${info} ${service} stopped"
+}
+
+case "$1" in
+    "start")
+	service_start
+	;;
+    "stop")
+	service_stop
+	;;
+    "restart")
+	service_stop
+	service_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
+
+EOF
