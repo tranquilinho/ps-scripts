@@ -1,0 +1,40 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+readonly log_file=${service_log}
+readonly log_facility="${service}-wordpress"
+. ${scripts_base}/common
+
+readonly template=${etc_dir}/wp-config-base.php
+readonly target=${web_home}/wp-config.php
+
+readonly auth_keys_url="https://api.wordpress.org/secret-key/1.1/"
+readonly auth_keys_file=${etc}/wp-auth.keys
+
+if [ ! -f ${template} ]; then
+    log "${critical} Template ${template} not found"
+    exit 2
+fi
+
+log "${info} Creating ${target} from ${template}"
+
+if [ ! -f ${auth_keys_file} ]; then
+    wget ${auth_keys_url} -O ${auth_keys_file}
+    if [ $? -ne 0 ]; then
+	log "${critical} Problem creating ${auth_keys_file}"
+	exit 2
+    fi
+fi
+
+# in sed, symbols like "&" have meaning, so they should be escaped
+echo "Wordpress DB password (escaping symbols with \\ )":
+read dbpassword
+sed "s/@PASSWORD@/${dbpassword}/g" ${template} | sed "/AUTH_KEYS_MARK/r ${auth_keys_file}" > ${target}
+
+if [ $? -eq 0 ]; then
+    log "${success} Config file ${target} created"
+else
+    log "${critical} Problem creating config file ${target}"
+fi
