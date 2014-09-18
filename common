@@ -5,19 +5,27 @@ readonly warning="WARN"
 readonly critical="CRIT"
 readonly success=" OK "
 
-readonly log_format='$(date +"%s %Y-%m-%d %H:%M:%S") $(hostname) "$(printf "%20s" ${log_facility})"'
+readonly log_hostname=$(hostname)
+readonly log_format='${log_timestamp} ${log_hostname} "$(printf "%20s" ${log_facility})"'
 
+# warning: appending logalize alters the value of $?, so you must use
+# ${PIPESTATUS[0]} instead
 logalize(){
 	local logalize_file=$1
-#readonly logalize="s/^/${log_format} ${info}/g"
-	local log_prefix=$(eval echo ${log_format})
-	cat - | sed "s/^/${log_prefix} ${info}/g" >> ${logalize_file}
+	cat - | while read line_to_log ; do
+	    echo "${line_to_log}"
+	    printf -v log_timestamp "%(%s %Y-%m-%d %H:%M:%S)T" -1
+	    log_prefix=$(eval echo ${log_format})
+	    printf "%s %s %s\n" "${log_prefix}" "${info}" "${line_to_log}"  >> ${logalize_file}
+	done
 }
 
 
 log(){
     [ -z "${log_file}" ] && readonly log_file=${log_dir}/build.log
     [ -z "${log_facility}" ] && readonly log_facility=${service}-build
+    [ ! -d $(dirname ${log_file}) ] && mkdir -p $(dirname ${log_file})
+    printf -v log_timestamp "%(%s %Y-%m-%d %H:%M:%S)T" -1
     echo "$(eval echo "${log_format}") $1" >> ${log_file}
 }
 
@@ -25,7 +33,7 @@ log(){
 download_pkg(){
     wget -c ${url}
     if [ $? -ne 0 ]; then
-	echo Could not download package
+	log "${critical} Could not download package"
 	exit 3
     fi
 }
@@ -33,7 +41,7 @@ download_pkg(){
 verify_pkg(){
     pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
     if [ ${pkg_hash} != ${expected_hash} ]; then
-	echo Package integrity test failed
+	log "${critical} Package integrity test failed (${pkg_hash})"
 	exit 4
     fi
 }
@@ -62,23 +70,26 @@ build_preconditions(){
     download_pkg
     verify_pkg
 
-    tar xvfz ${pkg}
+    tar xfz ${pkg}
     cd ${pkg_dir}
     log "${success} preconditions finish ${pkg_name}"
 }
 
-# Param: $1 (noinstall)
+# Params:
+# $1 make option
+# $2 (noinstall)
 standard_install(){
     log "${info} standard install start ${pkg_name}"
+    
     # make clean &&  
-    make -j 2
-    if [ $? -ne 0 ]; then
+    make $1 -j 2 2>&1 | logalize $(make_log)
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
 	log "${critical} Problem building ${pkg_name}"
 	exit 8
     fi
-    if [ "a$1" != "anoinstall" ]; then
-	make install
-	if [ $? -ne 0 ]; then
+    if [ "a$2" != "anoinstall" ]; then
+	make install 2>&1 | logalize $(make_log)
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then
 	    log "${critical} Problem building ${pkg_name}"
 	    exit 8
 	fi
@@ -178,7 +189,11 @@ watchdog(){
 }
 
 daemon_stop(){
-    local pidfile=$1
+    local pid_file=$1
+    if [ ! -f ${pid_file} ]; then
+	log "${critical} PID file ${pid_file} missing"
+	return 2
+    fi
     local pid=$(cat ${pidfile})
     kill ${pid}
     local waited=0
@@ -190,4 +205,26 @@ daemon_stop(){
 	fi
 	sleep 1
     done
+}
+
+is_running(){
+    local process_name=$1
+    local process_count=$(ps h -C ${process_name} | wc -l)
+    if [ ${process_count} -gt 0 ]; then
+	return 0
+    else
+	return 1
+    fi
+}
+
+configure_log(){
+    [ -z "${install_log_dir}" ] && local install_log_dir=${log_dir}/install
+    [ ! -d ${install_log_dir} ] && mkdir ${install_log_dir}
+    echo ${install_log_dir}/${pkg_name}_configure.log
+}
+
+make_log(){
+    [ -z "${install_log_dir}" ] && local install_log_dir=${log_dir}/install
+    [ ! -d ${install_log_dir} ] && mkdir ${install_log_dir}
+    echo ${install_log_dir}/${pkg_name}_make.log
 }
