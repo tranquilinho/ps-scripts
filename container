@@ -1,9 +1,9 @@
 #!/bin/bash
 
 readonly docker_cfg=${0%/scripts*}/etc/docker.cfg
-readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-. ${scripts_cfg}
+. ${service_cfg}
 
 if [ ! -f ${docker_cfg} ];then
     echo "Docker config ${docker_cfg} not found"
@@ -12,12 +12,21 @@ fi
 
 . ${docker_cfg}
 
-readonly docker_run=${service_root}/data/run/docker
+[ -z "${docker_run}" ] && readonly docker_run=${service_root}/data/run/docker
 readonly hash_file=${docker_run}/${container}
 readonly log_file=${service_root}/log/service.log
 readonly log_facility="${service}"
 
 . ${scripts_base}/common
+
+readonly docker_stderr=$(mktemp)
+docker=$(which docker)
+[ -z "${docker}" ] && docker=$(which docker.io)
+
+container_start(){
+    # log "${info} docker run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr}"
+    hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr})
+}
 
 case "$1" in
     "start")
@@ -25,8 +34,16 @@ case "$1" in
 	if [ ! -d ${docker_run} ]; then
 	    mkdir -p ${docker_run}
 	fi
-	hash=$(docker run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} )
-	if [ -n ${hash} ]; then
+	container_start
+	egrep "Abort due to constraint violation: UNIQUE| is already assigned" ${docker_stderr} >/dev/null
+	if [ $? -eq 0 ]; then
+	    # maybe the container was not stopped properly... remove previous instance
+	    log "${critical} Container name not unique - removing previous instance"
+	    readonly previous_hash=$( ${docker} ps -a | grep ${container} | cut -c1-12)
+	    ${docker} rm ${previous_hash}
+	    container_start
+	fi
+	if [ -n "${hash}" ]; then
 	    echo ${hash} > ${hash_file}
 	    log "${success} Container ${container} (${hash}) started"
 	else
@@ -38,8 +55,10 @@ case "$1" in
 	hash=$(cat ${hash_file})
 	if [ -n "${hash}" ]; then
 	    log "${info} Stopping ${hash}..."
-	    docker stop -t=15 ${hash}
-	    docker rm ${hash}
+	    log "${info} Stopping service..."
+	    watchdog 5 ssh -p ${container_ssh_port} localhost "${etc_dir}/service-manager stop" 
+	    ${docker} stop -t=15 ${hash}
+	    ${docker} rm ${hash}
 	    log "${success} Stopped"
 	else
 	    log "${critical} hashfile ${hash_file} not found"
@@ -49,4 +68,7 @@ case "$1" in
     *)
 	echo "Syntax: $0 [start|stop]"
 esac
+
+rm ${docker_stderr}
+
 exit 0
