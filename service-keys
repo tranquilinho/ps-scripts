@@ -1,13 +1,16 @@
 #!/bin/bash
 
-readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-. ${scripts_cfg}
+. ${service_cfg}
 readonly log_file=${service_log}
 readonly log_facility="${service}-keys"
 . ${scripts_base}/common
 
 if [ ! -f ${private_key} ]; then
+   if [ ! -d ${key_path} ]; then
+       mkdir -p ${key_path}
+   fi
    ssh-keygen -f ${private_key}
    if [ $? -eq 0 ]; then
        log "${success} Keys generated"
