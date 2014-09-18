@@ -1,0 +1,28 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly log_facility="${service}-admin"
+
+. ${scripts_base}/common
+
+readonly admin_key=${etc_dir}/admin-id_dsa.pub
+readonly authorized_keys=/root/.ssh/authorized_keys
+
+if [ -f ${admin_key} ]; then
+    log "${info} installing admin pub key"
+
+    [ ! -d /root/.ssh ] && mkdir /root/.ssh
+
+    if grep "$(cat ${admin_key})" ${authorized_keys} 2>&1 > /dev/null ; then
+	log "${warning} Admin key already installed"
+    else
+	cat ${admin_key} >> ${authorized_keys} && log "${success} Admin key installed"
+    fi
+else
+    log "${critical} Admin key ${admin_key} not found"
+    exit 2
+fi
