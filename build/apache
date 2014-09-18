@@ -1,13 +1,16 @@
 #!/bin/bash
 
-readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-. ${scripts_cfg} && . ${scripts_base}/common
+. ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=httpd
-readonly pkg_version=2.4.9
-readonly url_base=http://ftp.cixug.es/apache//httpd
-readonly expected_hash=50496e51605a3d852c183a7c667c25bcc7ee658d
+readonly pkg_version=2.4.10
+# !!!! this mirror keeps only the latest stable version...
+readonly url_base=http://ftp.cixug.es/apache/httpd
+readonly expected_hash=9682272d16f0b2a7f1c7bbb9816283e3ab161d66
+
+log "${info} ${pkg_name} install started"
 
 install_prereq apr "mandatory"
 install_prereq apr-util "mandatory"
@@ -18,7 +21,15 @@ build_preconditions
 
 cat ${scripts_base}/build/apache-portable.layout >> config.layout
 
+# Multiprocessing
+# in unix, there are 3 modules: prefork (no threads), worker (threads available) and event (thread-safe polling available, usually the default MPM)
+# You can setup MPM as modules (--enable-mpms-shared=all) or static ( --with-mpm=module)
+
 # for ldap support in apache, apr-util must be build with ldap support too (specyfing where the ldap libs are)
-./configure --prefix=${prefix} --enable-layout=Portable --datadir=${data_dir} --localstatedir=${service_root} --enable-pie -enable-authn-dbm --enable-authz-dbm --enable-ratelimit --enable-log-debug --enable-ssl --with-apr=${usr_prefix}/apr --with-apr-util=${usr_prefix}/apr-util --with-pcre=${usr_prefix}/pcre -with-ssl=${usr_prefix}/openssl
+# There are 2 types of CGI support:
+# --enable-cgid  (default with threaded MPMs)
+# --enable-cgi   (default with non-threaded MPMs)
+
+./configure --prefix=${prefix} --enable-layout=Portable --datadir=${data_dir} --localstatedir=${service_root} --enable-pie -enable-authn-dbm --enable-authz-dbm --enable-ratelimit --enable-log-debug --enable-ssl --with-apr=${usr_prefix}/apr --with-apr-util=${usr_prefix}/apr-util --with-pcre=${usr_prefix}/pcre -with-ssl=${usr_prefix}/openssl | logalize $(configure_log)
 
 standard_install
