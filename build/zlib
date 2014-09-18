@@ -1,8 +1,8 @@
 #!/bin/bash
 
-readonly scripts_cfg=${0%/scripts*}/etc/scripts.cfg
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-. ${scripts_cfg} && . ${scripts_base}/common
+. ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=zlib
 readonly pkg_version=1.2.8
