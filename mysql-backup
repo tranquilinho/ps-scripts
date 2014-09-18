@@ -1,0 +1,42 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+
+readonly backup_cfg_dir=${etc_dir}/backup
+
+readonly config_file=${backup_cfg_dir}/main.cfg
+readonly exclude_file=${backup_cfg_dir}/exclude.cfg
+
+readonly log_file=${backup_log}
+readonly log_facility="${service}-backup"
+
+. ${scripts_base}/common
+
+readonly backup_dir=${data_dir}/mysql-backup
+readonly backup_file=bcuweb-db-backup
+
+log "${info} MySQL BACKUP STARTED"
+
+git=$(which git)
+
+if [ -z "${git}" ]; then
+    ${scripts_base}/build/git || exit $?
+fi
+
+. ${scripts_base}/git-setup
+
+[ -z "${GIT_SSH}" ] && GIT_SSH="${scripts_base}/ssh"
+
+cd ${backup_dir}
+mysqldump --all-databases > ${backup_file}
+status=$?
+${git} add ${backup_file}
+${git} commit -m "${backup_file} $(date +%s)"
+
+if [ ${status} -eq 0 ]; then
+    log "${success} MySQL BACKUP FINISHED"
+else
+    log "${critical} Error backing up MySQL"
+fi

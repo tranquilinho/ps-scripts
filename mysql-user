@@ -1,0 +1,45 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+readonly log_file=${service_log}
+readonly log_facility="${service}-mysql"
+. ${scripts_base}/common
+
+check_params "user role:admin/user" $0 $@
+
+if [ ! $(which mysql) ]; then
+    log "${critical} Missing mysql client"
+    exit 2
+fi
+
+readonly user=$1
+readonly role=$2
+
+log "${info} Creating account ${user}"
+
+echo "Password: "
+read password
+
+case "${role}" in
+    user)
+	readonly privileges="SELECT, INSERT, UPDATE, DELETE"
+	;;
+    admin)
+	readonly privileges="ALL PRIVILEGES"
+	;;
+    *)
+	echo "Unknown role"
+	exit 2
+esac
+
+echo "CREATE USER '${user}'@'localhost' IDENTIFIED BY '${password}';
+GRANT ${privileges} ON * . * TO '${user}'@'localhost';
+FLUSH PRIVILEGES;" | mysql
+
+if [ $? -eq 0 ]; then
+    log "${success} Mysql user ${user} created"
+else
+    log "${critical} Problem creating account ${user}"
+fi

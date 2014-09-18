@@ -1,0 +1,67 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="mysql"
+readonly log_facility="${service}-${module}"
+readonly mysql_cfg=/etc/mysql/my.cnf
+readonly daemon=/usr/sbin/mysqld
+readonly pidfile=${run_dir}/${module}.pid
+
+readonly default_mysql_datadir=/var/lib/mysql
+readonly mysql_datadir=${data_dir}/mysql
+. ${scripts_base}/common
+
+
+mysql_start(){
+    log "${info} Starting ${module}"
+
+    if [ ! -f ${daemon} ]; then
+	log "${info} Installing MySQL"
+	${scripts_base}/build/mysql
+    fi
+
+    if [ -d ${mysql_datadir} ]; then
+	if [ ! -h ${default_mysql_datadir} ]; then
+	    mv ${default_mysql_datadir} ${default_mysql_datadir}.orig
+	    ln -s ${mysql_datadir} ${default_mysql_datadir}
+	fi
+    else
+	log "${critical} MySQL data dir ${mysql_datadir} missing"
+	exit 2
+    fi
+    ${daemon} &
+    status=$? ; pid=$!
+    if [ ${status} -eq 0 ]; then
+	echo ${pid} > ${pidfile}
+	log "${success} ${module} started"
+    else
+	log "${critical} Problem starting ${module}"
+    fi
+}
+
+mysql_stop(){
+    log "${info} Stopping ${module}..."
+    daemon_stop ${pidfile}
+    log "${success} Stopped"
+}
+
+case "$1" in
+    "start")
+	mysql_start
+	;;
+    "stop")
+	mysql_stop
+	;;
+    "restart")
+	mysql_stop
+	mysql_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
