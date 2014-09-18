@@ -1,0 +1,48 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="sshd"
+readonly log_facility="${service}-${module}"
+readonly daemon=/usr/sbin/mysqld
+readonly pidfile=${run_dir}/${module}.pid
+. ${scripts_base}/common
+
+
+sshd_start(){
+    log "${info} Starting ${module}"
+    ${daemon} -D
+    status=$? ; pid=$!
+    if [ ${status} -eq 0 ]; then
+	echo ${pid} > ${pidfile}
+	log "${success} ${module} started"
+    else
+	log "${critical} Problem starting ${module}"
+    fi
+}
+
+sshd_stop(){
+    log "${info} Stopping ${module}..."
+    daemon_stop ${pidfile}
+    log "${success} Stopped"
+}
+
+case "$1" in
+    "start")
+	sshd_start
+	;;
+    "stop")
+	sshd_stop
+	;;
+    "restart")
+	sshd_stop
+	sshd_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0

@@ -1,0 +1,28 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly log_facility="${service}-admin"
+
+. ${scripts_base}/common
+
+readonly expected_known_hosts=${etc_dir}/known_hosts
+readonly known_hosts=/root/.ssh/known_hosts
+
+if [ -f ${expected_known_hosts} ]; then
+    log "${info} setting up known hosts"
+
+    [ ! -d /root/.ssh ] && mkdir /root/.ssh
+
+    if [ ! -f ${known_hosts} ]; then
+	cp ${expected_known_hosts} ${known_hosts} && log "${success} Known hosts set up"
+    else
+	log "${info} Known hosts already set up"
+    fi
+else
+    log "${critical} Expected known host ${expected_known_hosts} not found "
+    exit 2
+fi
