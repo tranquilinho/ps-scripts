@@ -1,12 +1,24 @@
 #!/bin/bash
 
+# Look for @psedited
+
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-. ${service_cfg} && . ${scripts_base}/common
+. ${service_cfg}
 
-[ -z "${php_enabled}" ] && readonly php_enabled=1
+readonly log_file=${service_log}
+readonly log_facility="${service}-httpd-conf"
+
+. ${scripts_base}/common
+
+[ -z "${php_enabled}" ] && readonly php_enabled=0
+[ -z "${mod_wsgi_enabled}" ] && readonly mod_wsgi_enabled=0
+[ -z "${cgi_enabled}" ] && readonly cgi_enabled=0
+[ -z "${server_status}" ] && readonly server_status=0
 
 cat <<EOF
+#
+# Please update this config file with mkhttpd_conf
 #
 # This is the main Apache HTTP server configuration file.  It contains the
 # configuration directives that give the server its instructions.
@@ -124,10 +136,8 @@ LoadModule version_module modules/mod_version.so
 #LoadModule lbmethod_heartbeat_module modules/mod_lbmethod_heartbeat.so
 LoadModule unixd_module modules/mod_unixd.so
 #LoadModule dav_module modules/mod_dav.so
-LoadModule status_module modules/mod_status.so
 LoadModule autoindex_module modules/mod_autoindex.so
 #LoadModule info_module modules/mod_info.so
-#LoadModule cgid_module modules/mod_cgid.so
 #LoadModule dav_fs_module modules/mod_dav_fs.so
 #LoadModule vhost_alias_module modules/mod_vhost_alias.so
 #LoadModule negotiation_module modules/mod_negotiation.so
@@ -139,6 +149,54 @@ LoadModule alias_module modules/mod_alias.so
 # @PSedited
 LoadModule rewrite_module modules/mod_rewrite.so
 EOF
+
+if [ ${mod_wsgi_enabled} -eq 1 ]; then
+cat <<EOF
+LoadModule wsgi_module modules/mod_wsgi.so
+EOF
+fi
+
+if [ ${server_status} -eq 1 ]; then
+cat <<EOF
+LoadModule status_module modules/mod_status.so
+<Location /server-status>
+   SetHandler server-status
+</Location> 
+EOF
+fi
+
+
+if [ ${cgi_enabled} -eq 1 ]; then
+cat <<EOF
+####### CGIs enabled at /cgi-bin
+# with this config as-is, all executables in cgi-bin will be available 
+# Be careful with what you put in that directory...
+
+# CGId used with threaded MPM, cgi with non-threaded
+LoadModule cgid_module modules/mod_cgid.so
+
+<Location /cgi-bin>
+    Require all granted
+</Location>
+
+#
+# ScriptAlias: This controls which directories contain server scripts. 
+# ScriptAliases are essentially the same as Aliases, except that
+# documents in the target directory are treated as applications and
+# run by the server when requested rather than as documents sent to the
+# client.  The same rules about trailing "/" apply to ScriptAlias
+# directives as to Alias.
+#
+# Requires: mod_alias
+#
+# ScriptAlias /cgi-bin/ "${data_dir}/cgi-bin/"
+
+# A simple way to check environment variables is with cgi-bin/printenv 
+
+EOF
+fi
+
+
 
 if [ ${php_enabled} -eq 1 ]; then
 cat <<EOF
@@ -313,17 +371,6 @@ LogLevel warn
     # require it to be present in the URL.  You will also likely
     # need to provide a <Directory> section to allow access to
     # the filesystem path.
-
-    #
-    # ScriptAlias: This controls which directories contain server scripts. 
-    # ScriptAliases are essentially the same as Aliases, except that
-    # documents in the target directory are treated as applications and
-    # run by the server when requested rather than as documents sent to the
-    # client.  The same rules about trailing "/" apply to ScriptAlias
-    # directives as to Alias.
-    #
-    ScriptAlias /cgi-bin/ "${data_dir}/cgi-bin/"
-
 </IfModule>
 
 <IfModule cgid_module>
@@ -490,3 +537,4 @@ Include ${etc_dir}/apache2/service.conf
 
 EOF
 
+log "${info} httpd.conf generated"

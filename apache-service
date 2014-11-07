@@ -5,19 +5,28 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg}
 
+readonly apache_cfg_dir=${etc_dir}/apache2
 readonly log_file=${service_log}
 readonly log_facility="${service}-httpd"
 
 . ${scripts_base}/common
 
+check_config_files(){
+    [ ! -d ${apache_cfg_dir} ] && log "${critical} apache2 dir missing" && exit 3
+    [ ! -f ${apache_cfg_dir}/service.conf ] && log "${critical} service.conf missing" && exit 3
+    [ ! -f ${apache_cfg_dir}/envvars ] && log "${critical} envvars missing" && exit 3
+    return 0
+}
+
+
 set -e
 
 export LD_LIBRARY_PATH=${usr_prefix}/openssl/lib/
-
+readonly APACHE_CONFDIR=${apache_cfg_dir}
 readonly SERVER=$(hostname)
 readonly SUFFIX=${service}
-readonly SERVICE_BASE=/services/${SERVICE_NAME}
-readonly APACHE_CONFDIR=${service_root}/etc/apache2
+
+check_config_files
 
 [ -z "$APACHE_ENVVARS" ] && APACHE_ENVVARS=$APACHE_CONFDIR/envvars
 
@@ -37,7 +46,7 @@ HTCACHECLEAN_RUN=auto
 HTCACHECLEAN_MODE=daemon
 HTCACHECLEAN_SIZE=300M
 HTCACHECLEAN_DAEMON_INTERVAL=120
-HTCACHECLEAN_PATH=${SERVICE_BASE}/data/mod_disk_cache
+HTCACHECLEAN_PATH=${data_dir}/mod_disk_cache
 HTCACHECLEAN_OPTIONS=""
 
 APACHE_HTTPD=${APACHE_BIN}/httpd
@@ -49,7 +58,6 @@ if [ -z "$PIDFILE" ] ; then
     log "${critical} ERROR: APACHE_PID_FILE needs to be defined in $APACHE_ENVVARS"
     exit 2
 fi
-
 
 log_progress_msg () {
     if [ -z "${1:-}" ]; then

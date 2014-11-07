@@ -16,6 +16,11 @@ install_prereq apr "mandatory"
 install_prereq apr-util "mandatory"
 install_prereq pcre "mandatory"
 install_prereq openssl "mandatory"
+# libxml2 is required by proxy-html 
+install_prereq libxml2 "optional"
+
+
+[ -n "${php_enabled}" -a ${php_enabled} -eq 1 ] && install_prereq php "mandatory"
 
 build_preconditions
 
@@ -30,6 +35,7 @@ cat ${scripts_base}/build/apache-portable.layout >> config.layout
 # --enable-cgid  (default with threaded MPMs)
 # --enable-cgi   (default with non-threaded MPMs)
 
-./configure --prefix=${prefix} --enable-layout=Portable --datadir=${data_dir} --localstatedir=${service_root} --enable-pie -enable-authn-dbm --enable-authz-dbm --enable-ratelimit --enable-log-debug --enable-ssl --with-apr=${usr_prefix}/apr --with-apr-util=${usr_prefix}/apr-util --with-pcre=${usr_prefix}/pcre -with-ssl=${usr_prefix}/openssl | logalize $(configure_log)
+
+./configure --prefix=${prefix} --enable-layout=Portable --datadir=${data_dir} --localstatedir=${service_root} --enable-pie -enable-authn-dbm --enable-authz-dbm --enable-ratelimit --enable-log-debug --enable-ssl --with-apr=${usr_prefix}/apr --with-apr-util=${usr_prefix}/apr-util --with-pcre=${usr_prefix}/pcre -with-ssl=${usr_prefix}/openssl --enable-proxy-html | logalize $(configure_log)
 
 standard_install

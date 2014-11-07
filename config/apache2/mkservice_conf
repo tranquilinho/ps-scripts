@@ -2,11 +2,20 @@
 
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-. ${service_cfg} && . ${scripts_base}/common
+. ${service_cfg}
+
+readonly log_file=${service_log}
+readonly log_facility="${service}-httpd-conf"
+
+. ${scripts_base}/common
 
 [ -z "${wordpress_enabled}" ] && readonly wordpress_enabled=0
+readonly service_apache_conf=${etc_dir}/service.apache
 
+make_header(){
 cat <<EOF
+#
+# Please update this file with mkservice_conf
 #
 # Listen: Allows you to bind Apache to specific IP addresses and/or
 # ports, instead of the default. See also the <VirtualHost>
@@ -15,13 +24,14 @@ cat <<EOF
 # Change this to Listen on specific IP addresses as shown below to 
 # prevent Apache from glomming onto all bound IP addresses.
 #
-#Listen 12.34.56.78:80
 
-Listen ${http_port}
+# Putting server name within virtualhost may fail in https...
+ServerName ${default_server}
+EOF
+} 
 
-<VirtualHost *:${http_port}>
-   ServerName ${default_server}
-   
+make_details(){
+cat <<EOF   
    #
    # DocumentRoot: The directory out of which you will serve your
    # documents. By default, all requests are taken from this directory, but
@@ -55,11 +65,12 @@ Listen ${http_port}
        # AllowOverride controls what directives may be placed in .htaccess files.
        # It can be "All", "None", or any combination of the keywords:
        #   AllowOverride FileInfo AuthConfig Limit
-       #
+       # None -> nothing can be placed in .htaccess files
        AllowOverride None
    
        #
-       # Controls who can get stuff from this server.
+       # Access control (http://httpd.apache.org/docs/current/howto/access.html)
+       # all granted -> no restrictions by host 
        #
        Require all granted
 EOF
@@ -87,10 +98,46 @@ cat <<EOF
    # LogLevel alert rewrite:trace3
 EOF
 
-cat ${etc_dir}/service.apache
+
+[ -f ${service_apache_conf} ] && ${service_apache_conf}
     
+}
+
+
+make_header
+
+if [ -n "${http_port}" ]; then
 cat <<EOF
-
-</VirtualHost>
-
+Listen ${http_port}
+<VirtualHost *:${http_port}>
 EOF
+make_details
+
+cat <<EOF
+</VirtualHost>
+EOF
+
+fi
+
+if [ -n "${https_port}" ]; then
+cat <<EOF
+Listen ${https_port}
+<VirtualHost *:${https_port}>
+EOF
+make_details
+
+cat <<EOF
+   # SSL configuration
+   SSLEngine on    
+   # Self-generated
+   SSLCertificateFile    ${etc_dir}/apache2/ssl/hertz.pem
+   SSLCertificateKeyFile ${etc_dir}/apache2/ssl/hertz-private.key
+EOF
+
+cat <<EOF
+</VirtualHost>
+EOF
+
+fi
+
+log "${info} service.conf generated"
