@@ -1,0 +1,22 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=phpMyAdmin
+readonly pkg_version=4.2.9.1
+readonly pkg=${pkg_name}-${pkg_version}-all-languages.tar.bz2
+readonly pkg_dir=${pkg_name}-${pkg_version}-all-languages
+readonly url_base="http://kent.dl.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.2.9.1/"
+readonly expected_hash=701150123c9213392466df22909da8ee22d7e6ea
+
+# install_prereq zlib "mandatory"
+
+build_preconditions
+
+cp -a ${pkg_dir} ${usr_prefix}/phpmyadmin
+
+log "${warning} Remember to create config.inc.php (@see biocs for an example)"
+exit 0
+
