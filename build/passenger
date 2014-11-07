@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# "Phusion Passenger is a multi-language (Ruby, Python, Node) web & app server
+#  which can integrate into Apache and Nginx. Easy to use, stable and fast."
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=passenger
+
+install_prereq zlib "mandatory"
+install_prereq openssl "mandatory"
+install_prereq apr "mandatory"
+install_prereq apr-util "mandatory"
+install_prereq apache "mandatory"
+
+${usr_prefix}/ruby/bin/gem install rake
+${usr_prefix}/ruby/bin/gem install passenger
+
+export PATH=${usr_prefix}/httpd/bin/:$PATH
+export C_INCLUDE_PATH${usr_prefix}/openssl/include:${usr_prefix}/zlib/include:${usr_prefix}/httpd/include
+
+# -a -> unattended install
+${usr_prefix}/ruby/bin/passenger-install-apache2-module -a --apr-config-path ${usr_prefix}/apr/bin/apr-1-config --apxs2-path ${usr_prefix}/httpd/bin/apxs
