@@ -1,0 +1,34 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=ruby
+readonly pkg_version=1.9.3-p550
+readonly url_base=http://cache.ruby-lang.org/pub/ruby/1.9/
+
+install_prereq zlib "mandatory"
+install_prereq openssl "mandatory"
+
+build_preconditions
+
+# export C_INCLUDE_PATH=/services/redmine/usr/include
+# export CFLAGS=-L/services/redmine/usr/lib
+
+./configure --prefix=${prefix} 
+
+standard_install
+
+cd ext/openssl
+${prefix}/bin/ruby extconf.rb 
+make -j 2
+make install
+
+cd ../..
+cd ext/zlib
+${prefix}/bin/ruby extconf.rb 
+make -j 2
+make install
+
+
