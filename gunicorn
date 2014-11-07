@@ -1,0 +1,63 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+
+readonly module="gunicorn"
+readonly log_file=${service_log}
+readonly log_facility="${service}-${module}"
+
+. ${scripts_base}/common
+
+# The recommended way to start gunicorn is from within the application:
+# manage.py run_gunicorn
+
+readonly pidfile=${run_dir}/${module}.pid
+# !!!! integrate into ${usr_prefix}
+readonly daemon=/usr/local/bin/gunicorn_django
+
+gunicorn_start(){
+    log "${info} Starting ${module}"
+
+    if [ ! -f ${daemon} ]; then
+        log "${info} Installing ${module}"
+        ${scripts_base}/build/${module}
+    fi
+
+    # start gunicorn from web app dir (where manage.py is located)
+    [ -n "${DJANGO_WEB_HOME}" ] && cd ${DJANGO_WEB_HOME}
+    ${daemon} 
+
+    status=$? ; pid=$!
+    if [ ${status} -eq 0 ]; then
+        echo ${pid} > ${pidfile}
+        log "${success} ${module} started"
+    else
+        log "${critical} Problem starting ${module}"
+    fi
+}
+
+
+gunicorn_stop(){
+    log "${info} Stopping ${module}..."
+    daemon_stop ${pidfile}
+    log "${success} Stopped"
+}
+
+case "$1" in
+    "start")
+        gunicorn_start
+        ;;
+    "stop")
+        gunicorn_stop
+        ;;
+    "restart")
+        gunicorn_stop
+        gunicorn_start
+        ;;
+    *)
+        echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0

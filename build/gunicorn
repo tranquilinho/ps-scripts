@@ -1,0 +1,26 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+# !!!! use virtualenvs to allow different versions of gunicorn to coexist
+
+readonly pkg_name=gunicorn
+readonly pkg_version=19.1.1
+readonly url_base=https://pypi.python.org/packages/source/g/gunicorn
+readonly hasher=md5sum
+readonly expected_hash=eaa72bff5341c05169b76ce3dcbb8140
+[ -z "${python}" ] && readonly python=$(which python)
+
+${python} -c "import sys; print (sys.version)" | logalize ${build_log}
+
+if ${python} -c "import ${pkg_name}" ; then
+    log "${info} ${pkg_name} already available in ${python}"
+else
+    install_prereq setuptools "mandatory"
+    build_preconditions
+    ${python} setup.py install
+    log_status $? "${pkg_name} installed in ${python}" "Problem installing ${pkg_name} in ${python}"
+fi
+
