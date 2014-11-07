@@ -163,7 +163,7 @@ install_prereq(){
     local installed=1
     link=${usr_prefix}/${prereq}
     if [ -s ${link} ];then
-	ls  --dereference-command-line-symlink-to-dir ${link}
+	ls  --dereference-command-line-symlink-to-dir ${link} > /dev/null
 	[ $? -eq 0 ] && installed=0
     fi
     if [ ${installed} -ne 0 ]; then
