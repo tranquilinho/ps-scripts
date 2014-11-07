@@ -14,3 +14,5 @@ build_preconditions
 ./config --prefix=${prefix} --shared | logalize $(configure_log)
 
 standard_install
+
+# !!!! it seems to not to finishthe first make... running a second time succeeds (???)

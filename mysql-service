@@ -33,20 +33,17 @@ mysql_start(){
 	log "${critical} MySQL data dir ${mysql_datadir} missing"
 	exit 2
     fi
-    ${daemon} &
-    status=$? ; pid=$!
-    if [ ${status} -eq 0 ]; then
-	echo ${pid} > ${pidfile}
-	log "${success} ${module} started"
+
+    # !!!! simple check - improve for the case of many mysql daemons running at the same time
+    if /etc/init.d/mysql status | grep stopped; then
+	daemon_start ${daemon} " " ${pid_file}
     else
-	log "${critical} Problem starting ${module}"
+	log "${warning} MySQL already started"
     fi
 }
 
 mysql_stop(){
-    log "${info} Stopping ${module}..."
     daemon_stop ${pidfile}
-    log "${success} Stopped"
 }
 
 case "$1" in

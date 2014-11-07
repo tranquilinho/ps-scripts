@@ -9,7 +9,7 @@ readonly log_facility="${service}-admin"
 
 . ${scripts_base}/common
 
-readonly admin_key=${etc_dir}/admin-id_dsa.pub
+readonly admin_key=${etc_dir}/admin_key
 readonly authorized_keys=/root/.ssh/authorized_keys
 
 if [ -f ${admin_key} ]; then

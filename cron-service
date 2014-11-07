@@ -13,27 +13,20 @@ readonly pidfile=${run_dir}/${module}.pid
 . ${scripts_base}/common
 
 case "$1" in
-	"start")
-		log "${info} Starting ${module}"
-		if [ ! -f ${daemon} ]; then
-        		${scripts_base}/build/cron
-    		fi
-
-		if is_running ${module} ; then
-		    log "${warning} ${module} already running"
-		else
-		    ${daemon} &
-		    echo $! > ${pidfile}
-		fi
-		log "${success} ${module} started"
+    "start")
+	log "${info} Starting ${module}"
+	if [ ! -f ${daemon} ]; then
+            ${scripts_base}/build/cron
+    	fi
+	
+	daemon_start ${daemon} " " ${pidfile}
 	;;
+
 	"stop")
-	        log "${info} Stopping ${module}..."
-		daemon_stop ${pidfile}
-		log "${success} Stopped"
-
+	daemon_stop ${pidfile}
 	;;
+
 	*)
-		echo "Syntax: $0 [start|stop]"
+	echo "Syntax: $0 [start|stop]"
 esac
 exit 0
