@@ -1,0 +1,19 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=jdk
+readonly pkg_version=1.7.0_67
+readonly pkg=jdk-7u67-linux-x64.tar.gz
+# it seems there is no direct download url
+# readonly url_base=
+readonly expected_hash=c1428d338ac60a1b61160f74a45abd74f83e8703
+
+build_preconditions
+
+# precompiled - just link in usr/
+ln -s ${build_dir}/jdk${pkg_version} ${usr_prefix}/jdk-${pkg_version}
+ln -s ${usr_prefix}/jdk-${pkg_version} ${usr_prefix}/jdk
+
