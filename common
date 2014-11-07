@@ -62,6 +62,11 @@ download_pkg(){
 }
 
 verify_pkg(){
+    if [ -z "${expected_hash}" ]; then
+	. ${scripts_base}/build/hashes
+	local hash_key="${pkg_name},${pkg_version}"
+	local expected_hash=${expected_hashes["${hash_key}"]}
+    fi
     pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
     if [ ${pkg_hash} != ${expected_hash} ]; then
 	log "${critical} Package integrity test failed (${pkg_hash})"
