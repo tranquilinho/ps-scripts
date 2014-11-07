@@ -4,7 +4,13 @@ print_usage(){
     echo Make a service.cfg file into stdout
     echo "Syntax: $0 -n service_name [-i feature1,feature2,...]"
     echo "Features available:"
-    grep _enabled $0 | gawk '{ if (match($0, /^readonly (.*)_enabled.*/, matches)) print matches[1]}' | sort
+    local regex="^readonly (.*)_enabled.*"
+    grep _enabled $0 | while read line; do
+	if [[ ${line} =~ ${regex} ]]; then
+	    echo ${BASH_REMATCH[1]}
+	fi
+    done | sort
+
     exit 1
 }
 
