@@ -1,0 +1,47 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="varnish"
+readonly log_facility="${service}-${module}"
+readonly daemon=${usr_prefix}/varnish/sbin/varnishd
+readonly pidfile=${run_dir}/${module}.pid
+
+
+. ${scripts_base}/common
+
+varnish_start(){
+    log "${info} Starting ${module}"
+
+    if [ ! -f ${daemon} ]; then
+	log "${info} Installing Varnish"
+	${scripts_base}/build/varnish
+    fi
+
+    daemon_start ${daemon} "-F -f ${etc_dir}/varnish.vcl -a :${varnish_port}" ${pidfile}
+    log_status $? "${module} started" "Problem starting ${module}"
+}
+
+varnish_stop(){
+    daemon_stop ${pidfile} ${module}
+}
+
+case "$1" in
+    "start")
+	varnish_start
+	;;
+    "stop")
+	varnish_stop
+	;;
+    "restart")
+	varnish_stop
+	varnish_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0

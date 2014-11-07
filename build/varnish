@@ -1,0 +1,25 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=varnish
+readonly pkg_version=4.0.1
+readonly url_base=https://repo.varnish-cache.org/source
+readonly expected_hash=4302281bd71777117b6642d4cd47feb2cf3e35c0
+
+install_prereq python-docutils "mandatory"
+install_prereq pcre "mandatory"
+debian_install libedit-dev
+
+build_preconditions
+
+export PCRE_LIBS="-L${usr_prefix}/pcre/lib -lpcre"
+export PCRE_CFLAGS="-I${usr_prefix}/pcre/include"
+
+./configure --prefix=${prefix} --with-pcre-config=${usr_prefix}/pcre/bin/pcre-config
+
+standard_install
+
+
