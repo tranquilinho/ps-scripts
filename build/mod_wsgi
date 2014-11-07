@@ -1,0 +1,22 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=mod_wsgi
+readonly pkg_version=4.2.8
+readonly url_base=https://github.com/GrahamDumpleton/mod_wsgi/archive
+readonly pkg=${pkg_version}.tar.gz
+readonly url=${url_base}/${pkg}
+readonly expected_hash=f5632cf987bfa2daf12bfd9950ea76bd15335faf
+
+build_preconditions
+[ -n "${mod_wsgi_python}" ] && readonly with_python="--with-python=${mod_wsgi_python}"
+
+configure "--prefix=${prefix} --with-apxs=${usr_prefix}/httpd/bin/apxs ${with_python}"
+
+standard_install
+
+
