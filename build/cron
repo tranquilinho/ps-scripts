@@ -6,17 +6,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
-log "${info} installing Cron server"
+debian_install cron
 
-apt-get install -y cron  2>&1 | logalize ${log_dir}/apt.log
-
-if [ $? -eq 0 ];then
-    log "${success} Cron server installed"
-    status=0
-else
-    log "${critical} problem installing Cron server"
-    status=2
-fi
-
-exit ${status}
+exit $?
 

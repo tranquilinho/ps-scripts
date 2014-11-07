@@ -18,15 +18,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 log "${info} installing MySQL server (with BLANK root PASSWORD)"
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y mysql-server 2>&1 | logalize ${log_dir}/apt.log
+debian_install mysql-server
 
-if [ $? -eq 0 ];then
-    log "${success} MySQL server installed"
-    status=0
-else
-    log "${critical} problem installing MySQL server"
-    status=2
-fi
-
-exit ${status}
+exit $?
 
