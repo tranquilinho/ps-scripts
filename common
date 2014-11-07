@@ -1,17 +1,20 @@
 #!/bin/bash
 
-readonly info="    "
-readonly warning="WARN"
+readonly     info="    "
+readonly  warning="WARN"
 readonly critical="CRIT"
-readonly success=" OK "
+readonly  success=" OK "
 
 readonly log_hostname=$(hostname)
 readonly log_format='${log_timestamp} ${log_hostname} "$(printf "%20s" ${log_facility})"'
+readonly build_log=${log_dir}/build.log
 
 # warning: appending logalize alters the value of $?, so you must use
 # ${PIPESTATUS[0]} instead
 logalize(){
 	local logalize_file=$1
+	[ -z "${log_facility}" ] && readonly log_facility=${service}-build
+
 	cat - | while read line_to_log ; do
 	    echo "${line_to_log}"
 	    printf -v log_timestamp "%(%s %Y-%m-%d %H:%M:%S)T" -1
@@ -22,20 +25,40 @@ logalize(){
 
 
 log(){
-    [ -z "${log_file}" ] && readonly log_file=${log_dir}/build.log
+    [ -z "${log_file}" ] && readonly log_file=${build_log}
     [ -z "${log_facility}" ] && readonly log_facility=${service}-build
     [ ! -d $(dirname ${log_file}) ] && mkdir -p $(dirname ${log_file})
     printf -v log_timestamp "%(%s %Y-%m-%d %H:%M:%S)T" -1
     echo "$(eval echo "${log_format}") $1" >> ${log_file}
 }
 
+log_status(){
+    local my_status=$1
+    local success_msg="$2"
+    local fail_msg="$3"
+    if [ ${my_status} -eq 0 ]; then
+	log "${success} ${success_msg}"
+    else
+	log "${critical} ${fail_msg}"
+    fi
+}
 
 download_pkg(){
-    wget -c ${url}
-    if [ $? -ne 0 ]; then
-	log "${critical} Could not download package"
-	exit 3
+    local status=0
+    local downloaded=1
+    if [ -n "${mirror_base}" ]; then
+	local download_url=${mirror_base}/${pkg}
+	wget -c ${download_url}
+	downloaded=$?
     fi
+    if [ ${downloaded} -ne 0 ]; then
+	local download_url=${url_base}/${pkg}
+	wget -c ${download_url}
+	downloaded=$?
+    fi
+
+    [ ${downloaded} -ne 0 ] && log "${critical} Could not download package ${download_url}" && exit 3
+
 }
 
 verify_pkg(){
@@ -46,13 +69,29 @@ verify_pkg(){
     fi
 }
 
+extract_pkg(){
+    local pkg_file_info=$(file ${pkg})
+
+    if echo ${pkg_file_info} | grep tar > /dev/null 2>&1; then
+	echo ${pkg_file_info} | grep bzip2 > /dev/null 2>&1 && local decompress_option="j"
+	echo ${pkg_file_info} | grep gzip > /dev/null 2>&1 && local decompress_option="x"
+	tar xf${decompress_option} ${pkg}
+	if [ $? -ne 0 ]; then
+	    log "${critical} Could not extract package"
+	    exit 5
+	fi
+    else
+	log "${warning} ${pkg} - unknown file type"
+	return 11
+    fi
+}
+
 common_build_vars(){
     [ -z "${pkg_name}" -o -z "${pkg_version}" ] && echo Package name undefined && exit 4
     [ -z "${pkg_dir}" ] && readonly pkg_dir=${pkg_name}-${pkg_version}
     [ -z "${pkg}" ] && readonly pkg=${pkg_dir}.tar.gz
     [ -z "${prefix}" ] && readonly prefix=${usr_prefix}/${pkg_dir}
     [ -z "${hasher}" ] && readonly hasher=sha1sum
-    [ -z "${url}" ] && readonly url=${url_base}/${pkg}
 }
 
 build_preconditions(){
@@ -69,11 +108,21 @@ build_preconditions(){
 
     download_pkg
     verify_pkg
-
-    tar xfz ${pkg}
-    cd ${pkg_dir}
+    extract_pkg && cd ${pkg_dir}
     log "${success} preconditions finish ${pkg_name}"
 }
+
+configure(){
+    local configure_options="$1"
+    log "${info} ./configure ${configure_options}"
+    ./configure ${configure_options}
+    if [ $? -ne 0 ]; then
+	log "${critical} Problem configuring ${pkg_name}"
+	exit 8
+    fi
+    log "${success} ${pkg_name} configured"
+}
+
 
 # Params:
 # $1 make option
@@ -121,6 +170,15 @@ install_prereq(){
     else
 	log "${warning} Prereq ${prereq} already installed"
     fi
+}
+
+debian_install(){
+    local my_package=$1
+    log "${info} installing ${my_package}"
+    apt-get install -y ${my_package} 2>&1 | logalize ${log_dir}/apt.log
+    local my_status=$?
+    log_status ${my_status} "${my_package} installed" "Problem installing ${my_package}"
+    return ${my_status}
 }
 
 check_params(){
@@ -176,6 +234,7 @@ watchdog(){
 
 	while ((t > 0)); do
             sleep ${interval}
+	    # -0 -> exit code indicates if a signal may be sent
             kill -0 ${pid} || exit
             ((t -= interval))
 	done
@@ -188,14 +247,61 @@ watchdog(){
 
 }
 
+
+daemon_start(){
+    local my_daemon=$1
+    local options="$2"
+    local my_pidfile=$3
+    local run_as=$4
+    local cmd="${my_daemon} ${options}"
+    if [ -n "${run_as}" ]; then
+	local run_as_cmd="su - ${run_as} -c "
+	cmd="${run_as_cmd} '${cmd}'"
+    fi
+    
+    log "${info} Starting daemon ${my_daemon}"
+
+    if [ ! -f ${my_daemon} ]; then
+        log "${critical} Daemon ${my_daemon} not found"
+    fi
+
+    if is_running ${my_daemon} ${my_pidfile}; then
+	log "${warning} ${my_daemon} already running"
+    else
+	log "${info} ${cmd}"
+	# If cmd starts in daemon mode, it is attached to init (PID 1) and $! points to this script itself
+	# Hence, for proper pid-saving, the cmd must be started in foreground...
+	eval "${cmd} &"
+	status=$? ; pid=$!
+
+	log_status ${status} "${my_daemon} started" "Problem starting ${my_daemon}"
+	if [ ${status} -eq 0 ]; then
+	    [ ! -d $(dirname ${my_pidfile}) ] && mkdir $(dirname ${my_pidfile})
+            echo ${pid} > ${my_pidfile}
+	else
+	    return ${status}
+	fi
+    fi
+}
+
+
 daemon_stop(){
-    local pid_file=$1
-    if [ ! -f ${pid_file} ]; then
+    local my_pidfile=$1
+    local daemon_name=$2
+    if [ ! -f ${my_pidfile} ]; then
 	log "${critical} PID file ${pid_file} missing"
 	return 2
     fi
-    local pid=$(cat ${pidfile})
-    kill ${pid}
+    log "${info} Stopping daemon ${daemon_name}"
+
+    local pid=$(cat ${my_pidfile})
+    # In simple cases, it's enough to kill the daemon
+    # When the daemon spawns lots of childs, it's safer
+    # to kill all of them by pgid
+    # su pgid is different from pgid of the child process, hence
+    # it's safer to get the gpid of the child
+    local pgid=$(ps --no-headers -o pgid --ppid ${pid})
+    [ -n "${pgid}" ] && kill -- -${pgid}
     local waited=0
     while [ -n "$(ps -o pid= -o comm= -p ${pid} )" ]; do
 	waited=$(( waited + 1 ))
@@ -205,16 +311,27 @@ daemon_stop(){
 	fi
 	sleep 1
     done
+    log "${success} Daemon ${daemon_name} stopped"
 }
+
 
 is_running(){
     local process_name=$1
-    local process_count=$(ps h -C ${process_name} | wc -l)
-    if [ ${process_count} -gt 0 ]; then
-	return 0
-    else
-	return 1
+    local my_pid_file=$2
+    [ $# -ne 2 -o -z "${process_name}" ] && log "${warning} is_running: wrong parameters" && return 2
+
+    if [ -f ${my_pid_file} ];then
+	local pid=$(cat ${my_pid_file})
+
+	local process_count=$(ps h ${pid} | wc -l)
+	if [ ${process_count} -gt 0 ]; then
+	    return 0
+	fi
     fi
+
+    process_count=$(ps h -C ${process_name} | wc -l)
+    [ ${process_count} -gt 0 ] && log "${warning} There are other ${process_name} processes running"
+    return 1
 }
 
 configure_log(){
@@ -227,4 +344,13 @@ make_log(){
     [ -z "${install_log_dir}" ] && local install_log_dir=${log_dir}/install
     [ ! -d ${install_log_dir} ] && mkdir ${install_log_dir}
     echo ${install_log_dir}/${pkg_name}_make.log
+}
+
+random_str(){
+    tr -dc _A-H-J-N-P-Z-a-h-m-z-1-9 < /dev/urandom | head -c${1:-14}
+}
+
+cpu_count(){
+    local cpus=$(( $(cat /sys/devices/system/cpu/online | cut -c 3-) + 1 ))
+    echo ${cpus}
 }
