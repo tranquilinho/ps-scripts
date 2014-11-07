@@ -1,0 +1,5 @@
+# use only sha1sums to keep things simple
+declare -A expected_hashes
+expected_hashes+=([openssl,1.0.1j]=cff86857507624f0ad42d922bb6f77c4f1c2b819)
+expected_hashes+=([openssl,1.0.1h]=b2239599c8bf8f7fc48590a55205c26abe560bf8)
+expected_hashes+=([ruby,1.9.3-p550]=b24e9e5e1f53710ff0eb438fb680964c8efbdcb3)
