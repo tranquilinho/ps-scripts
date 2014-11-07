@@ -1,0 +1,128 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+print_usage(){
+   echo "Syntax: $0 -n cert_name -C country -c city -O organization -o org_unit -F fqdn -e email [-f -h -d days -k rsa_key_length]"
+   exit 1
+}
+
+force=0
+cert_valid=365
+# As of 2014, 4096 is the recommended rsa key length
+rsa_key_length=4096
+
+if [ "$#" -ge 12 ]; then
+    while getopts "n:C:c:O:o:F:e:d:k:fh" options; do
+	case "${options}" in
+            n)
+		readonly cert_name=${OPTARG}
+		;;
+            d)
+		readonly cert_valid=${OPTARG}
+		;;
+            k)
+		readonly rsa_key_length=${OPTARG}
+		;;
+            C)
+		readonly country=${OPTARG}
+		;;
+            c)
+		readonly city=${OPTARG}
+		;;
+            O)
+		readonly organization=${OPTARG}
+		;;
+            o)
+		readonly org_unit=${OPTARG}
+		;;
+            F)
+		readonly fqdn=${OPTARG}
+		;;
+            f)
+		force=1
+		;;
+	    h)
+		print_usage
+		;;
+            e)
+		readonly email=${OPTARG}
+		;;
+            *)
+		echo "Unknow option"
+		print_usage
+		;;
+	esac
+    done
+else
+    print_usage
+fi
+
+readonly cert_dir=${etc_dir}/apache2/ssl
+readonly cert_cfg=${etc_dir}/snake_oil.cfg
+readonly host_key=${cert_dir}/${cert_name}-private.key
+readonly host_cert=${cert_dir}/${cert_name}.pem
+
+[ ! -d ${cert_dir} ] && mkdir -p ${cert_dir}
+
+if [ ! -f ${cert_cfg} -o ${force} -eq 1 ]; then
+    cat >${cert_cfg} <<EOF
+ [ req ]
+        default_bits           = ${rsa_key_length}
+        default_keyfile        = ${host_key}
+        distinguished_name     = req_distinguished_name
+	# don't ask for certificate parameters, get'em here
+        prompt                 = no
+	# passwords for the input / output private key files
+        # input_password        = mypass
+        # output_password        = mypass
+
+ [ req_distinguished_name ]
+        C                      = ${country}
+        ST                     = ${city}
+        L                      = ${city}
+        O                      = ${organization}
+        OU                     = ${org_unit}
+        CN                     = ${fqdn}
+        emailAddress           = ${email}
+EOF
+
+fi
+
+# Default: use RSA keys (supported in "old" apache versions like the ones in Debian)
+# -nodes -> don't encrypt the private key
+openssl req -new -x509 -days ${cert_valid} -nodes -config ${cert_cfg} -out ${host_cert} 
+exit 0
+
+# Eliptic curve (EC) is the Perfect Forward Secrecy (PFS) option in OpenSSL
+# EC is supported in apache mod_ssl from version 2.5
+readonly ca_private_key=ca-${cert_name}-private.key
+readonly ca_cert=ca-${cert_name}.pem
+readonly host_req=${cert_name}.req
+
+# eliptic curves list: openssl ecparam -list-curves
+readonly EC_NAME=sect283k1
+
+# from http://this.is.thoughtcrime.org.nz/elliptic-curve-ca-guide
+# sec283k1, a NIST/SECG standard curve over a 283 bit binary field.
+# CA key
+openssl ecparam -out ${ca_private_key} -name ${EC_NAME} -genkey
+openssl req -x509 -new -key ${ca_private_key} -out ${ca_cert} -outform PEM -days ${cert_valid}
+
+# Create another private key and generate an associated certificate request.
+openssl ecparam -out ${host_key} -name ${EC_NAME} -genkey
+openssl req -new -nodes -key ${host_key} -outform pem -out ${host_req}
+
+
+# Generate the signed certificate from the request.
+
+# This ca.db.* filenames should match the ones in openssl.cnf
+touch ca.db.index
+if [ ! -f ca.db.serial ]; then
+    echo 01 > ca.db.serial
+fi
+# if outdir is not specified, it will use the default from /usr/lib/ssl/openssl.cnf
+openssl ca -keyfile ${ca_private_key} -cert ${ca_cert} -in ${host_req} -out ${host_cert} -outdir . -config openssl.cnf
+
