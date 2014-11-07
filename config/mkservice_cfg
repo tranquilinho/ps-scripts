@@ -1,14 +1,45 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
-    echo Syntax: $0 service_name
-    exit 2
+print_usage(){
+    echo Make a service.cfg file into stdout
+    echo "Syntax: $0 -n service_name [-i feature1,feature2,...]"
+    echo "Features available:"
+    grep _enabled $0 | gawk '{ if (match($0, /^readonly (.*)_enabled.*/, matches)) print matches[1]}' | sort
+    exit 1
+}
+
+user_wants(){
+    local feature=$1
+    [[ "${includes}" == *${feature}* ]]
+    return $?
+}
+
+if [ "$#" -gt 0 ]; then
+    while getopts "i:n:" options; do
+	case "${options}" in
+            i)
+		readonly includes=${OPTARG}
+		;;
+	    n)
+		readonly service=${OPTARG}
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
 fi
 
-[ -z "${service}" ] && readonly service=$1
+[ -z "${service}" ] && print_usage
 
+cat <<EOF
 readonly service_root=/services/${service}
+EOF
 
+cat <<"EOF"
 readonly scripts_base=${service_root}/scripts
 
 readonly data_dir=${service_root}/data
@@ -26,16 +57,62 @@ readonly key_path=${etc_dir}/service-keys
 readonly private_key=${key_path}/id_rsa
 readonly public_key=${key_path}/id_rsa.pub
 
-readonly web_home=${data_dir}/htdocs
+# readonly mirror_base=
 
-readonly apache_enabled=0
-readonly mysql_enabled=0
-readonly cron_enabled=1
-
+readonly ssh_port=8632
 # other useful variables (under specific circumstances)
-# readonly http_port=8040
-# readonly default_server=my.server.org
-# readonly wordpress_enabled=1
 # readonly user=repo
 # readonly id=1103
-# readonly repo_home=${data_dir}/${user}
+EOF
+
+user_wants apache && cat <<"EOF"
+readonly apache_enabled=1
+readonly web_home=${data_dir}/htdocs
+readonly http_port=8080
+readonly default_server=default.kewl.com
+EOF
+
+user_wants php && cat <<"EOF"
+readonly php_enabled=1
+EOF
+
+user_wants wordpress && cat <<"EOF"
+readonly wordpress_enabled=1
+EOF
+
+user_wants mod_wsgi && cat <<"EOF"
+readonly mod_wsgi_enabled=1
+# You can specify a python other than the system's one
+readonly mod_wsgi_python=python
+EOF
+
+user_wants gunicorn && cat <<"EOF"
+readonly gunicorn_enabled=1
+readonly gunicorn_port=8055
+EOF
+
+user_wants varnish && cat <<"EOF"
+readonly varnish_enabled=1
+readonly varnish_port=8691
+EOF
+
+user_wants glassfish && cat <<"EOF"
+readonly glassfish_enabled=1
+readonly gfadmin_port=8658
+readonly gfanswers_file=${etc_dir}/glassfish.cfg
+readonly gf_password_file=${etc_dir}/gfpasswords
+
+EOF
+
+user_wants mysql && cat <<"EOF"
+readonly mysql_enabled=1
+EOF
+
+user_wants cron && cat <<"EOF"
+readonly cron_enabled=1
+EOF
+
+user_wants nagios && cat <<"EOF"
+readonly nagios_enabled=1
+export nagios_cfg=${etc_dir}/nagios/nagios.cfg
+EOF
