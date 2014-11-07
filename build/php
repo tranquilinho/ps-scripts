@@ -13,11 +13,20 @@ readonly hasher=md5sum
 install_prereq zlib "mandatory"
 install_prereq pcre "mandatory"
 install_prereq libxml2 "mandatory"
-install_prereq apache "mandatory"
+install_prereq httpd "mandatory"
 
 build_preconditions
 
-./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs --with-libxml-dir=${usr_prefix}/libxml2 --with-openssl=${usr_prefix}/openssl --with-pcre-regex=${usr_prefix}/pcre --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir=${usr_prefix}/zlib
+# php.ini location check: run php --ini
+
+# multibyte string required by phpmyadmin
+# mbstring -> --enable-mbregex, --with-gd=DIR?
+# @see http://php.net/manual/en/mbstring.installation.php
+
+./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs --with-libxml-dir=${usr_prefix}/libxml2 --with-openssl=${usr_prefix}/openssl --with-pcre-regex=${usr_prefix}/pcre --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir=${usr_prefix}/zlib --with-config-file-path=${etc_dir} --enable-mbstring
 
 # if apache-build libtool fails, replace it with php one
 standard_install
+
+# --with-config-file-path seems to be ignored, so we link to php.ini in the default location (lib)
+ln -s ${etc_dir}/php.ini ${usr_prefix}/php/lib
