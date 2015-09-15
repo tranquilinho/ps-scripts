@@ -1,0 +1,47 @@
+#!/bin/bash
+
+print_usage(){
+    echo "Create container-init"
+    echo "Syntax: $0 -n container_name"
+    exit 1
+}
+
+
+if [ "$#" -gt 0 ]; then
+    while getopts "n:" options; do
+	case "${options}" in
+	    n)
+		readonly service=${OPTARG}
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${service}" ] && print_usage
+
+cat <<EOF
+#!/bin/bash
+
+readonly service=${service}
+EOF
+cat <<"EOF"
+readonly service_root=/services/${service}
+
+${service_root}/scripts/docker-service-fix
+
+${service_root}/scripts/install_admin_key
+
+${service_root}/scripts/service-cron
+
+${service_root}/scripts/setup_known_hosts
+
+${service_root}/etc/service-manager start
+
+/usr/sbin/sshd -D
+EOF

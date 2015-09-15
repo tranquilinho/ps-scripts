@@ -1,0 +1,19 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=nagios-custom-checks
+
+log "${info} ${pkg_name} install started"
+cd ${etc_dir}
+git clone ssh://repo@hertz/services/deployer/data/git/nagios-custom-checks.git
+if [ $? -eq 0 ]; then
+    log "${success} ${pkg_name} installed"
+    exit 0
+else
+    log "${critical} Problem installing ${pkg_name}"
+    exit 2
+fi
+

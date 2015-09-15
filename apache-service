@@ -143,7 +143,7 @@ case $1 in
 	    fi
 	fi
 
-	$APACHE2CTL start 2>&1 | logalize ${log_file}
+	${APACHE2CTL} start 2>&1 | logalize ${log_file}
 	if [ ${PIPESTATUS[0]} -eq 0 ]; then
             if check_htcacheclean ; then
                 log_progress_msg htcacheclean
@@ -190,6 +190,11 @@ case $1 in
             log "${critical} Problem restarting apache"
         fi
         ;;
+
+    reload)
+	${APACHE2CTL} graceful
+	;;
+	
     status)
         PID=$(pidof_apache) || true
         if [ -n "$PID" ]; then

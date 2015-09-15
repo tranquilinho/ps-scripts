@@ -1,0 +1,17 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=scipion
+readonly pkg_version=1.0
+readonly url_repo=https://github.com/biocompwebs/scipion.git
+
+cd ${usr_prefix}
+git clone ${url_repo}
+cd scipion
+./scipion config
+./scipion install -j 2
+
+

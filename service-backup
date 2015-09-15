@@ -20,6 +20,8 @@ if [ ! -f ${private_key} ];then
         exit 3
 fi
 
+chmod 600 ${private_key}
+
 if [ -z "$(which rsync)" ]; then
     ${scripts_base}/build/rsync
 fi
@@ -30,16 +32,18 @@ log "${info} BACKUP STARTED"
 data_dirs=$(grep data= ${config_file})
 log "${info} Backing-up data..."
 
+rsync_options_line=$(grep rsync_options= ${config_file})
+rsync_options=${rsync_options_line##rsync_options=}
 line=$(grep backup= ${config_file})
 backup_host=$(expr match ${line} "backup=\(.*\):.*:.*:.*")
 backup_path=$(expr match ${line} "backup=.*:.*:.*:\(.*\)")
 for d in ${data_dirs}; do
-    dir="$(expr match "${d}" "data=\(.*\)")/"
+    dir="$(expr match "${d}" "data=\(.*\)")"
     backup_dest="${backup_host}:${backup_path}/"
     # if ${DIR} does not end in /, we should append it...
     snapshot_dir="/nas/snapshots/${service}/$(date +%Y%m%d)"
     log "${info} Backing up ${dir} to ${backup_dest}"
-    rsync -av -e "ssh -i ${private_key}" --delete --backup --exclude-from=${exclude_file} --backup-dir=${snapshot_dir} ${dir} ${backup_dest} | logalize ${log_file}
+    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" --delete --backup --exclude-from=${exclude_file} --backup-dir=${snapshot_dir} ${dir} ${backup_dest} | logalize ${log_file}
     # touch ${dir}/.last_vmsbackup
 done
 

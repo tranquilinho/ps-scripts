@@ -7,7 +7,7 @@ readonly log_file=${service_log}
 readonly log_facility="${service}"
 . ${scripts_base}/common
 
-if [ -z "$(which make)" ]; then
+if [ -z "$(which make)" -o -z "$(which wget)" -o -z "$(which file)" ]; then
    log "${critical} Build environment not ready"
    ${scripts_base}/install_build_env ||  exit 14
 else

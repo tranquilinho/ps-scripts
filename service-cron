@@ -7,6 +7,9 @@ readonly log_file=${service_log}
 readonly log_facility="${service}-cron"
 . ${scripts_base}/common
 
+# ensure cron is installed
+${scripts_base}/build/cron
+
 # install the cron jobs needed by this service
 readonly service_cron_dir=${etc_dir}/cron
 readonly system_cron_dir=/etc/cron.d

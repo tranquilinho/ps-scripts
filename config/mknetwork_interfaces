@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Create a config file with the syntax of Debian etc/network/interfaces, using the parameters from service.cfg
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+
+
+cat <<EOF
+# ${default_server}
+auto ${public_ip_alias}
+iface ${public_ip_alias} inet static
+        address ${public_ip_addr}
+        netmask ${public_ip_mask}
+        gateway ${public_gateway}
+EOF

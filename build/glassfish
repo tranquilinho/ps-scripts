@@ -55,6 +55,8 @@ else
     exit 2
 fi
 
+install_prereq jdk "mandatory"
+
 log "${info} Custom install start ${pkg_name} ${pkg_version}"
 
 
@@ -84,14 +86,14 @@ fi
 
 
 if [ ${skip_configure:-1} -ne 0 ]; then
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} start-domain domain1 | logalize ${build_log}
+    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} start-domain domain1 | logalize ${build_log}
 
 
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} enable-secure-admin | logalize ${build_log}
+    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} enable-secure-admin | logalize ${build_log}
 
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} create-file-user --groups deployer --authrealmname admin-realm deployer | logalize ${build_log}
+    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} create-file-user --groups deployer --authrealmname admin-realm deployer | logalize ${build_log}
 
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} restart-domain domain1 | logalize ${build_log}
+    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} restart-domain domain1 | logalize ${build_log}
 fi
 
 

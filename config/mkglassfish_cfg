@@ -17,9 +17,9 @@ fi
 
 if [ ! -f ${gfadmin_password_file} ]; then
     readonly gfadmin_password=$( random_str )
-    echo "AS_ADMIN_PASSWORD=${gfadmin_password}" > ${gf_password_file} 
+    echo "AS_ADMIN_USERPASSWORD=${gfadmin_password}" > ${gfadmin_password_file} 
 else
-    readonly line=$(grep "AS_ADMIN_PASSWORD=" ${gf_password_file})
+    readonly line=$(grep "AS_ADMIN_USERPASSWORD=" ${gfadmin_password_file})
     readonly gfadmin_password=$( expr match "${line}" ".*=\(.*\)")
 fi
 

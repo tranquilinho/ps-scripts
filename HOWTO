@@ -1,0 +1,11 @@
+create service.cfg
+
+
+Apache
+------
+
+Create service config (config/apache2/mkservice_conf)
+
+Create apache config (config/apache2/mkhttpd_conf)
+
+Copy envvars file (config/apache2/envvars -> etc/apache2)

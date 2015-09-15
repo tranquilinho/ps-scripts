@@ -8,6 +8,7 @@ readonly pkg_name=httpd
 readonly pkg_version=2.4.10
 # !!!! this mirror keeps only the latest stable version...
 readonly url_base=http://ftp.cixug.es/apache/httpd
+readonly expected_hash=9682272d16f0b2a7f1c7bbb9816283e3ab161d66
 
 log "${info} ${pkg_name} install started"
 
@@ -16,8 +17,12 @@ install_prereq apr-util "mandatory"
 install_prereq pcre "mandatory"
 install_prereq openssl "mandatory"
 # libxml2 is required by proxy-html 
-install_prereq libxml2 "optional"
+install_prereq libxml2 "mandatory"
 
+readonly os_aux=$(grep "^ID=" /etc/os-release)
+readonly os=${os_aux##ID=}
+
+debian_install uuid-dev
 
 [ -n "${php_enabled}" -a ${php_enabled} -eq 1 ] && install_prereq php "mandatory"
 

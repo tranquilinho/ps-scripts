@@ -13,6 +13,7 @@ readonly log_facility="${service}"
 if [ ! -h /sbin/initctl ]; then
     # "fix" service startup problem inside docker
     dpkg-divert --local --rename --add /sbin/initctl
+    # !!!! remove /sbin/initctl first?
     ln -s /bin/true /sbin/initctl
     log "${success} Docker service start fix applied"
 fi

@@ -130,8 +130,8 @@ cat <<EOF
    # SSL configuration
    SSLEngine on    
    # Self-generated
-   SSLCertificateFile    ${etc_dir}/apache2/ssl/hertz.pem
-   SSLCertificateKeyFile ${etc_dir}/apache2/ssl/hertz-private.key
+   SSLCertificateFile    ${etc_dir}/apache2/ssl/${service}.pem
+   SSLCertificateKeyFile ${etc_dir}/apache2/ssl/${service}-private.key
 EOF
 
 cat <<EOF
