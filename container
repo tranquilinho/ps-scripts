@@ -28,7 +28,9 @@ docker=$(which docker)
 container_start(){
     # log "${info} docker run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr}"
     # !!!! log docker log ;-)
-    hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr})
+    [ -z "${docker_options}" ] && docker_options="-d"
+
+    hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} ${docker_options} -t ${image} ${container_init} 2> ${docker_stderr})
 }
 
 case "$1" in

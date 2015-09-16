@@ -1,3 +1,4 @@
 #!/bin/bash
 
+# example of minimal container-init
 /usr/sbin/sshd -D
