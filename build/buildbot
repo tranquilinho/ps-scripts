@@ -17,7 +17,7 @@ ${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/nu
 if ${python} -c "import ${pkg_name}" ; then
     log "${info} ${pkg_name} already available in ${python}"
 else
-    # by now, use pip
+    # by now, use pip. It seems it depends on build-essentials, so it make take a while to install...
     debian_install python-pip
     debian_install python-dev
     pip install buildbot | logalize ${build_log}
