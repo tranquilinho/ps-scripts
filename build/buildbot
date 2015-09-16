@@ -37,7 +37,9 @@ EOF
 	chmod +x ${usr_prefix}/buildbot/bin/master
     fi
 
-    echo "Remember to copy scripts/config/buildbot.tac to your buildbot master directory"
+    if [ ! -f ${data_dir}/buildbot/master/buildbot.tac ]; then
+	echo "Remember to copy scripts/config/buildbot.tac to your buildbot master directory"
+    fi
 
     log_status $? "${pkg_name} installed in ${python}" "Problem installing ${pkg_name} in ${python}"
 fi
