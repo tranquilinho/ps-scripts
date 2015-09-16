@@ -3,42 +3,51 @@
 # Original script by jburguet
 # Updates by jcuenca
 
-# Get some info about the system.
-HOST=$(hostname)
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-BASEDIR=${HOST}  # directory where the slave will reside
-NAME=${HOST}     # slave name (used by buildbot master)
-PASS=""        # password for buildbot master 
-MASTER=ramanujan.cnb.csic.es
+. ${service_cfg} && . ${scripts_base}/common
 
-# Create buildbot dir and install buildslave package.
-mkdir -p ${HOME}/buildbot
-cd ${HOME}/buildbot
 
-mkdir -p local
-wget https://pypi.python.org/packages/source/b/buildbot-slave/buildbot-slave-0.8.9.tar.gz
-tar xzf buildbot-slave-0.8.9.tar.gz
-cd buildbot-slave-0.8.9
-python setup.py install --prefix=${HOME}/buildbot/local
+readonly pkg_name=buildbot-slave
+readonly pkg_version=0.8.9
+readonly url_base=https://pypi.python.org/packages/source/b/buildbot-slave
+readonly expected_hash=3c56a5a061116060705ac35f96e514d8d984ed88
+
+${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
+
+if ${python} -c "import buildslave" ; then
+    log "${info} ${pkg_name} already available in ${python}"
+else
+    build_preconditions
+    python setup.py install --prefix=${usr_prefix}/buildbot-slave-${pkg_version}
+    cd ${usr_prefix}
+    ln -s buildbot-slave-${pkg_version} buildbot-slave
+    if [ ! -x ${usr_prefix}/buildbot/bin/slave ]; then
+       # wrapper for calling buildbot (slave)
+	mkdir -p ${usr_prefix}/buildbot/bin
+	cat > ${usr_prefix}/buildbot/bin/slave <<EOF
+#!/usr/bin/python
+
+from buildslave.scripts import runner
+runner.run()
+EOF
+	chmod +x ${usr_prefix}/buildbot/bin/slave
+    fi
+fi
+
+log "${success} standard install finish ${pkg_name}"
+
 
 # Create a buildslave
-cd ${HOME}/buildbot
-buildslave create-slave ${BASEDIR} ${NASTER} ${NAME} ${PASS}
+#cd ${HOME}/buildbot
+#buildslave create-slave ${BASEDIR} ${MASTER} ${NAME} ${PASS}
 
 # Remember to include the new slave in the master config,
 #    buildbot/scipion-master/master.cfg to add
 # for example:
-#   BuildSlave("new-slave", "ultrasecurepassword:-p")
+#   BuildSlave("${NAME}", "${PASS}")
 
 
-# Create env.sh
-cd ${HOME}/buildbot
-cat > env.sh <<EOF
-# Source this file to use our local installation of buildslave.
-export PATH=${HOME}/buildbot/local/bin:\${PATH}
-export PYTHONPATH=${HOME}/buildbot/local/lib/python2.7/site-packages:\${PYTHONPATH}
-EOF
-
-# Run buildslave
-cd ${HOME}/buildbot/${BASEDIR}
-buildslave start
+# environment
+# export PATH=${HOME}/buildbot/local/bin:\${PATH}
+# export PYTHONPATH=${HOME}/buildbot/local/lib/python2.7/site-packages:\${PYTHONPATH}
