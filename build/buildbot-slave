@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Original script by jbruguet
+
+# Get some info about the system.
+HOST=`hostname`
+
+BASEDIR=$HOST  # directory where the slave will reside
+NAME=$HOST  # identification name with buildbot master
+PASS="cl4rk-4"  # password that a buildbot master must use
+
+# Create buildbot dir and install buildslave package.
+mkdir -p $HOME/buildbot
+cd $HOME/buildbot
+
+mkdir -p local
+wget https://pypi.python.org/packages/source/b/buildbot-slave/buildbot-slave-0.8.9.tar.gz
+tar xzf buildbot-slave-0.8.9.tar.gz
+cd buildbot-slave-0.8.9
+python setup.py install --prefix=$HOME/buildbot/local
+
+# Create a buildslave
+cd $HOME/buildbot
+buildslave create-slave $BASEDIR ramanujan.cnb.csic.es $NAME $PASS
+
+# Remember to include the new slave in the master config,
+#    buildbot/scipion-master/master.cfg to add
+# for example:
+#   BuildSlave("new-slave", "ultrasecurepassword:-p")
+
+
+# Create env.sh
+cd $HOME/buildbot
+cat > env.sh <<EOF
+# Source this file to use our local installation of buildslave.
+export PATH=$HOME/buildbot/local/bin:\$PATH
+export PYTHONPATH=$HOME/buildbot/local/lib/python2.7/site-packages:\$PYTHONPATH
+EOF
+
+# Run buildslave
+cd $HOME/buildbot/$BASEDIR
+buildslave start
