@@ -6,6 +6,14 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 # !!!! use virtualenvs to allow different versions of gunicorn to coexist
 
+# unicorn needs python ssl module. When using the python of the OS, it comes with
+# that precompiled.
+# When using "custom pythons", the ssl module is built only if the ssl library is
+# detected
+# Ideally, one would use our openssl, but it seems python does not offer an easy way 
+# to specify a ssl library other than the one of the OS...
+
+
 readonly pkg_name=gunicorn
 readonly pkg_version=19.1.1
 readonly url_base=https://pypi.python.org/packages/source/g/gunicorn
