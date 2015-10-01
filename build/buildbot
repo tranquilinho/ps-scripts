@@ -6,10 +6,6 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 
 readonly pkg_name=buildbot
-readonly pkg_version=
-readonly url_base=
-# readonly hasher=md5sum
-# readonly expected_hash=eaa72bff5341c05169b76ce3dcbb8140
 [ -z "${python}" ] && readonly python=$(which python)
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
