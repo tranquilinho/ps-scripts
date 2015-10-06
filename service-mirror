@@ -54,7 +54,7 @@ for d in ${data_dirs}; do
     mirror_dest="${mirror_path}/"
     log "${info} Mirroring ${from} to ${mirror_dest}"
 
-    rsync -avn ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" --delete ${from}  ${mirror_dest} | logalize ${log_file}
+    rsync -av ${rsync_options} -e "ssh -o StrictHostKeyChecking=no" --delete ${from}  ${mirror_dest} | logalize ${log_file}
 
 done
 
