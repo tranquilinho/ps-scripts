@@ -30,8 +30,8 @@ fi
 log "${info} MIRROR-PULL STARTED"
 line=$(grep mirror= ${config_file})
 readonly mirror_host=$(expr match ${line} "mirror=\(.*\):.*:.*:.*")
-if [ $(hostname) == ${mirror_host} ]; then
-    log "${success} Skipping (I am not the mirror host, ${mirror_host}"
+if [ $(hostname) != ${mirror_host} ]; then
+    log "${success} Skipping (I am not the mirror host, ${mirror_host})"
     exit 0
 fi
 
