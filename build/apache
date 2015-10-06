@@ -5,7 +5,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=httpd
-readonly pkg_version=2.4.10
+readonly pkg_version=2.4.16
 # !!!! this mirror keeps only the latest stable version...
 readonly url_base=http://ftp.cixug.es/apache/httpd
 readonly expected_hash=9682272d16f0b2a7f1c7bbb9816283e3ab161d66

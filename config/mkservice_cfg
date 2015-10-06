@@ -62,7 +62,9 @@ readonly public_key=${key_path}/id_rsa.pub
 # default value for paralelism (-j option in make, etc)
 readonly ps_paralel="-j 2"
 
-readonly ssh_port=8632
+
+readonly ssh_port=22
+
 # other useful variables (under specific circumstances)
 # readonly user=repo
 # readonly id=1103
