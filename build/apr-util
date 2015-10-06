@@ -7,8 +7,6 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly pkg_name=apr-util
 readonly pkg_version=1.5.4
 readonly url_base=http://apache.rediris.es/apr/
-readonly expected_hash=71a11d037240b292f824ba1eb537b4e3
-readonly hasher=md5sum
 
 build_preconditions
 
