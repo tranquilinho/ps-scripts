@@ -4,16 +4,5 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} 
 
-readonly log_file=${service_log}
-readonly log_facility="${service}"
-
-. ${scripts_base}/common
-
-
-if [ ! -h /sbin/initctl ]; then
-    # "fix" service startup problem inside docker
-    dpkg-divert --local --rename --add /sbin/initctl
-    # !!!! remove /sbin/initctl first?
-    ln -s /bin/true /sbin/initctl
-    log "${success} Docker service start fix applied"
-fi
+echo "WARNING: this script has been renamed to docker-service-startup-fix"
+${scripts_base}/docker-service-startup-fix
