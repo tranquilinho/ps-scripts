@@ -1,0 +1,64 @@
+#!/bin/bash
+
+print_usage(){
+    echo Create a backup config file
+    echo "Syntax: $0 -n service_name -b backup_server:vg:lv:path [-r replica_server:vg:lv:path]"
+    exit 1
+}
+
+if [ "$#" -gt 0 ]; then
+    while getopts "b:r:n:m:" options; do
+	case "${options}" in
+            b)
+		fields=(${OPTARG//:/ })
+		readonly backup_server=${fields[0]}
+		readonly backup_vg=${fields[1]}
+		readonly backup_lv=${fields[2]}
+		readonly backup_path=${fields[3]}
+		;;
+            r)
+		fields=(${OPTARG//:/ })
+		readonly replica_server=${fields[0]}
+		readonly replica_vg=${fields[1]}
+		readonly replica_lv=${fields[2]}
+		readonly replica_path=${fields[3]}
+		readonly replica_days=${fields[4]}
+		;;
+            m)
+		fields=(${OPTARG//:/ })
+		readonly mirror_server=${fields[0]}
+		readonly mirror_vg=${fields[1]}
+		readonly mirror_lv=${fields[2]}
+		readonly mirror_path=${fields[3]}
+		;;
+	    n)
+		readonly service=${OPTARG}
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${service}" ] || [ -z "${backup_server}" ] || [ -z "${backup_path}" ] && print_usage
+
+cat <<EOF
+service=${service}
+backup=${backup_server}:${backup_vg}:${backup_lv}:${backup_path}
+data=/services/${service}/
+EOF
+
+[ -n "${mirror_server}" ] && cat <<EOF
+mirror=${mirror_server}:${mirror_vg}:${mirror_lv}:${mirror_path}
+EOF
+
+
+[ -n "${replica_server}" ] && cat <<EOF
+replicas=${replica_server}:${replica_vg}:${replica_lv}:${replica_path}:${replica_days}
+EOF
+
+
