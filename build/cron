@@ -6,7 +6,15 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
-debian_install cron
 
-exit $?
+readonly pkg_name=anacron
+readonly pkg_version=2.3
+readonly url_base=http://freefr.dl.sourceforge.net/project/anacron/anacron/${pkg_version}/
+
+build_preconditions
+
+./configure --prefix=${prefix}  --with-apr=${usr_prefix}/apr
+
+standard_install
+
 
