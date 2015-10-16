@@ -63,6 +63,9 @@ download_pkg(){
 
 verify_pkg(){
     pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
+
+    [ -z "${expected_hash}" ] && log "${critical} Missing expected hash..." && exit 5
+
     if [ ${pkg_hash} != ${expected_hash} ]; then
 	log "${critical} Package integrity test failed (${pkg_hash})"
 	exit 4
@@ -149,10 +152,13 @@ standard_install(){
 	log "${critical} Problem installing ${pkg_name}"
 	exit 8
     fi
+
+    if [ -d ${prefix} ]; then
     # make sure the symlink points to what it was just installed,
     # instead to some random version (for example, in a different but similar service...)
-    rm ${usr_prefix}/${pkg_name}
-    ln -s ${prefix} ${usr_prefix}/${pkg_name}
+	rm ${usr_prefix}/${pkg_name}
+	ln -s ${prefix} ${usr_prefix}/${pkg_name}
+    fi
     log "${success} standard install finish ${pkg_name}"
 }
 
