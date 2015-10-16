@@ -4,7 +4,6 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
-
 readonly pkg_name=Django
 readonly pkg_version=1.8.4
 # !!!! wget by default cannot download directly from site with proper package name

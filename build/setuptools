@@ -8,7 +8,8 @@ readonly pkg_name=setuptools
 readonly pkg_version=latest
 readonly pkg=ez_setup.py
 readonly url_base=https://bootstrap.pypa.io
-readonly expected_hash=e0a71b9771c5e0cdc1ac3a8a2493c5e27ac477a4
+
+[ -z "${python}" ] && readonly python=$(which python)
 
 if ${python} -c "import ${pkg_name}" ; then
     log "${info} ${pkg_name} already available in ${python}"
