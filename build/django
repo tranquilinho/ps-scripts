@@ -11,6 +11,8 @@ readonly pkg_version=1.8.4
 # By now we use the download from the mirror...
 readonly url_base=https://www.djangoproject.com/download/1.8.4/tarball/
 
+install_prereq python "mandatory"
+
 [ -z "${python}" ] && readonly python=$(which python)
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log}
