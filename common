@@ -62,9 +62,13 @@ download_pkg(){
 }
 
 verify_pkg(){
-    pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
+    . ${scripts_base}/build/hashes
 
-    [ -z "${expected_hash}" ] && log "${critical} Missing expected hash..." && exit 5
+    local pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
+    local key="${pkg_name},${pkg_version}"
+    local expected_hash=${expected_hashes[${key}]}
+
+    [ -z "${pkg_hash}" ] || [ -z "${expected_hash}" ] && log "${critical} Missing hash" && exit 5
 
     if [ ${pkg_hash} != ${expected_hash} ]; then
 	log "${critical} Package integrity test failed (${pkg_hash})"
