@@ -6,69 +6,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
+debian_install cron
 
-readonly pkg_name=anacron
-readonly pkg_version=2.3
-url_base=http://freefr.dl.sourceforge.net/project/anacron/anacron/${pkg_version}/
+exit $?
 
-build_preconditions
-
-# strangely, it tries to assign to a const int - apply patch
-patch <<EOF
---- gregor.c    2000-06-22 22:50:40.000000000 +0000
-+++ mygregor.c  2015-10-16 10:46:42.800482180 +0000
-@@ -65,7 +65,7 @@
- {
-     int dn;
-     int i;
--    const int isleap; /* save three calls to leap() */
-+
- 
-     /* Some validity checks */
- 
-@@ -75,8 +75,9 @@
-     if (year > (INT_MAX / 366)) return - 1;
-     if (month > 12 || month < 1) return - 1;
-     if (day < 1) return - 1;
--  
--    isleap = leap(year);
-+
-+    /* save three calls to leap() */  
-+    const int isleap = leap(year);
-   
-     if (month != 2) {
-        if(day > days_in_month[month - 1]) return - 1;
-EOF
-
-# No configure - patch Makefile
-patch <<EOF
---- Makefile    2000-06-22 22:26:11.000000000 +0000
-+++ Makefile.new        2015-10-16 10:55:12.340632851 +0000
-@@ -19,16 +19,17 @@
- #   'COPYING' that comes with the Anacron source distribution.
- 
- 
--PREFIX = 
-+PREFIX = ${service_root}
- BINDIR = \$(PREFIX)/usr/sbin
- MANDIR = \$(PREFIX)/usr/man
--CFLAGS = -Wall -pedantic -O2
-+#CFLAGS = -Wall -pedantic -O2
-+CFLAGS = -Wall  -O2
- #CFLAGS = -Wall -O2 -g -DDEBUG
- 
- # If you change these, please update the man-pages too
- # Only absolute paths here, please
--SPOOLDIR = /var/spool/anacron
--ANACRONTAB = /etc/anacrontab
-+SPOOLDIR = ${data_dir}/spool/anacron
-+ANACRONTAB = ${etc_dir}/anacrontab
- 
- RELEASE = 2.3
- package_name = anacron-\$(RELEASE)
-EOF
-
-standard_install
-
-
-url_base=ftp://ftp.isc.org/isc/cron/cron_4.1.shar

@@ -7,7 +7,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly log_file=${service_log}
 readonly module="cron"
 readonly log_facility="${service}-${module}"
-readonly daemon=${usr_prefix}/sbin/anacron
+readonly daemon=/usr/sbin/cron
 readonly pidfile=${run_dir}/${module}.pid
 
 . ${scripts_base}/common
@@ -19,12 +19,6 @@ case "$1" in
             ${scripts_base}/build/cron
     	fi
 	
-	readonly spool_dir="${data_dir}/spool/anacron"
-	[ ! -d ${spool_dir} ] && mkdir -p ${spool_dir}
-
-	readonly crontab="${etc_dir}/anacrontab"
-	[ ! -f ${crontab} ] && echo "Missing ${crontab}" && exit 2
-
 	daemon_start ${daemon} " " ${pidfile}
 	;;
 
