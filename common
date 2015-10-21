@@ -46,6 +46,9 @@ log_status(){
 download_pkg(){
     local status=0
     local downloaded=1
+
+    [ -z "$(which wget)" ] && debian_install wget
+
     if [ -n "${mirror_base}" ]; then
 	local download_url=${mirror_base}/${pkg}
 	wget -c ${download_url}

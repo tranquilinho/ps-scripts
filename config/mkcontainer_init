@@ -37,6 +37,8 @@ ${service_root}/scripts/docker-service-fix
 
 ${service_root}/scripts/install_admin_key
 
+apt-get update 2>&1 >/dev/null
+
 ${service_root}/scripts/service-cron
 
 ${service_root}/scripts/setup_known_hosts
