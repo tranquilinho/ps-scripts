@@ -21,7 +21,7 @@ Features
    - Simple versioning and updates: automatically build the versions of your dependencies that you need, then use
      the one that suits you best. Or try different versions in different instances of the service.
    - Start the service as a whole with a single script. Or restart one of the dependencies.
-   - Simple backup system included: service file, MySQL databases
+   - Simple backup system included: service files, MySQL databases
    - Popular packages like apache, gunicorn, nagios, openssl or wordpress already included. Easy to add new build scripts for the
      missing ones
    - Integrated logging subsystem in log directory. There you will find apache logs, but also service backup logs, service deployment logs...
@@ -56,8 +56,8 @@ Actual installation of the scripts is pretty simple: clone them from this repo a
 
 To keep track of all the configuration, one can use a git repository:
 
-   git init
-   git remote add origin ssh://git@gitserver/services/wp-example.git
+    git init
+    git remote add origin ssh://git@gitserver/services/wp-example.git
 
 In this example I will use git sparringly (since git is not the focus of the example). Feel free to apply your own revision policy.
 
@@ -118,8 +118,14 @@ Copy your ssh public key as the service manager key:
 
      cp ~/.ssh/id_rsa.pub /services/wp-example/etc/admin_key
 
+Keep track of all configuration:
+
+    git add etc
+
 And you are done!
 
+    /services/wp-example/scripts/container start
+    
     docker ps
     CONTAINER ID        IMAGE               COMMAND                CREATED             STATUS              PORTS                                                                  NAMES
     9425ae35ff5b        debian:stable-ssh   "/services/wp-exampl   3 seconds ago       Up 2 seconds        0.0.0.0:9632->22/tcp, 0.0.0.0:9680->9680/tcp                           wp-example 
@@ -129,13 +135,16 @@ All the required software packages are built from source the first time the serv
 ~~~~
 tail -f log/*
 ==> log/apt.log <==
-1445439390 2015-10-21 14:56:30 a12b328dc467               -build      libstdc++6-4.7-doc make-doc man-browser ed diffutils-doc perl-doc
-1445439390 2015-10-21 14:56:30 a12b328dc467               -build      libterm-readline-gnu-perl libterm-readline-perl-perl libpod-plainer-perl
-1445439390 2015-10-21 14:56:30 a12b328dc467               -build      The following NEW packages will be installed:
+1445440531 2015-10-21 15:15:31 fa185b5333ad     wp-example-build      debconf: falling back to frontend: Readline
+1445440532 2015-10-21 15:15:32 fa185b5333ad     wp-example-build      Setting up file (1:5.22+15-2) ...
+1445440532 2015-10-21 15:15:32 fa185b5333ad     wp-example-build      Setting up mailutils (1:2.99.98-2) ...
+
 
 ==> log/build.log <==
-1445439388 2015-10-21 14:56:28 a12b328dc467               -build      httpd install started
-1445439388 2015-10-21 14:56:28 a12b328dc467               -build      installing build environment
+1445511319 2015-10-22 10:55:19 fa185b5333ad     wp-example-build      httpd install started
+1445511319 2015-10-22 10:55:19 fa185b5333ad     wp-example-build      preconditions start apr
+1445511320 2015-10-22 10:55:20 fa185b5333ad     wp-example-build  OK  preconditions finish apr
+1445511361 2015-10-22 10:56:01 fa185b5333ad     wp-example-build      standard install start apr
 
 ==> log/service.log <==
 1445439388 2015-10-21 16:56:28 heisenberg.cnb.csic.es                           Docker container start
@@ -176,7 +185,7 @@ To document: architecture details
 Licensing
 =========
 
-ps-scripts is licensed under GPL license, version 2.3. See LICENSE for full text.
+ps-scripts is licensed under GPL license, version 3. See LICENSE for full text.
 
 
 Related projects
@@ -193,4 +202,4 @@ Feel free to contact me regarding suggestions, requests or any issue you find.
 Author
 ======
 
-Copyright 2014,2015 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com), Biocomputing Unit - CNB/CSIC.
+Copyright 2014,2015 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com). Biocomputing Unit - CNB/CSIC.
