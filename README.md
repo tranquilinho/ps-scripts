@@ -77,7 +77,7 @@ The key point is defining what you want, using the configuration files.
 
     /services/wp-example/scripts/config/mkservice_cfg -n wp-example -i apache,cron,wordpress > /services/wp-example/etc/service.cfg
 
-mkservice_cfg uses generic port numbers. You may want to review the generated service.cfg
+*mkservice_cfg* uses generic port numbers. You may want to review the generated service.cfg
 
 Now apache config:
 
