@@ -52,21 +52,23 @@ Installation
 
 Actual installation of the scripts is pretty simple: clone them from this repo as "scripts":
 
-git clone https://github.com/tranquilinho/ps-scripts.git scripts
+       git clone https://github.com/tranquilinho/ps-scripts.git scripts
 
 To keep track of all the configuration, one can use a git repository:
 
-git init
-git remote add origin ssh://git@gitserver/services/wp-example.git
+   git init
+   git remote add origin ssh://git@gitserver/services/wp-example.git
 
 In this example I will use git sparringly (since git is not the focus of the example). Feel free to apply your own revision policy.
 
+~~~~
    # create the basic layout
    mkdir -p etc/backup
    mkdir -p usr/bin usr/lib usr/src
    mkdir -p data/
    mkdir etc/apache2
    mkdir -p log/apache2
+~~~~
 
 Configuration
 -------------
@@ -156,7 +158,7 @@ Usage examples
 
 To start our example service as a container:
 
-   /services/wp-example/scripts/container start
+    /services/wp-example/scripts/container start
 
 You can ssh into your container. Following the example,
 
@@ -164,7 +166,7 @@ You can ssh into your container. Following the example,
 
 To stop the service:
 
-   /services/wp-example/scripts/container stop
+    /services/wp-example/scripts/container stop
 
 Under the hood
 ==============
