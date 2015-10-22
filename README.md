@@ -41,12 +41,14 @@ Let's deploy a WordPress-based service. We run all commands in the "server envir
 (the service will run inside a Docker container)
 
 Service root
+------------
 
 First, decide where you will deploy the service:
 
-cd /services/wp-example
+       cd /services/wp-example
 
 Installation
+------------
 
 Actual installation of the scripts is pretty simple: clone them from this repo as "scripts":
 
@@ -59,68 +61,70 @@ git remote add origin ssh://git@gitserver/services/wp-example.git
 
 In this example I will use git sparringly (since git is not the focus of the example). Feel free to apply your own revision policy.
 
-# create the basic layout
-mkdir -p etc/backup
-mkdir -p usr/bin usr/lib usr/src
-mkdir -p data/
-mkdir etc/apache2
-mkdir -p log/apache2
+   # create the basic layout
+   mkdir -p etc/backup
+   mkdir -p usr/bin usr/lib usr/src
+   mkdir -p data/
+   mkdir etc/apache2
+   mkdir -p log/apache2
 
 Configuration
+-------------
 
 The key point is defining what you want, using the configuration files.
 
-/services/wp-example/scripts/config/mkservice_cfg -n wp-example -i apache,cron,wordpress > /services/wp-example/etc/service.cfg
+    /services/wp-example/scripts/config/mkservice_cfg -n wp-example -i apache,cron,wordpress > /services/wp-example/etc/service.cfg
 
 mkservice_cfg uses generic port numbers. You may want to review the generated service.cfg
 
 Now apache config:
 
-/services/wp-example/scripts/config/apache2/mkhttpd_conf > /services/wp-example/etc/apache2/httpd.conf
-/services/wp-example/scripts/config/apache2/mkservice_conf > /services/wp-example/etc/apache2/service.conf
-cp /services/wp-example/scripts/config/apache2/envvars /services/wp-example/etc/apache2
+    /services/wp-example/scripts/config/apache2/mkhttpd_conf > /services/wp-example/etc/apache2/httpd.conf
+    /services/wp-example/scripts/config/apache2/mkservice_conf > /services/wp-example/etc/apache2/service.conf
+    cp /services/wp-example/scripts/config/apache2/envvars /services/wp-example/etc/apache2
 
 Docker configuration:
 
-/services/wp-example/scripts/config/mkdocker_cfg -n wp-example > /services/wp-example/etc/docker.cfg
-/services/wp-example/scripts/config/mkcontainer_init -n wp-example > /services/wp-example/etc/container-init
+       /services/wp-example/scripts/config/mkdocker_cfg -n wp-example > /services/wp-example/etc/docker.cfg
+       /services/wp-example/scripts/config/mkcontainer_init -n wp-example > /services/wp-example/etc/container-init
 
 Currently, you need to review docker.cfg to set which image to use. You may also want to take a look at etc/container-init.
 
 service-manager will start and stop apache and cron. There are some additional prerrequisites that can be made explicit in etc/service-prereq:
 
-/services/wp-example/scripts/config/mkservice-manager > /services/wp-example/etc/service-manager
-cat > /services/wp-example/etc/service-prereq <<"EOF"
-#!/bin/bash
-readonly service_root=/services/wp-example
+		/services/wp-example/scripts/config/mkservice-manager > /services/wp-example/etc/service-manager
+		cat > /services/wp-example/etc/service-prereq <<"EOF"
+		#!/bin/bash
+		readonly service_root=/services/wp-example
 
-. /services/wp-example/etc/service.cfg
+		. /services/wp-example/etc/service.cfg
 
-# run apache as www user, with UID 4000
-${scripts_base}/create-user 4000 www ${web_home}
-chown -R www.www ${web_home}
+		# run apache as www user, with UID 4000
+		${scripts_base}/create-user 4000 www ${web_home}
+		chown -R www.www ${web_home}
 
-# setup git for mysql backup
-${scripts_base}/build/git
-git config --global user.email "backup@wp-example"
-EOF
+		# setup git for mysql backup
+		${scripts_base}/build/git
+		git config --global user.email "backup@wp-example"
+		EOF
 
-chmod u+x /services/wp-example/etc/service-prereq /services/wp-example/etc/service-manager /services/wp-example/etc/container-init
+		chmod u+x /services/wp-example/etc/service-prereq /services/wp-example/etc/service-manager /services/wp-example/etc/container-init
 
-/services/wp-example/scripts/config/mkbackup_cfg -n wp-example -b mybackupserver:vg0:wp-example-backup-service:/backup/services/wp-example  > /services/wp-example/etc/backup/main.cfg
+		/services/wp-example/scripts/config/mkbackup_cfg -n wp-example -b mybackupserver:vg0:wp-example-backup-service:/backup/services/wp-example  > /services/wp-example/etc/backup/main.cfg
 
 Copy your ssh public key as the service manager key:
 
-cp ~/.ssh/id_rsa.pub /services/wp-example/etc/admin_key
+     cp ~/.ssh/id_rsa.pub /services/wp-example/etc/admin_key
 
 And you are done!
 
-docker ps
-CONTAINER ID        IMAGE               COMMAND                CREATED             STATUS              PORTS                                                                  NAMES
-9425ae35ff5b        debian:stable-ssh   "/services/wp-exampl   3 seconds ago       Up 2 seconds        0.0.0.0:9632->22/tcp, 0.0.0.0:9680->9680/tcp                           wp-example 
+    docker ps
+    CONTAINER ID        IMAGE               COMMAND                CREATED             STATUS              PORTS                                                                  NAMES
+    9425ae35ff5b        debian:stable-ssh   "/services/wp-exampl   3 seconds ago       Up 2 seconds        0.0.0.0:9632->22/tcp, 0.0.0.0:9680->9680/tcp                           wp-example 
 
 All the required software packages are built from source the first time the service runs. You can follow the progress in log/service.log and log/build.log:
 
+~~~~
 tail -f log/*
 ==> log/apt.log <==
 1445439390 2015-10-21 14:56:30 a12b328dc467               -build      libstdc++6-4.7-doc make-doc man-browser ed diffutils-doc perl-doc
@@ -142,7 +146,7 @@ tail -f log/*
 1445439388 2015-10-21 14:56:28 a12b328dc467               -httpd      Starting web server apache2
 1445439388 2015-10-21 14:56:28 a12b328dc467               -httpd      Installing apache2
 1445439388 2015-10-21 14:56:28 a12b328dc467                      CRIT Build environment not ready
-
+~~~~~
 
 
 Since all the scripts are bash, you can dig into the details of any step invoking them with bash -x
@@ -152,15 +156,15 @@ Usage examples
 
 To start our example service as a container:
 
-/services/wp-example/scripts/container start
+   /services/wp-example/scripts/container start
 
 You can ssh into your container. Following the example,
 
-ssh -p 9632 root@dockerserver
+    ssh -p 9632 root@dockerserver
 
 To stop the service:
 
-/services/wp-example/scripts/container stop
+   /services/wp-example/scripts/container stop
 
 Under the hood
 ==============
