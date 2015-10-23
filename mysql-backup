@@ -16,7 +16,7 @@ readonly log_facility="${service}-backup"
 
 readonly backup_dir=${data_dir}/mysql-backup
 readonly backup_file=${service}-db-backup
-readonly db_config=${etc_dir}/mysql/my.cnf
+[ -z "${mysql_auth_file}" ] && readonly mysql_auth_file=${etc_dir}/mysql.cnf
 
 log "${info} MySQL BACKUP STARTED"
 
@@ -28,7 +28,7 @@ fi
 
 [ -z "${GIT_SSH}" ] && GIT_SSH="${scripts_base}/ssh"
 
-[ -f ${db_config} ] && readonly mysql_auth="--defaults-file=${db_config}"
+[ -f ${mysql_auth_file} ] && readonly mysql_auth="--defaults-file=${mysql_auth_file}"
 
 [ ! -d ${backup_dir} ] && mkdir -p ${backup_dir}
 
