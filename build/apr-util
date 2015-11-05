@@ -8,6 +8,8 @@ readonly pkg_name=apr-util
 readonly pkg_version=1.5.4
 readonly url_base=http://apache.rediris.es/apr/
 
+install_prereq apr "mandatory"
+
 build_preconditions
 
 ./configure --prefix=${prefix}  --with-apr=${usr_prefix}/apr
