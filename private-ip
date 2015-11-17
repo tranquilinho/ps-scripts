@@ -1,5 +1,5 @@
 #!/bin/bash
 
-. /services/${service}/etc/service.cfg
+. /services/deployer/etc/service.cfg
 
 ifconfig ${private_ip_iface} ${private_ip_addr}

@@ -1,5 +1,5 @@
 #!/bin/bash
 
-. /services/${service}/etc/service.cfg
+. /services/monitoring/etc/service.cfg
 
 nagios -v ${nagios_cfg}

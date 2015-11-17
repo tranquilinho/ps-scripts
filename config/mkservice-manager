@@ -27,7 +27,6 @@ readonly log_facility="${service}"
 . ${scripts_base}/common
 
 service_start(){
-    ${etc_dir}/service-prereq
     log "${info} Starting ${service}"
 EOF
 [ ${mysql_enabled} -eq 1 ] && cat <<"EOF"
