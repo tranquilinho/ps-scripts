@@ -7,6 +7,8 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly pkg_name=php
 readonly pkg_version=5.5.13
 readonly url_base="http://es1.php.net/distributions/"
+readonly expected_hash=32d0fc26fccdb249a918c0e01ffb7b82
+readonly hasher=md5sum
 
 install_prereq zlib "mandatory"
 install_prereq pcre "mandatory"

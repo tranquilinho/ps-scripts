@@ -5,8 +5,9 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=openssl
-readonly pkg_version=1.0.1p
+readonly pkg_version=1.0.1h
 readonly url_base=http://www.openssl.org/source/
+readonly expected_hash=b2239599c8bf8f7fc48590a55205c26abe560bf8
 
 build_preconditions
 
@@ -14,4 +15,4 @@ build_preconditions
 
 standard_install
 
-# !!!! it seems to not to finish the first make... running a second time succeeds (???)
+# !!!! it seems to not to finishthe first make... running a second time succeeds (???)
