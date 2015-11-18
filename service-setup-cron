@@ -13,8 +13,10 @@ ${scripts_base}/build/cron
 # install the cron jobs needed by this service
 readonly service_cron_dir=${etc_dir}/cron
 readonly system_cron_dir=/etc/cron.d
+installed_files=0
 
 for cron_file in $(ls ${service_cron_dir}); do
+    (( installed_files ++ ))
     if [ ! -s ${system_cron_dir}/${cron_file} ]; then 
 	ln -s ${service_cron_dir}/${cron_file} ${system_cron_dir}
 	if [ $? -eq 0 ]; then
@@ -26,3 +28,5 @@ for cron_file in $(ls ${service_cron_dir}); do
 	log "${warning} ${cron_file}  already installed"
     fi
 done
+
+[ ${installed_files} -eq 0 ] && log "${critical} No cron files found..."
