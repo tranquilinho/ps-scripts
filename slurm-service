@@ -7,7 +7,8 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly log_file=${service_log}
 readonly module="slurm"
 readonly log_facility="${service}-${module}"
-readonly daemon=${usr_prefix}/slurm/sbin/slurmd
+# readonly daemon=${usr_prefix}/slurm/sbin/slurmd
+readonly daemon_base=${usr_prefix}/slurm/sbin
 readonly pid_file=${data_dir}/slurm/slurmd.pid
 
 . ${scripts_base}/common
@@ -21,13 +22,17 @@ slurm_start(){
 	${scripts_base}/build/slurm
     fi
     
-    # !!! The PID is managed by the daemon itself??
-    daemon_start ${daemon} "-f ${etc_dir}/slurm.conf"
+    # !!!! slurmctld PID is managed by the daemon itself,
+    #     slurmd seems not to create it...
+    daemon_start ${daemon_base}/slurmctld
+    # !!!! slurmd is running as root?
+    daemon_start ${daemon_base}/slurmd "-f ${etc_dir}/slurm.conf"
 }
 
 slurm_stop(){
-    # !!!! kill also the nobody child processes...
-    daemon_stop ${pid_file}
+    # !!!! kill both daemons properly---
+    echo "Doing nothing..."
+    # daemon_stop ${pid_file}
 }
 
 case "$1" in

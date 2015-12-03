@@ -13,7 +13,7 @@ build_preconditions
 
 install_prereq munge "mandatory"
 
-./configure --prefix=${prefix} --with-munge=${usr_prefix}/munge | logalize $(configure_log)
+./configure --prefix=${prefix} --sysconfdir=${etc_dir} --with-munge=${usr_prefix}/munge | logalize $(configure_log)
 
 standard_install
 
