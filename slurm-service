@@ -21,7 +21,8 @@ slurm_start(){
 	log "${info} Installing slurm"
 	${scripts_base}/build/slurm
     fi
-    
+
+    daemon_start ${usr_prefix}/munge/sbin/munged
     # !!!! slurmctld PID is managed by the daemon itself,
     #     slurmd seems not to create it...
     daemon_start ${daemon_base}/slurmctld
