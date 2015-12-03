@@ -1,0 +1,48 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="slurm"
+readonly log_facility="${service}-${module}"
+readonly daemon=${usr_prefix}/slurm/sbin/slurmd
+readonly pid_file=${run_dir}/${module}.pid
+
+. ${scripts_base}/common
+
+
+slurm_start(){
+    log "${info} Starting ${module}"
+
+    if [ ! -f ${daemon} ]; then
+	log "${info} Installing slurm"
+	${scripts_base}/build/slurm
+    fi
+
+    # !!!! the pid is wrong?
+    daemon_start ${daemon} "-f ${etc_dir}/slurm.conf" ${pid_file}
+}
+
+slurm_stop(){
+    # !!!! kill also the nobody child processes...
+    daemon_stop ${pid_file}
+}
+
+case "$1" in
+    "start")
+	slurm_start
+	;;
+    "stop")
+	slurm_stop
+	;;
+    "restart")
+	slurm_stop
+	slurm_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
