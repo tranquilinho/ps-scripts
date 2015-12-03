@@ -11,10 +11,9 @@ readonly pkg=${pkg_name}-${pkg_version}.tar.bz2
 
 build_preconditions
 
-# install_prereq zlib "mandatory"
-# install Munge? http://dun.github.io/munge/
+install_prereq munge "mandatory"
 
-./configure --prefix=${prefix} | logalize $(configure_log)
+./configure --prefix=${prefix} --with-munge=${usr_prefix}/munge | logalize $(configure_log)
 
 standard_install
 

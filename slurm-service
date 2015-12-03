@@ -8,7 +8,7 @@ readonly log_file=${service_log}
 readonly module="slurm"
 readonly log_facility="${service}-${module}"
 readonly daemon=${usr_prefix}/slurm/sbin/slurmd
-readonly pid_file=${run_dir}/${module}.pid
+readonly pid_file=${data_dir}/slurm/slurmd.pid
 
 . ${scripts_base}/common
 
@@ -20,9 +20,9 @@ slurm_start(){
 	log "${info} Installing slurm"
 	${scripts_base}/build/slurm
     fi
-
-    # !!!! the pid is wrong?
-    daemon_start ${daemon} "-f ${etc_dir}/slurm.conf" ${pid_file}
+    
+    # !!! The PID is managed by the daemon itself??
+    daemon_start ${daemon} "-f ${etc_dir}/slurm.conf"
 }
 
 slurm_stop(){

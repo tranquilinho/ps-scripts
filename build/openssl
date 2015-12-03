@@ -10,6 +10,7 @@ readonly url_base=http://www.openssl.org/source/
 
 build_preconditions
 
+# !!!! skip doc install (man pages)
 ./config --prefix=${prefix} --shared | logalize $(configure_log)
 
 standard_install

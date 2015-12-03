@@ -15,7 +15,7 @@ cd munge-munge-${pkg_version}
 
 install_prereq openssl "mandatory"
 
-./configure --prefix=${prefix} --with-openssl-prefix=${usr_dir}/openssl | logalize $(configure_log)
+./configure --prefix=${prefix} --with-openssl-prefix=${usr_prefix}/openssl | logalize $(configure_log)
 
 standard_install
 
