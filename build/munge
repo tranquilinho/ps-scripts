@@ -1,0 +1,21 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=munge
+readonly pkg_version=0.5.11
+readonly url_base=https://github.com/dun/munge/archive/
+
+build_preconditions
+
+# the dirname after extraction is not the standard...
+cd munge-munge-${pkg_version}
+
+install_prereq openssl "mandatory"
+
+./configure --prefix=${prefix} --with-openssl-prefix=${usr_dir}/openssl | logalize $(configure_log)
+
+standard_install
+
