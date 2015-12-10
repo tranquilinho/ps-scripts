@@ -1,0 +1,39 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+. ${etc_dir}/docker.cfg
+
+print_usage(){
+    echo "Syntax:"
+    echo "   $0 -f nfs_from -t to_directory"
+    echo "Example:"
+    echo "   $0 -f server3:/nas/jdoe/work /services/svc1/data/jdoe"
+    exit 2
+}
+
+
+
+while getopts "f:t:" options; do
+    case "${options}" in
+        f)
+	    readonly from="${OPTARG}"
+	    ;;
+        t)
+	    readonly to="${OPTARG}"
+	    ;;
+    esac
+done
+
+if [ -z "${from}" -o -z "${to}" ]; then
+	print_usage
+fi
+
+[ ! -d ${to} ] && log "${critical} Destination directory does not exist..." && exit 3
+
+log "${info} Mounting ${from} in ${to}"
+readonly target=$(docker inspect --format "{{.State.Pid}}" ${container})
+nsenter --target ${target} --mount --uts --ipc --net --pid -- mount -t nfs ${from} ${to}
+log "${info} Mount status: $?"
