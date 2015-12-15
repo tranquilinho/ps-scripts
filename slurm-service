@@ -32,7 +32,9 @@ slurm_start(){
 
 slurm_stop(){
     # !!!! kill both daemons properly---
-    echo "Doing nothing..."
+    ${usr_prefix}/slurm/bin/scontrol shutdown
+    #pkill slurm
+    pkill munged
     # daemon_stop ${pid_file}
 }
 
