@@ -1,0 +1,20 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=openssh
+readonly pkg_version=7.1p1
+readonly url_base=http://mirror.switch.ch/ftp/pub/OpenBSD/OpenSSH/portable/
+
+build_preconditions
+
+install_prereq openssl "mandatory"
+install_prereq zlib "mandatory"
+
+./configure --prefix=${prefix} --with-zlib=${usr_prefix}/zlib --with-ssl-dir=${usr_prefix}/openssl --without-openssl-header-check | logalize $(configure_log)
+
+standard_install
+
+

@@ -7,20 +7,25 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly log_file=${service_log}
 readonly module="sshd"
 readonly log_facility="${service}-${module}"
-readonly daemon=/usr/sbin/sshd
+# if service has its own sshd, use it
+if [ -x ${usr_prefix}/openssh/sbin/sshd ]; then
+    readonly daemon=${usr_prefix}/openssh/sbin/sshd
+else
+    readonly daemon=/usr/sbin/sshd
+fi
 readonly pidfile=${run_dir}/${module}.pid
 . ${scripts_base}/common
 
 
 sshd_start(){
     log "${info} Starting ${module}"
-    ${daemon} -D
+    ${daemon} -p ${ssh_port} -f ${etc_dir}/ssh/sshd_config
     status=$? ; pid=$!
     if [ ${status} -eq 0 ]; then
 	echo ${pid} > ${pidfile}
-	log "${success} ${module} started"
+	log "${success} ${daemon} started"
     else
-	log "${critical} Problem starting ${module}"
+	log "${critical} Problem starting ${daemon}"
     fi
 }
 
