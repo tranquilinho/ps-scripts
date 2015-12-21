@@ -8,11 +8,12 @@ readonly pkg_name=chimera
 readonly pkg_version=alpha-linux_x86_64_osmesa
 readonly pkg=${pkg_name}-${pkg_version}.bin
 readonly url_base=http://scipion.cnb.csic.es/downloads/scipion/software/em/
-readonly expected_hash=c13a36c4271a70a023de8145f506684c20813992
+
 
 cd ${usr_prefix}/src
+common_build_vars
 download_pkg
-verify_pkg
+verify_pkg || echo "Package corrupted" || exit 3
 chmod a+x ${pkg}
 
 ./${pkg} <<EOF
