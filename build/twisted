@@ -10,14 +10,21 @@ readonly pkg_version=15.4.0
 readonly pkg=Twisted-${pkg_version}.tar.bz2
 readonly url_base=https://pypi.python.org/packages/source/T/Twisted/
 
+[ -z "${python}" ] && readonly python=$(which python)
+
 if ${python} -c "import twisted" ; then
     log "${info} ${pkg_name} already available in ${python}"
 else
     install_prereq setuptools "mandatory"
+    install_prereq python "mandatory"
 
     build_preconditions
-    
-    python setup.py install --prefix=${usr_prefix}/${pkg_name}-${pkg_version}
+
+    readonly prefix=${usr_prefix}/${pkg_name}-${pkg_version}
+    # the install path should appear in PYTHONPATH
+    export PYTHONPATH=${PYTHONPATH}:${prefix}/lib/python2.7/site-packages
+    # Compilation depends on Python.h -> python headers (installed by build/python)
+    python setup.py install --prefix=${prefix}
     cd ${usr_prefix}
     ln -s ${pkg_name}-${pkg_version} ${pkg_name}
 fi

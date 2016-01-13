@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# by now, use system cron
+# install Python (devel version, with headers) and pip
 
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
 debian_install python-dev
+
 debian_install python-pip
 
 exit $?
