@@ -11,7 +11,8 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly pkg_name=buildbot-slave
 readonly pkg_version=0.8.9
 readonly url_base=https://pypi.python.org/packages/source/b/buildbot-slave
-readonly expected_hash=3c56a5a061116060705ac35f96e514d8d984ed88
+
+[ -z "${python}" ] && readonly python=$(which python)
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
 
@@ -19,7 +20,12 @@ if ${python} -c "import buildslave" ; then
     log "${info} ${pkg_name} already available in ${python}"
 else
     build_preconditions
-    python setup.py install --prefix=${usr_prefix}/buildbot-slave-${pkg_version}
+
+    readonly prefix=${usr_prefix}/buildbot-slave-${pkg_version}
+    # the install path should appear in PYTHONPATH
+    export PYTHONPATH=${PYTHONPATH}:${prefix}/lib/python2.7/site-packages
+
+    python setup.py install --prefix=${prefix}
     cd ${usr_prefix}
     ln -s buildbot-slave-${pkg_version} buildbot-slave
     if [ ! -x ${usr_prefix}/buildbot/bin/slave ]; then
