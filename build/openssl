@@ -5,7 +5,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=openssl
-readonly pkg_version=1.0.1p
+readonly pkg_version=1.0.2f
 readonly url_base=http://www.openssl.org/source/
 
 build_preconditions
