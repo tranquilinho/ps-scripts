@@ -19,6 +19,14 @@ if [ ! -f ${private_key} ];then
         log "${critical} Service backup private key ${private_key} missing"
         exit 3
 fi
+if [ ! -f ${config_file} ];then
+        log "${critical} Service backup config ${config_file} missing"
+        exit 3
+fi
+if [ -f ${exclude_file} ];then
+    readonly exclude_option="--exclude-from=${exclude_file}"
+fi
+
 
 chmod 600 ${private_key}
 
@@ -45,7 +53,7 @@ for d in ${data_dirs}; do
     snapshot_dir="/nas/snapshots/${service}/$(date +%Y%m%d)"
     log "${info} Backing up ${dir} to ${backup_dest}"
 
-    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" --delete --backup --exclude-from=${exclude_file} --backup-dir=${snapshot_dir} ${dir} ${backup_dest} | logalize ${log_file}
+    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" ${exclude_option} --delete --backup --backup-dir=${snapshot_dir} ${dir} ${backup_dest} | logalize ${log_file}
     # touch ${dir}/.last_vmsbackup
 done
 
