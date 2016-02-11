@@ -6,14 +6,13 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 
 readonly pkg_name=twiki
-readonly pkg_version=6.0.1
-readonly url_base=http://garr.dl.sourceforge.net/project/twiki/TWiki%20for%20all%20Platforms/TWiki-${pkg_version}
+readonly pkg_version=6.0.2
+readonly url_base=http://heanet.dl.sourceforge.net/project/twiki/TWiki%20for%20all%20Platforms/TWiki-${pkg_version}
 readonly pkg=TWiki-${pkg_version}.tgz
-readonly expected_hash=ad52c6169078380d6f3e0e1973c7cd77
-readonly hasher=md5sum
 
 install_prereq perl "mandatory"
 install_prereq apache "mandatory"
+debian_install rcs
 
 build_preconditions
 

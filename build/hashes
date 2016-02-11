@@ -25,3 +25,4 @@ expected_hashes+=([chimera,alpha-linux_x86_64_osmesa]=c13a36c4271a70a023de8145f5
 expected_hashes+=([openssh,7.1p1]=ed22af19f962262c493fcc6ed8c8826b2761d9b6)
 expected_hashes+=([Twisted,15.4.0]=eb3607f58ac3d046fa38f513e15a68544f038c58)
 expected_hashes+=([buildbot-slave,0.8.9]=3c56a5a061116060705ac35f96e514d8d984ed88)
+expected_hashes+=([TWiki,6.0.2]=77e6c78761c6b63fb0210f3b52e46a88911b3b9d)
