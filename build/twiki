@@ -11,6 +11,8 @@ readonly url_base=http://heanet.dl.sourceforge.net/project/twiki/TWiki%20for%20a
 readonly pkg=TWiki-${pkg_version}.tgz
 
 install_prereq perl "mandatory"
+# perl dependencies: HTML::Entities 
+debian_install libhtml-parser-perl
 install_prereq apache "mandatory"
 debian_install rcs
 
