@@ -16,17 +16,20 @@ readonly pidfile=${run_dir}/${module}.pid
 
 supervisor_start(){
     log "${info} Starting ${module}"
-    id supervisor > /dev/null
+
+    [ -z "${user}" ] && readonly user=supervisor
+    
+    id ${user} > /dev/null
     if [ $? -ne 0 ]; then
-	log "${critical} Missing user 'supervisor'"
+	log "${critical} Missing user '${user}'"
 	exit 2
     fi
 
     [ ! -f ${log_dir}/supervisord.log ] && touch ${log_dir}/supervisord.log
     [ ! -f ${pidfile} ] && touch ${pidfile}
 
-    chown supervisor ${pidfile} ${log_dir}/supervisord.log
-    
+    chown ${user} ${pidfile} ${log_dir}/supervisord.log
+
     ${daemon} -c ${etc_dir}/supervisord.conf
     status=$? ; pid=$!
     if [ ${status} -eq 0 ]; then
