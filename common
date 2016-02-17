@@ -82,6 +82,7 @@ extract_pkg(){
     if echo ${pkg_file_info} | grep "tar\|tgz" > /dev/null 2>&1; then
 	echo ${pkg_file_info} | grep bzip2 > /dev/null 2>&1 && local decompress_option="j"
 	echo ${pkg_file_info} | grep gzip > /dev/null 2>&1 && local decompress_option="x"
+	echo ${pkg_file_info} | grep XZ > /dev/null 2>&1 && local decompress_option="J"
 	tar xf${decompress_option} ${pkg}
 	if [ $? -ne 0 ]; then
 	    log "${critical} Could not extract package"
@@ -138,7 +139,7 @@ standard_install(){
     log "${info} standard install start (${ps_paralel}) ${pkg_name}"
     
     # make clean &&  
-    make $1 ${ps_paralel:--j2} 2>&1 | logalize $(make_log)
+    make $1 ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
 
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
 	log "${critical} Problem building ${pkg_name}"
