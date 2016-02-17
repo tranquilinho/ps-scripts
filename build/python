@@ -13,6 +13,11 @@ readonly url_base=https://www.python.org/ftp/python/2.7.11/
 
 build_preconditions
 
+if [ -d ${usr_prefix}/${pkg_name}-${pkg_version} ]; then
+    log "${warning} Python ${pkg_version} already installed..."
+    exit 0
+fi
+
 install_prereq zlib "mandatory"
 install_prereq openssl "mandatory"
 
