@@ -6,9 +6,58 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
-debian_install python-dev
+readonly pkg_name=Python
+readonly pkg_version=2.7.11
+pkg=${pkg_name}-${pkg_version}.tar.xz
+readonly url_base=https://www.python.org/ftp/python/2.7.11/
 
-debian_install python-pip
+build_preconditions
 
-exit $?
+install_prereq zlib "mandatory"
+install_prereq openssl "mandatory"
+
+# patch to use service's zlib & openssl
+readonly setup_file="${usr_prefix}/src/${pkg_dir}/Modules/Setup.dist"
+
+patch ${setup_file} <<EOF
+219c219
+< #_ssl _ssl.c \\
+---
+> _ssl _ssl.c \\
+EOF
+
+exit 1
+
+
+
+
+exit 0
+
+if [ $? -eq 0 ]; then
+    log "${ok} Python patched successfully"
+else
+    log "${critical} Problem patching python: ${setup_file}"
+    exit 2
+fi
+    
+
+# --enable-shared ? 
+# --enable-unicode=ucs4 ?
+# other: --with-system-expat --with-system-ffi  
+
+./configure --prefix=${prefix} 
+
+# python modules:
+# _curses            _curses_panel      _dbm
+# _gdbm              _sqlite3           _ssl
+# _tkinter           bz2                readline
+#  zlib 
+
+# standard_install
+
+# debian_install python-dev
+
+#debian_install python-pip
+
+# exit $?
 
