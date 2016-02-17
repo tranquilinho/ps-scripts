@@ -12,7 +12,7 @@ readonly url_base=https://www.djangoproject.com/download/1.8.4/tarball/
 
 install_prereq python "mandatory"
 
-[ -z "${python}" ] && readonly python=${python_bin}/python
+[ -z "${python}" ] && readonly python=${usr_prefix}/Python/bin/python
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log}
 

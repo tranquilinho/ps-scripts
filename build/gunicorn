@@ -17,7 +17,7 @@ readonly pkg_name=gunicorn
 readonly pkg_version=19.3.0
 readonly url_base=https://pypi.python.org/packages/source/g/gunicorn
 
-[ -z "${python}" ] && readonly python=${python_bin}/python
+[ -z "${python}" ] && readonly python=${usr_prefix}/Python/bin/python
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log}
 

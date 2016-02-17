@@ -12,7 +12,7 @@ readonly pkg_name=buildbot-slave
 readonly pkg_version=0.8.9
 readonly url_base=https://pypi.python.org/packages/source/b/buildbot-slave
 
-[ -z "${python}" ] && readonly python=${python_bin}/python
+[ -z "${python}" ] && readonly python=${usr_prefix}/Python/bin/python
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
 
