@@ -8,20 +8,20 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly pkg_name=buildbot
 readonly pkg_version=
 readonly url_base=
-# readonly expected_hash=eaa72bff5341c05169b76ce3dcbb8140
-[ -z "${python}" ] && readonly python=$(which python)
+
+readonly python_bin=${usr_prefix}/Python/bin
+[ -z "${python}" ] && readonly python=${python_bin}/python
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
 
 if ${python} -c "import ${pkg_name}" ; then
     log "${info} ${pkg_name} already available in ${python}"
 else
-    # by now, use pip. It seems it depends on build-essentials, so it make take a while to install...
-    debian_install python-pip
-    debian_install python-dev
-    pip install buildbot | logalize ${build_log}
+    install_prereq pip "mandatory"
+    readonly pip=${python_bin}/pip
+    ${pip} install buildbot | logalize ${build_log}
     # required for manhole
-    pip install pycrypto pyasn1 | logalize ${build_log}
+    ${pip} install pycrypto pyasn1 | logalize ${build_log}
 
     if [ ! -x ${usr_prefix}/buildbot/bin/master ]; then
        # wrapper for calling buildbot (master)

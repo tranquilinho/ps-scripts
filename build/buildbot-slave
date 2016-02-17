@@ -12,7 +12,7 @@ readonly pkg_name=buildbot-slave
 readonly pkg_version=0.8.9
 readonly url_base=https://pypi.python.org/packages/source/b/buildbot-slave
 
-[ -z "${python}" ] && readonly python=$(which python)
+[ -z "${python}" ] && readonly python=${python_bin}/python
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
 
@@ -25,14 +25,14 @@ else
     # the install path should appear in PYTHONPATH
     export PYTHONPATH=${PYTHONPATH}:${prefix}/lib/python2.7/site-packages
 
-    python setup.py install --prefix=${prefix}
+    ${python} setup.py install --prefix=${prefix}
     cd ${usr_prefix}
     ln -s buildbot-slave-${pkg_version} buildbot-slave
     if [ ! -x ${usr_prefix}/buildbot/bin/slave ]; then
        # wrapper for calling buildbot (slave)
 	mkdir -p ${usr_prefix}/buildbot/bin
 	cat > ${usr_prefix}/buildbot/bin/slave <<EOF
-#!/usr/bin/python
+#!${python}
 
 from buildslave.scripts import runner
 runner.run()
@@ -42,7 +42,6 @@ EOF
 fi
 
 log "${success} standard install finish ${pkg_name}"
-
 
 # Create a buildslave
 #cd ${HOME}/buildbot

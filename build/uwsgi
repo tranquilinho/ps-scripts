@@ -11,6 +11,8 @@ readonly expected_hash=5e0fc187ea10366153a1f800c0e7e80940188837
 
 build_preconditions
 
+[ -z "${python}" ] && readonly python=${python_bin}/python
+
 # uwsgi has no configure script...
 
 ${python} uwsgiconfig.py --build
