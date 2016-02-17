@@ -341,6 +341,7 @@ daemon_stop(){
 	    log "${critical} Daemon with pid ${pid} not found"
 	else
 	    local waited=0
+	    kill -TERM ${pid}
 	    while [ -n "$(ps -o pid= -o comm= -p ${pid} )" ]; do
 		echo -n "."
 		waited=$(( waited + 1 ))
