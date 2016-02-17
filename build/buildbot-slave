@@ -25,7 +25,7 @@ else
     # the install path should appear in PYTHONPATH
     export PYTHONPATH=${PYTHONPATH}:${prefix}/lib/python2.7/site-packages
 
-    ${python} setup.py install --prefix=${prefix}
+    ${python} setup.py install --prefix=${prefix} | logalize ${build_log} > /dev/null
     cd ${usr_prefix}
     ln -s buildbot-slave-${pkg_version} buildbot-slave
     if [ ! -x ${usr_prefix}/buildbot/bin/slave ]; then
