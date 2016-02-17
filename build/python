@@ -19,19 +19,23 @@ install_prereq openssl "mandatory"
 # patch to use service's zlib & openssl
 readonly setup_file="${usr_prefix}/src/${pkg_dir}/Modules/Setup.dist"
 
+# important: keep every single char (like tabs) or the patch will fail...
 patch ${setup_file} <<EOF
-219c219
+218,221c218,221
+< #SSL=/usr/local/ssl
 < #_ssl _ssl.c \\
+< #	-DUSE_SSL -I\$(SSL)/include -I\$(SSL)/include/openssl \\
+< #	-L\$(SSL)/lib -lssl -lcrypto
 ---
+> SSL=${usr_prefix}/openssl
 > _ssl _ssl.c \\
+> 	-DUSE_SSL -I\$(SSL)/include -I\$(SSL)/include/openssl \\
+> 	-L\$(SSL)/lib -lssl -lcrypto
+467c467
+< #zlib zlibmodule.c -I\$(prefix)/include -L\$(exec_prefix)/lib -lz
+---
+> zlib zlibmodule.c -I${usr_prefix}/zlib/include -L${usr_prefix}/zlib/lib -lz
 EOF
-
-exit 1
-
-
-
-
-exit 0
 
 if [ $? -eq 0 ]; then
     log "${ok} Python patched successfully"
@@ -40,22 +44,19 @@ else
     exit 2
 fi
     
-
 # --enable-shared ? 
 # --enable-unicode=ucs4 ?
 # other: --with-system-expat --with-system-ffi  
 
 ./configure --prefix=${prefix} 
 
-# python modules:
+# available python modules:
 # _curses            _curses_panel      _dbm
-# _gdbm              _sqlite3           _ssl
-# _tkinter           bz2                readline
-#  zlib 
+# _gdbm              _sqlite3           * _ssl
+# _tkinter            bz2                readline
+#  * zlib 
 
-# standard_install
-
-# debian_install python-dev
+standard_install
 
 #debian_install python-pip
 

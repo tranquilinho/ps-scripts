@@ -15,9 +15,9 @@ readonly url_base=https://pypi.python.org/packages/source/T/Twisted/
 if ${python} -c "import twisted" ; then
     log "${info} ${pkg_name} already available in ${python}"
 else
-    install_prereq setuptools "mandatory"
     install_prereq python "mandatory"
-
+    install_prereq setuptools "mandatory"
+    
     build_preconditions
 
     readonly prefix=${usr_prefix}/${pkg_name}-${pkg_version}
