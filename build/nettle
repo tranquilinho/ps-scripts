@@ -13,6 +13,9 @@ build_preconditions
 
 debian_install m4
 
+export CPPFLAGS=-I${usr_prefix}/gmp/include
+export LDFLAGS=-L${usr_prefix}/gmp/lib
+
 ./configure --prefix=${prefix}  | logalize $(configure_log)
 
 standard_install
