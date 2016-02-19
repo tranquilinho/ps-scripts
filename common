@@ -97,7 +97,8 @@ extract_pkg(){
 common_build_vars(){
     [ -z "${pkg_name}" -o -z "${pkg_version}" ] && echo Package name undefined && exit 4
     [ -z "${pkg_dir}" ] && readonly pkg_dir=${pkg_name}-${pkg_version}
-    [ -z "${pkg}" ] && readonly pkg=${pkg_dir}.tar.gz
+    [ -z "${pkg_ext}" ] && readonly pkg_ext=tar.gz
+    [ -z "${pkg}" ] && readonly pkg=${pkg_dir}.${pkg_ext}
     [ -z "${prefix}" ] && readonly prefix=${usr_prefix}/${pkg_dir}
     [ -z "${hasher}" ] && readonly hasher=sha1sum
 }
@@ -145,10 +146,11 @@ standard_install(){
 	log "${critical} Problem building ${pkg_name}"
 	exit 8
     fi
+
     if [ "a$2" != "anoinstall" ]; then
 	make install ${ps_paralel} 2>&1 | logalize $(make_log)
 	if [ ${PIPESTATUS[0]} -ne 0 ]; then
-	    log "${critical} Problem building ${pkg_name}"
+	    log "${critical} Problem installing ${pkg_name}"
 	    exit 8
 	fi
     fi
