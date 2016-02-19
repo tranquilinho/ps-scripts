@@ -1,0 +1,17 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=gmp
+readonly pkg_version=6.1.0
+readonly pkg_ext=tar.xz
+readonly url_base=https://gmplib.org/download/gmp/
+
+build_preconditions
+
+./configure --prefix=${prefix} --enable-cxx   | logalize $(configure_log)
+
+standard_install
+
