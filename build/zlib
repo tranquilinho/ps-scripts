@@ -7,7 +7,6 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly pkg_name=zlib
 readonly pkg_version=1.2.8
 readonly url_base=http://zlib.net/
-readonly expected_hash=a4d316c404ff54ca545ea71a27af7dbc29817088
 
 build_preconditions
 
