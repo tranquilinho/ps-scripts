@@ -17,6 +17,7 @@ install_prereq zlib "mandatory"
 export CPPFLAGS=-I${usr_prefix}/zlib/include
 export LDFLAGS=-L${usr_prefix}/zlib/lib
 # 2) Compilation uses CPPFLAGS, but in the end libs are linked against system's libz...
+#    One option would be to patch Makefile and set ZLIB_INCLUDE and LIBZLIB
 ./config --prefix=${prefix} shared zlib-dynamic | logalize $(configure_log)
 
 standard_install

@@ -166,6 +166,14 @@ standard_install(){
 	rm ${usr_prefix}/${pkg_name}
 	ln -s ${prefix} ${usr_prefix}/${pkg_name}
     fi
+
+    local have_pc_files=$(echo ${usr_prefix}/${pkg_name}/lib/pkgconfig/*.pc)
+    if [ -n "${have_pc_files}"  ]; then
+       # collect pkg-config files into service pkg-config dir
+	[ ! -d ${usr_prefix}/pkg-config ] && mkdir -p ${usr_prefix}/pkg-config
+	ln -s ${usr_prefix}/${pkg_name}/lib/pkgconfig/*.pc ${usr_prefix}/pkg-config/
+    fi
+
     log "${success} standard install finish ${pkg_name}"
 }
 
