@@ -18,10 +18,14 @@ if [ -d ${usr_prefix}/${pkg_name}-${pkg_version} ]; then
     exit 0
 fi
 
+# to check details on modules installation, read setup.py
+
 install_prereq zlib "mandatory"
 install_prereq openssl "mandatory"
+install_prereq bzip2 "mandatory"
 
 # patch to use service's zlib & openssl
+# !!!! maybe it's possible to install these 2 modules via setup.py (like bz2, see below)?
 readonly setup_file="${usr_prefix}/src/${pkg_dir}/Modules/Setup.dist"
 
 # important: keep every single char (like tabs) or the patch will fail...
@@ -49,6 +53,8 @@ else
     exit 2
 fi
     
+# bz2 module is required to install things with pip (since 
+# most of its packages are tar.bz2...)
 # --enable-shared ? 
 # --enable-unicode=ucs4 ?
 # other: --with-system-expat --with-system-ffi  
@@ -63,7 +69,10 @@ fi
 
 standard_install
 
-#debian_install python-pip
+readonly python=${usr_prefix}/Python/bin/python
+
+${python} setup.py build_ext -I ${usr_prefix}/bzip2/include -L ${usr_prefix}/bzip2/lib/
+${python} setup.py install
 
 # exit $?
 
