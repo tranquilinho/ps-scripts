@@ -4,6 +4,8 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
+# if the installation of some module with pip fails, use --verbose
+
 readonly pkg_name=pip
 readonly pkg_version=8.0.2
 readonly url_base=https://pypi.python.org/packages/source/p/pip

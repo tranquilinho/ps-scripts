@@ -12,7 +12,9 @@ build_preconditions
 
 # no ./configure
 
+make -f Makefile-libbz2_so
 make install PREFIX=${prefix}
+cp libbz2.so.${pkg_version} ${prefix}/lib
 
 ln -s ${prefix} ${usr_prefix}/${pkg_name}
 
