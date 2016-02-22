@@ -30,7 +30,7 @@ else
        # wrapper for calling buildbot (master)
 	mkdir -p ${usr_prefix}/buildbot/bin
 	cat > ${usr_prefix}/buildbot/bin/master <<EOF
-#!/usr/bin/python
+#!${python}
 
 from buildbot.scripts import runner
 runner.run()
