@@ -19,9 +19,12 @@ if ${python} -c "import ${pkg_name}" ; then
 else
     install_prereq pip "mandatory"
     readonly pip=${python_bin}/pip
-    ${pip} install buildbot | logalize ${build_log}
-    # required for manhole
+    # Buildbot dependencies
+    # pycrypto: required for manhole
     ${pip} install pycrypto pyasn1 | logalize ${build_log}
+    ${pip} install twisted | logalize ${build_log}
+
+    ${pip} install buildbot | logalize ${build_log}
 
     if [ ! -x ${usr_prefix}/buildbot/bin/master ]; then
        # wrapper for calling buildbot (master)
