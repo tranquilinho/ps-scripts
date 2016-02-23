@@ -10,7 +10,7 @@ print_usage(){
     echo "Syntax:"
     echo "   $0 -f nfs_from -t to_directory"
     echo "Example:"
-    echo "   $0 -f server3:/nas/jdoe/work /services/svc1/data/jdoe"
+    echo "   $0 -f server3:/nas/jdoe/work -t /services/svc1/data/jdoe"
     exit 2
 }
 
