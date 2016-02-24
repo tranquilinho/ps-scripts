@@ -13,8 +13,13 @@ readonly url_base=https://www.python.org/ftp/python/2.7.11/
 
 build_preconditions
 
-if [ -d ${usr_prefix}/${pkg_name}-${pkg_version} ]; then
-    log "${warning} Python ${pkg_version} already installed..."
+readonly python_bin=${usr_prefix}/Python/bin
+[ -z "${python}" ] && readonly python=${python_bin}/python
+
+readonly available_python=$(${python} -V 2>&1 )
+
+if [[ "${available_python}" == Python* ]]; then
+    log "${warning} ${available_python} (${python}) already installed..."
     exit 0
 fi
 
