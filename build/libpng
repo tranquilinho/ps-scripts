@@ -1,0 +1,17 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=libpng
+readonly pkg_version=1.6.21
+readonly url_base=ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/
+
+build_preconditions
+
+./configure --prefix=${prefix} 
+
+standard_install
+
+
