@@ -105,6 +105,7 @@ EOF
 user_wants glassfish && cat <<"EOF"
 readonly glassfish_enabled=1
 readonly gfadmin_port=8658
+readonly gfhttp_port=8650
 readonly gfanswers_file=${etc_dir}/glassfish.cfg
 readonly gfadmin_password_file=${etc_dir}/gfadmin.password
 readonly gfdeployer_password_file=${etc_dir}/gfdeployer.password

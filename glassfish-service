@@ -16,10 +16,13 @@ glassfish_start(){
 
     # jdk should have been installed with glassfish...
 
+    # if [ -z "${gfadmin_port}" -o -z "${gfdeployer_password_file} ]
+
     if [ ! -f ${daemon} -o ! -d ${usr_prefix}/glassfish/glassfish/domains/domain1 ]; then
 	log "${info} Installing Glassfish"
 	${scripts_base}/build/glassfish
-	${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfdeployer_password_file} deploy ${data_dir}/war/stable/3dembenchmark.war | logalize ${build_log}	
+	# log "${info} Deploying war"
+	# ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfdeployer_password_file} deploy ${data_dir}/war/stable/3dembenchmark.war | logalize ${build_log}	
     else
 	log "${info} Starting domain1"
 	${daemon} start-domain domain1
