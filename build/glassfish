@@ -42,13 +42,10 @@ done
 
 readonly pkg_name=glassfish
 readonly pkg=glassfish-${pkg_version}-unix.sh
+readonly url_base=http://download.java.net/glassfish/${pkg_version}/release/
 if [ ${pkg_version} == "4.0" ]; then
-    readonly url_base=http://download.java.net/glassfish/4.0/release/
-    readonly expected_hash=c63d086245efad1f479779eee2606b7c341a4e68
     readonly glassfish_dir=glassfish4
 elif [ ${pkg_version} == "3.1.2.2" ]; then 
-    readonly url_base=http://download.java.net/glassfish/3.1.2.2/release/
-    readonly expected_hash=44f5cf8839fc754fb1b22252c792b8e5633ac8ec
     readonly glassfish_dir=glassfish3
 else
     echo "Unknown version"
