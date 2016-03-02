@@ -17,10 +17,8 @@ debian_install libjpeg-turbo8-dev
 debian_install libcairo2-dev
 debian_install libossp-uuid-dev
 debian_install libvncserver-dev
-# !!!! tomcat6 or newer...
+install_prereq glassfish "mandatory"
 # !!!! libguac
-
-readonly setup_file="${usr_prefix}/src/${pkg_dir}/Modules/Setup.dist"
 
 # it seems configure only uses pkg-config to detect pango...
 CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d 
