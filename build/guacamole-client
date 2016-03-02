@@ -1,0 +1,22 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=guacamole-client
+readonly pkg_version=0.9.9
+readonly url_base=http://downloads.sourceforge.net/project/guacamole/current/source/
+
+build_preconditions
+
+# Guacamole client
+install_prereq maven "mandatory"
+
+# create the .war file
+${usr_prefix}/maven/bin/mvn package
+# install it in glassfish
+cp ./guacamole/target/guacamole-0.9.9.war ${usr_prefix}/glassfish/glassfish/domains/domain1/autodeploy
+
+exit $?
+
