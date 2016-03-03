@@ -21,9 +21,11 @@ install_prereq glassfish "mandatory"
 # !!!! libguac
 
 # it seems configure only uses pkg-config to detect pango...
-CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d 
+CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole
 
 standard_install
+
+echo "Add GUACAMOLE_HOME=${etc_dir}/guacamole to service.cfg"
 
 exit $?
 
