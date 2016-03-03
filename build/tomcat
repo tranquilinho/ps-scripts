@@ -1,0 +1,30 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=apache-tomcat
+readonly pkg_version=6.0.45
+readonly url_base=http://ftp.cixug.es/apache/tomcat/tomcat-6/v${pkg_version}/bin/
+
+build_preconditions
+
+# Guacamole client
+# install_prereq maven "mandatory"
+
+# just link to source
+ln -s ${usr_prefix}/src/${pkg_name}-${pkg_version} ${prefix}
+ln -s ${usr_prefix}/${pkg_name}-${pkg_version} ${usr_prefix}/${pkg_name}
+# use service config
+mv ${usr_prefix}/${pkg_name}/conf ${usr_prefix}/${pkg_name}/conf.orig
+ln -s  ${etc_dir}/tomcat ${usr_prefix}/${pkg_name}/conf
+
+cat <<"EOF"
+Set CATALINA variables in service.cfg:
+export CATALINA_HOME=${usr_prefix}/apache-tomcat/
+export CATALINA_TMPDIR=${data_dir}/run/apache-tomcat/
+EOF
+
+exit $?
+
