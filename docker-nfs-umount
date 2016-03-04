@@ -1,0 +1,36 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+. ${etc_dir}/docker.cfg
+
+print_usage(){
+    echo "Syntax:"
+    echo "   $0 -t to_directory"
+    echo "Example:"
+    echo "   $0 -t /services/svc1/data/jdoe"
+    exit 2
+}
+
+
+
+while getopts "t:" options; do
+    case "${options}" in
+        t)
+	    readonly to="${OPTARG}"
+	    ;;
+    esac
+done
+
+if [ -z "${to}" ]; then
+	print_usage
+fi
+
+[ ! -d ${to} ] && log "${critical} Destination directory does not exist..." && exit 3
+
+log "${info} Umounting ${to}"
+readonly target=$(docker inspect --format "{{.State.Pid}}" ${container})
+nsenter --target ${target} --mount --uts --ipc --net --pid -- umount ${to}
+log "${info} Umount status: $?"

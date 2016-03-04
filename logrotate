@@ -1,0 +1,27 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+
+readonly log_file=${service_log}
+readonly log_facility="logrotate"
+
+. ${scripts_base}/common
+
+log "${info} logrotate STARTED"
+
+readonly logrotate=${usr_prefix}/logrotate/sbin/logrotate
+
+if [ ! -x ${logrotate} ]; then 
+    ${scripts_base}/build/logrotate || exit $?
+fi
+
+${logrotate} -s ${data_dir}/run/logrotate.status ${etc_dir}/logrotate.conf 
+status=$?
+
+if [ ${status} -eq 0 ]; then
+    log "${success} logrotate FINISHED"
+else
+    log "${critical} logrotate error"
+fi

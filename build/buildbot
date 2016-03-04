@@ -1,0 +1,49 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=buildbot
+readonly pkg_version=
+readonly url_base=
+
+readonly python_bin=${usr_prefix}/Python/bin
+[ -z "${python}" ] && readonly python=${python_bin}/python
+
+${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
+
+if ${python} -c "import ${pkg_name}" ; then
+    log "${info} ${pkg_name} already available in ${python}"
+else
+    install_prereq pip "mandatory"
+    [ -z "${pip}" ] && readonly pip=${python_bin}/pip
+
+    # Buildbot dependencies
+    # pycrypto: required for manhole
+    ${pip} install pycrypto pyasn1 | logalize ${build_log}
+    ${pip} install twisted | logalize ${build_log}
+
+    ${pip} install buildbot | logalize ${build_log}
+
+    if [ ! -x ${usr_prefix}/buildbot/bin/master ]; then
+       # wrapper for calling buildbot (master)
+	mkdir -p ${usr_prefix}/buildbot/bin
+	cat > ${usr_prefix}/buildbot/bin/master <<EOF
+#!${python}
+
+from buildbot.scripts import runner
+runner.run()
+EOF
+	chmod +x ${usr_prefix}/buildbot/bin/master
+    fi
+
+    if [ ! -f ${data_dir}/buildbot/master/buildbot.tac ]; then
+	echo "Remember to copy scripts/config/buildbot.tac to your buildbot master directory"
+    fi
+
+    log_status $? "${pkg_name} installed in ${python}" "Problem installing ${pkg_name} in ${python}"
+fi
+
+log "${success} standard install finish ${pkg_name}"

@@ -5,7 +5,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg}
 
 readonly log_file=${service_log}
-readonly log_facility="${service}-httpd-conf"
+readonly log_facility="${service}-gf-conf"
 
 . ${scripts_base}/common
 
@@ -15,12 +15,20 @@ else
     readonly version=$1
 fi
 
+[ -z "${gfadmin_password_file}" ] && readonly gfadmin_password_file=${etc_dir}/gfadmin.password
+
 if [ ! -f ${gfadmin_password_file} ]; then
     readonly gfadmin_password=$( random_str )
-    echo "AS_ADMIN_PASSWORD=${gfadmin_password}" > ${gf_password_file} 
+    echo "AS_ADMIN_USERPASSWORD=${gfadmin_password}" > ${gfadmin_password_file} 
 else
-    readonly line=$(grep "AS_ADMIN_PASSWORD=" ${gf_password_file})
+    readonly line=$(grep "AS_ADMIN_USERPASSWORD=" ${gfadmin_password_file})
     readonly gfadmin_password=$( expr match "${line}" ".*=\(.*\)")
+fi
+
+# Check that all required vars are available
+if [ -z "${gfadmin_password}" -o -z "${gfadmin_port}" -o -z "${JAVA_HOME}" -o -z "${gfhttp_port}" ]; then
+    log "${critical} Missing glassfish parameters in service config"
+    exit 5
 fi
 
 # customize the answers file using the env vars from service.cfg

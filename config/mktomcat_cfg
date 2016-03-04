@@ -1,0 +1,58 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+
+readonly log_file=${service_log}
+readonly log_facility="${service}-gf-conf"
+
+. ${scripts_base}/common
+
+# Important parameters:
+
+# server.xml:
+# <Server port="8005" shutdown="SHUTDOWN">
+#     <Connector port="8080" protocol="HTTP/1.1" 
+#     <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
+#
+# logging.properties -> path to logs
+#
+# tomcat-users.xml -> roles
+
+
+exit 1
+
+if [ $# -ne 1 ]; then
+    readonly version=4.0
+else
+    readonly version=$1
+fi
+
+[ -z "${gfadmin_password_file}" ] && readonly gfadmin_password_file=${etc_dir}/gfadmin.password
+
+if [ ! -f ${gfadmin_password_file} ]; then
+    readonly gfadmin_password=$( random_str )
+    echo "AS_ADMIN_USERPASSWORD=${gfadmin_password}" > ${gfadmin_password_file} 
+else
+    readonly line=$(grep "AS_ADMIN_USERPASSWORD=" ${gfadmin_password_file})
+    readonly gfadmin_password=$( expr match "${line}" ".*=\(.*\)")
+fi
+
+# Check that all required vars are available
+if [ -z "${gfadmin_password}" -o -z "${gfadmin_port}" -o -z "${JAVA_HOME}" -o -z "${gfhttp_port}" ]; then
+    log "${critical} Missing glassfish parameters in service config"
+    exit 5
+fi
+
+# customize the answers file using the env vars from service.cfg
+(
+cat - ${scripts_base}/config/glassfish-${version}.answers <( echo _myEOF)  <<EOF
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+. ${service_cfg}
+readonly gfadmin_password=${gfadmin_password}
+cat <<_myEOF
+EOF
+) | bash
+
+log "${info} glassfish.answers generated"

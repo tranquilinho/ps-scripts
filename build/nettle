@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Mozilla NSPR (portability)
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=nettle
+readonly pkg_version=3.2
+readonly url_base=https://ftp.gnu.org/gnu/nettle/
+
+build_preconditions
+
+debian_install m4
+install_prereq gmp "mandatory"
+
+export CPPFLAGS=-I${usr_prefix}/gmp/include
+export LDFLAGS=-L${usr_prefix}/gmp/lib
+
+./configure --prefix=${prefix}  | logalize $(configure_log)
+
+standard_install
+

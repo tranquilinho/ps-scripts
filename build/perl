@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# by now, use apt
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+debian_install perl
+
+exit $?
+

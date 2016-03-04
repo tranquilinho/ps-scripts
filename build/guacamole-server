@@ -1,0 +1,31 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=guacamole-server
+readonly pkg_version=0.9.9
+readonly url_base=http://downloads.sourceforge.net/project/guacamole/current/source/
+
+build_preconditions
+
+install_prereq pkgconfig "mandatory"
+install_prereq libpng "mandatory"
+# use OS packages by now
+debian_install libjpeg-turbo8-dev
+debian_install libcairo2-dev
+debian_install libossp-uuid-dev
+debian_install libvncserver-dev
+install_prereq glassfish "mandatory"
+# !!!! libguac
+
+# it seems configure only uses pkg-config to detect pango...
+CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole
+
+standard_install
+
+echo "Add GUACAMOLE_HOME=${etc_dir}/guacamole to service.cfg"
+
+exit $?
+

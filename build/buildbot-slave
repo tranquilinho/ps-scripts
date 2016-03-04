@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Original script by jburguet
+# Updates by jcuenca
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=buildbot-slave
+readonly pkg_version=0.8.9
+readonly url_base=https://pypi.python.org/packages/source/b/buildbot-slave
+
+[ -z "${python}" ] && readonly python=${usr_prefix}/Python/bin/python
+
+${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
+
+if ${python} -c "import buildslave" ; then
+    log "${info} ${pkg_name} already available in ${python}"
+else
+    build_preconditions
+
+    readonly prefix=${usr_prefix}/buildbot-slave-${pkg_version}
+    # the install path should appear in PYTHONPATH
+    export PYTHONPATH=${PYTHONPATH}:${prefix}/lib/python2.7/site-packages
+
+    ${python} setup.py install --prefix=${prefix} | logalize ${build_log} > /dev/null
+    cd ${usr_prefix}
+    ln -s buildbot-slave-${pkg_version} buildbot-slave
+    if [ ! -x ${usr_prefix}/buildbot/bin/slave ]; then
+       # wrapper for calling buildbot (slave)
+	mkdir -p ${usr_prefix}/buildbot/bin
+	cat > ${usr_prefix}/buildbot/bin/slave <<EOF
+#!${python}
+
+from buildslave.scripts import runner
+runner.run()
+EOF
+	chmod +x ${usr_prefix}/buildbot/bin/slave
+    fi
+fi
+
+log "${success} standard install finish ${pkg_name}"
+
+# Create a buildslave
+#cd ${HOME}/buildbot
+#buildslave create-slave ${BASEDIR} ${MASTER} ${NAME} ${PASS}
+
+# Remember to include the new slave in the master config,
+#    buildbot/scipion-master/master.cfg to add
+# for example:
+#   BuildSlave("${NAME}", "${PASS}")
+
+
+# environment
+# export PATH=${HOME}/buildbot/local/bin:\${PATH}
+# export PYTHONPATH=${HOME}/buildbot/local/lib/python2.7/site-packages:\${PYTHONPATH}

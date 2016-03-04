@@ -1,0 +1,25 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=chimera
+readonly pkg_version=alpha-linux_x86_64_osmesa
+readonly pkg=${pkg_name}-${pkg_version}.bin
+readonly url_base=http://scipion.cnb.csic.es/downloads/scipion/software/em/
+
+
+cd ${usr_prefix}/src
+common_build_vars
+download_pkg
+verify_pkg || echo "Package corrupted" || exit 3
+chmod a+x ${pkg}
+
+./${pkg} <<EOF
+${usr_prefix}/chimera-20141124
+0
+EOF
+ln -s chimera-20141124 chimera
+
+

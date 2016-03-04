@@ -5,7 +5,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=pcre
-readonly pkg_version=8.35
+readonly pkg_version=8.37
 readonly url_base=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
 
 build_preconditions

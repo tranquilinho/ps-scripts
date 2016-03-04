@@ -1,0 +1,56 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="tomcat"
+readonly log_facility="${service}-${module}"
+
+. ${scripts_base}/common
+
+service_start(){
+    local daemon=${usr_prefix}/apache-tomcat/bin/startup.sh
+    log "${info} Starting ${module}"
+
+    # jdk should have been installed with glassfish...
+
+    # if [ -z "${gfadmin_port}" -o -z "${gfdeployer_password_file} ]
+
+    if [ ! -f ${daemon} ]; then
+	log "${info} Installing Tomcat..."
+	${scripts_base}/build/tomcat
+	# log "${info} Deploying war"
+	# ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfdeployer_password_file} deploy ${data_dir}/war/stable/3dembenchmark.war | logalize ${build_log}	
+    else
+	log "${info} Starting domain1"
+	${daemon} | logalize ${service_log}
+    fi
+
+    log_status $? "${module} started" "Problem starting ${module}"
+}
+
+service_stop(){
+    local daemon=${usr_prefix}/apache-tomcat/bin/shutdown.sh
+    log "${info} Stopping ${module}..."
+    ${daemon} | logalize ${service_log}
+    log_status $? "${module} Stopped" "Problem stoppping ${module}"
+}
+
+case "$1" in
+    "start")
+	service_start
+	;;
+    "stop")
+	service_stop
+	;;
+    "restart")
+	service_stop
+	service_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0

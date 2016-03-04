@@ -9,7 +9,7 @@ readonly module="mysql"
 readonly log_facility="${service}-${module}"
 readonly mysql_cfg=/etc/mysql/my.cnf
 readonly daemon=/usr/sbin/mysqld
-readonly pidfile=${run_dir}/${module}.pid
+readonly pid_file=${run_dir}/${module}.pid
 
 readonly default_mysql_datadir=/var/lib/mysql
 readonly mysql_datadir=${data_dir}/mysql
@@ -36,14 +36,14 @@ mysql_start(){
 
     # !!!! simple check - improve for the case of many mysql daemons running at the same time
     if /etc/init.d/mysql status | grep stopped; then
-	daemon_start ${daemon} " " ${pid_file}
+	daemon_start ${daemon} "--defaults-file=${etc_dir}/mysql/my.cnf " ${pid_file}
     else
 	log "${warning} MySQL already started"
     fi
 }
 
 mysql_stop(){
-    daemon_stop ${pidfile}
+    daemon_stop ${pid_file}
 }
 
 case "$1" in

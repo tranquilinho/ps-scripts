@@ -4,13 +4,7 @@ print_usage(){
     echo Make a service.cfg file into stdout
     echo "Syntax: $0 -n service_name [-i feature1,feature2,...]"
     echo "Features available:"
-    local regex="^readonly (.*)_enabled.*"
-    grep _enabled $0 | while read line; do
-	if [[ ${line} =~ ${regex} ]]; then
-	    echo ${BASH_REMATCH[1]}
-	fi
-    done | sort
-
+    grep _enabled $0 | gawk '{ if (match($0, /^readonly (.*)_enabled.*/, matches)) print matches[1]}' | sort
     exit 1
 }
 
@@ -65,7 +59,12 @@ readonly public_key=${key_path}/id_rsa.pub
 
 # readonly mirror_base=
 
-readonly ssh_port=8632
+# default value for paralelism (-j option in make, etc)
+readonly ps_paralel="-j 2"
+
+
+readonly ssh_port=22
+
 # other useful variables (under specific circumstances)
 # readonly user=repo
 # readonly id=1103
@@ -75,6 +74,7 @@ user_wants apache && cat <<"EOF"
 readonly apache_enabled=1
 readonly web_home=${data_dir}/htdocs
 readonly http_port=8080
+readonly https_enabled=1
 readonly default_server=default.kewl.com
 EOF
 
@@ -105,8 +105,15 @@ EOF
 user_wants glassfish && cat <<"EOF"
 readonly glassfish_enabled=1
 readonly gfadmin_port=8658
+readonly gfhttp_port=8650
 readonly gfanswers_file=${etc_dir}/glassfish.cfg
-readonly gf_password_file=${etc_dir}/gfpasswords
+readonly gfadmin_password_file=${etc_dir}/gfadmin.password
+readonly gfdeployer_password_file=${etc_dir}/gfdeployer.password
+
+# Java stuff
+export JAVA_HOME=${usr_prefix}/jdk
+# If glassfish is installed with this JAVA_HOME, it's not mandatory
+# to update PATH (unless other programs need to find java binaries)
 
 EOF
 

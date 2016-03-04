@@ -1,0 +1,25 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=tastypie
+readonly pkg_version=
+readonly url_base=
+
+readonly python_bin=${usr_prefix}/Python/bin
+[ -z "${python}" ] && readonly python=${python_bin}/python
+
+${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
+
+if ${python} -c "import ${pkg_name}" ; then
+    log "${info} ${pkg_name} already available in ${python}"
+else
+    install_prereq django "mandatory"
+    readonly pip=${python_bin}/pip
+    ${pip} install django-tastypie | logalize ${build_log}
+fi
+
+log "${success} standard install finish ${pkg_name}"

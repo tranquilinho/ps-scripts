@@ -42,18 +42,17 @@ done
 
 readonly pkg_name=glassfish
 readonly pkg=glassfish-${pkg_version}-unix.sh
+readonly url_base=http://download.java.net/glassfish/${pkg_version}/release/
 if [ ${pkg_version} == "4.0" ]; then
-    readonly url_base=http://download.java.net/glassfish/4.0/release/
-    readonly expected_hash=c63d086245efad1f479779eee2606b7c341a4e68
     readonly glassfish_dir=glassfish4
 elif [ ${pkg_version} == "3.1.2.2" ]; then 
-    readonly url_base=http://download.java.net/glassfish/3.1.2.2/release/
-    readonly expected_hash=44f5cf8839fc754fb1b22252c792b8e5633ac8ec
     readonly glassfish_dir=glassfish3
 else
     echo "Unknown version"
     exit 2
 fi
+
+install_prereq jdk "mandatory"
 
 log "${info} Custom install start ${pkg_name} ${pkg_version}"
 
@@ -64,8 +63,11 @@ if [ ${skip_install:-1} -ne 0 ]; then
 	rm ${usr_prefix}/glassfish
     fi
 
+    [ -z "${gfanswers_file}" ] && readonly gfanswers_file=${etc_dir}/glassfish.cfg
+
     # The original answers file is created with the -n option of glassfish installer
-    ${scripts_base}/config/mkglassfish_cfg ${pkg_version} > ${gfanswers_file}
+    ${scripts_base}/config/mkglassfish_cfg ${pkg_version} > ${gfanswers_file} 
+    [ $? -ne 0 ] && log "${critical} Problem creating glassfish answers file" && exit 3
 
     bash ${pkg} -a ${gfanswers_file} -s 2>&1 | logalize ${build_log}
     
@@ -81,17 +83,16 @@ if [ ${skip_install:-1} -ne 0 ]; then
 
 fi
 
+readonly asadmin=${prefix}/bin/asadmin
 
+if [ ${skip_configure:-1} -ne 0 -a -x ${asadmin} ]; then
+    ${asadmin} --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} start-domain domain1 | logalize ${build_log}
 
-if [ ${skip_configure:-1} -ne 0 ]; then
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} start-domain domain1 | logalize ${build_log}
+    ${asadmin} --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} enable-secure-admin | logalize ${build_log}
 
+    ${asadmin} --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} create-file-user --groups deployer --authrealmname admin-realm deployer | logalize ${build_log}
 
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} enable-secure-admin | logalize ${build_log}
-
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} create-file-user --groups deployer --authrealmname admin-realm deployer | logalize ${build_log}
-
-    ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gf_password_file} restart-domain domain1 | logalize ${build_log}
+    ${asadmin} --port ${gfadmin_port} --passwordfile ${gfadmin_password_file} restart-domain domain1 | logalize ${build_log}
 fi
 
 

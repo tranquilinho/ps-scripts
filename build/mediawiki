@@ -1,0 +1,14 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=mediawiki
+readonly pkg_version=1.24.1
+readonly url_base=http://releases.wikimedia.org/mediawiki/1.24/
+readonly expected_hash=9ad18d6f432bb77a27d5d3145278a296b15186db
+
+build_preconditions
+
+cp -a ${usr_prefix}/src/${pkg_dir} ${usr_prefix}/${pkg_name}

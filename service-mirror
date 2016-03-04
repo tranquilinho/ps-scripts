@@ -1,0 +1,61 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+
+readonly backup_cfg_dir=${etc_dir}/backup
+
+readonly config_file=${backup_cfg_dir}/main.cfg
+readonly exclude_file=${backup_cfg_dir}/exclude.cfg
+# readonly private_key=${backup_cfg_dir}/id_rsa
+
+# since we will be "overwriting" ourselves, the log file should be outside...
+readonly log_file=/var/log/mirror-${service}.log
+readonly log_facility="${service}-mirror"
+
+. ${scripts_base}/common
+
+if [ ! -f ${private_key} ];then
+        log "${critical} Service backup private key ${private_key} missing"
+        exit 3
+fi
+
+chmod 600 ${private_key}
+
+if [ -z "$(which rsync)" ]; then
+    ${scripts_base}/build/rsync
+fi
+
+log "${info} MIRROR-PULL STARTED"
+line=$(grep mirror= ${config_file})
+readonly mirror_host=$(expr match ${line} "mirror=\(.*\):.*:.*:.*")
+if [ $(hostname) != ${mirror_host} ]; then
+    log "${success} Skipping (I am not the mirror host, ${mirror_host})"
+    exit 0
+fi
+
+readonly mirror_path=$(expr match ${line} "mirror=.*:.*:.*:\(.*\)")
+line=$(grep frontend= ${config_file})
+readonly frontend_host=$(expr match ${line} "frontend=\(.*\):.*:.*:.*")
+if [ $(hostname) == ${frontend_host} ]; then    
+    log "${critical} Skipping (mirror host can not be the frontend)"
+    exit 2
+fi
+
+log "${info} Mirroring..."
+readonly data_dirs=$(grep data= ${config_file})
+readonly rsync_options_line=$(grep rsync_options= ${config_file})
+readonly rsync_options=${rsync_options_line##rsync_options=}
+
+for d in ${data_dirs}; do
+    dir="$(expr match "${d}" "data=\(.*\)")"
+    from="${frontend_host}:${dir}"
+    mirror_dest="${mirror_path}/"
+    log "${info} Mirroring ${from} to ${mirror_dest}"
+
+    rsync -a ${rsync_options} -e "ssh -o StrictHostKeyChecking=no" --delete ${from}  ${mirror_dest} | logalize ${log_file}
+
+done
+
+log "${success} MIRROR-PULL FINISHED"

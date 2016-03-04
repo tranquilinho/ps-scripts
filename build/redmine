@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# "Redmine is a flexible project management web application. 
+# Written using the Ruby on Rails framework, it is cross-platform and cross-database."
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=redmine
+
+install_prereq passenger "mandatory"
+# the bundle includes all redmine build dependencies: mysql, postgresql, imagemagick...
+debian_install libmysqlclient-dev
+debian_install libpq-dev
+debian_install libmagickcore-dev
+debian_install libmagickwand-dev
+debian_install libsqlite3-dev
+# for accessing code repositories
+debian_install git
+debian_install subversion
+
+cd ${usr_prefix}/redmine
+${usr_prefix}/ruby/bin/bundle install

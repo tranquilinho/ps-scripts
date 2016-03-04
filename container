@@ -27,7 +27,11 @@ docker=$(which docker)
 
 container_start(){
     # log "${info} docker run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr}"
-    hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr})
+    # !!!! log docker log ;-)
+
+    [ -z "${docker_options}" ] && docker_options="-d"
+
+    hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} ${docker_options} -t ${image} ${container_init} 2> ${docker_stderr})
 }
 
 case "$1" in
@@ -36,6 +40,16 @@ case "$1" in
 	if [ ! -d ${docker_run} ]; then
 	    mkdir -p ${docker_run}
 	fi
+
+	# If the service has the same "service root" inside and outside, we can
+	# initialize this variable for him
+	[ -z "${container_init_outside}" ] && container_init_outside=${container_init}
+
+	if [ ! -x ${container_init_outside} ];then
+	    echo "${container_init} must have executable permission"
+	    exit 3
+	fi
+
 	container_start
 	egrep "Abort due to constraint violation: UNIQUE| is already assigned" ${docker_stderr} >/dev/null
 	if [ $? -eq 0 ]; then

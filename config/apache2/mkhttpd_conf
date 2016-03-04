@@ -43,7 +43,7 @@ cat <<EOF
 #
 
 ServerRoot "${usr_prefix}/httpd"
-
+PidFile "${data_dir}/run/apache2.pid"
 
 #
 # Mutex: Allows you to set the mutex mechanism and mutex file directory
@@ -129,7 +129,6 @@ LoadModule version_module modules/mod_version.so
 #LoadModule session_cookie_module modules/mod_session_cookie.so
 #LoadModule session_dbd_module modules/mod_session_dbd.so
 #LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
-#LoadModule ssl_module modules/mod_ssl.so
 #LoadModule lbmethod_byrequests_module modules/mod_lbmethod_byrequests.so
 #LoadModule lbmethod_bytraffic_module modules/mod_lbmethod_bytraffic.so
 #LoadModule lbmethod_bybusyness_module modules/mod_lbmethod_bybusyness.so
@@ -155,6 +154,14 @@ cat <<EOF
 LoadModule wsgi_module modules/mod_wsgi.so
 EOF
 fi
+
+if [ ${https_enabled} -eq 1 ]; then
+cat <<EOF
+LoadModule ssl_module modules/mod_ssl.so
+EOF
+fi
+
+
 
 if [ ${server_status} -eq 1 ]; then
 cat <<EOF
@@ -378,7 +385,7 @@ LogLevel warn
     # ScriptSock: On threaded servers, designate the path to the UNIX
     # socket used to communicate with the CGI daemon of mod_cgid.
     #
-    #Scriptsock cgisock
+    Scriptsock ${data_dir}/run/cgisock
 </IfModule>
 
 

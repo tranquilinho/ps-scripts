@@ -9,20 +9,23 @@ readonly log_facility="${service}-admin"
 
 . ${scripts_base}/common
 
-readonly expected_known_hosts=${etc_dir}/known_hosts
-readonly known_hosts=/root/.ssh/known_hosts
+. ${etc_dir}/known_hosts
 
-if [ -f ${expected_known_hosts} ]; then
-    log "${info} setting up known hosts"
+for user in "${!known_hosts[@]}"; do
 
-    [ ! -d /root/.ssh ] && mkdir /root/.ssh
+    if [ -f ${expected_known_hosts[$user]} ]; then
+	log "${info} setting up known hosts for ${user}"
 
-    if [ ! -f ${known_hosts} ]; then
-	cp ${expected_known_hosts} ${known_hosts} && log "${success} Known hosts set up"
+	[ ! -d $(dirname ${known_hosts[$user]}) ] && mkdir $(dirname ${known_hosts[$user]})
+
+	if [ ! -f ${known_hosts[$user]} ]; then
+	    cp ${expected_known_hosts[$user]} ${known_hosts[$user]} && log "${success} Known hosts set up"
+	else
+	    log "${info} Known hosts already set up for ${user}"
+	fi
     else
-	log "${info} Known hosts already set up"
+	log "${critical} Expected known host ${expected_known_hosts[$user]} not found "
+	exit 2
     fi
-else
-    log "${critical} Expected known host ${expected_known_hosts} not found "
-    exit 2
-fi
+
+done

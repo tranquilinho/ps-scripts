@@ -6,7 +6,7 @@ readonly critical="CRIT"
 readonly  success=" OK "
 
 readonly log_hostname=$(hostname)
-readonly log_format='${log_timestamp} ${log_hostname} "$(printf "%20s" ${log_facility})"'
+readonly log_format='${log_timestamp} ${log_hostname} "$(printf "%16s" ${log_facility})"'
 readonly build_log=${log_dir}/build.log
 
 # warning: appending logalize alters the value of $?, so you must use
@@ -65,12 +65,14 @@ download_pkg(){
 }
 
 verify_pkg(){
-    if [ -z "${expected_hash}" ]; then
-	. ${scripts_base}/build/hashes
-	local hash_key="${pkg_name},${pkg_version}"
-	local expected_hash=${expected_hashes["${hash_key}"]}
-    fi
-    pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
+    . ${scripts_base}/build/hashes
+
+    local pkg_hash=$( ${hasher} ${pkg} | cut -d " " -f 1 )
+    local key="${pkg_name},${pkg_version}"
+    local expected_hash=${expected_hashes[${key}]}
+
+    [ -z "${pkg_hash}" ] || [ -z "${expected_hash}" ] && log "${critical} Missing hash" && exit 5
+
     if [ ${pkg_hash} != ${expected_hash} ]; then
 	log "${critical} Package integrity test failed (${pkg_hash})"
 	exit 4
@@ -80,9 +82,10 @@ verify_pkg(){
 extract_pkg(){
     local pkg_file_info=$(file ${pkg})
 
-    if echo ${pkg_file_info} | grep tar > /dev/null 2>&1; then
+    if echo ${pkg_file_info} | grep "tar\|tgz" > /dev/null 2>&1; then
 	echo ${pkg_file_info} | grep bzip2 > /dev/null 2>&1 && local decompress_option="j"
 	echo ${pkg_file_info} | grep gzip > /dev/null 2>&1 && local decompress_option="x"
+	echo ${pkg_file_info} | grep XZ > /dev/null 2>&1 && local decompress_option="J"
 	tar xf${decompress_option} ${pkg}
 	if [ $? -ne 0 ]; then
 	    log "${critical} Could not extract package"
@@ -97,7 +100,8 @@ extract_pkg(){
 common_build_vars(){
     [ -z "${pkg_name}" -o -z "${pkg_version}" ] && echo Package name undefined && exit 4
     [ -z "${pkg_dir}" ] && readonly pkg_dir=${pkg_name}-${pkg_version}
-    [ -z "${pkg}" ] && readonly pkg=${pkg_dir}.tar.gz
+    [ -z "${pkg_ext}" ] && readonly pkg_ext=tar.gz
+    [ -z "${pkg}" ] && readonly pkg=${pkg_dir}.${pkg_ext}
     [ -z "${prefix}" ] && readonly prefix=${usr_prefix}/${pkg_dir}
     [ -z "${hasher}" ] && readonly hasher=sha1sum
 }
@@ -136,18 +140,20 @@ configure(){
 # $1 make option
 # $2 (noinstall)
 standard_install(){
-    log "${info} standard install start ${pkg_name}"
+    log "${info} standard install start (${ps_paralel}) ${pkg_name}"
     
     # make clean &&  
-    make $1 -j 2 2>&1 | logalize $(make_log)
+    make $1 ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
+
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
 	log "${critical} Problem building ${pkg_name}"
 	exit 8
     fi
+
     if [ "a$2" != "anoinstall" ]; then
-	make install 2>&1 | logalize $(make_log)
+	make install ${ps_paralel} 2>&1 | logalize $(make_log)
 	if [ ${PIPESTATUS[0]} -ne 0 ]; then
-	    log "${critical} Problem building ${pkg_name}"
+	    log "${critical} Problem installing ${pkg_name}"
 	    exit 8
 	fi
     fi
@@ -156,7 +162,22 @@ standard_install(){
 	log "${critical} Problem installing ${pkg_name}"
 	exit 8
     fi
-    ln -s ${prefix} ${usr_prefix}/${pkg_name}
+
+    if [ -d ${prefix} ]; then
+    # make sure the symlink points to what it was just installed,
+    # instead to some random version (for example, in a different but similar service...)
+	rm ${usr_prefix}/${pkg_name}
+	ln -s ${prefix} ${usr_prefix}/${pkg_name}
+    fi
+
+    if [ -d ${prefix}/lib/pkgconfig ]; then
+	local have_pc_files=$(echo ${prefix}/lib/pkgconfig/*.pc)
+	if [ -n "${have_pc_files}"  ]; then
+        # collect pkg-config files into service pkg-config dir
+	    [ ! -d ${usr_prefix}/pkg-config ] && mkdir -p ${usr_prefix}/pkg-config
+	    ln -s ${usr_prefix}/${pkg_name}/lib/pkgconfig/*.pc ${usr_prefix}/pkg-config/
+	fi
+    fi
     log "${success} standard install finish ${pkg_name}"
 }
 
@@ -184,7 +205,7 @@ debian_install(){
     local my_package=$1
     log "${info} installing ${my_package}"
     apt-get install -y ${my_package} 2>&1 | logalize ${log_dir}/apt.log
-    local my_status=$?
+    local my_status=${PIPESTATUS[0]}
     log_status ${my_status} "${my_package} installed" "Problem installing ${my_package}"
     return ${my_status}
 }
@@ -262,9 +283,23 @@ daemon_start(){
     local my_pidfile=$3
     local run_as=$4
     local cmd="${my_daemon} ${options}"
+
     if [ -n "${run_as}" ]; then
-	local run_as_cmd="su - ${run_as} -c "
-	cmd="${run_as_cmd} '${cmd}'"
+	# specifying the shell is important for users with restricted shells, like /bin/false
+	local run_as_cmd="su - ${run_as} -s /bin/bash -c "
+	if [ -n "${my_pidfile}" ]; then
+	    [ ! -d $(dirname ${my_pidfile}) ] && mkdir $(dirname ${my_pidfile})
+	    cmd="${run_as_cmd} '${cmd} & echo \$! > ${my_pidfile}'"
+	else
+	    cmd="${run_as_cmd} '${cmd} &'"
+	fi
+    else
+	if [ -n "${my_pidfile}" ]; then
+	    [ ! -d $(dirname ${my_pidfile}) ] && mkdir $(dirname ${my_pidfile})
+	    cmd="${cmd} & echo \$! > ${my_pidfile}" 
+	else
+	    cmd="${cmd} &" 
+	fi
     fi
     
     log "${info} Starting daemon ${my_daemon}"
@@ -279,16 +314,12 @@ daemon_start(){
 	log "${info} ${cmd}"
 	# If cmd starts in daemon mode, it is attached to init (PID 1) and $! points to this script itself
 	# Hence, for proper pid-saving, the cmd must be started in foreground...
-	eval "${cmd} &"
-	status=$? ; pid=$!
+	eval "${cmd}" 
+	status=$? 
+	# pid=$!
 
 	log_status ${status} "${my_daemon} started" "Problem starting ${my_daemon}"
-	if [ ${status} -eq 0 ]; then
-	    [ ! -d $(dirname ${my_pidfile}) ] && mkdir $(dirname ${my_pidfile})
-            echo ${pid} > ${my_pidfile}
-	else
-	    return ${status}
-	fi
+	return ${status}
     fi
 }
 
@@ -303,23 +334,41 @@ daemon_stop(){
     log "${info} Stopping daemon ${daemon_name}"
 
     local pid=$(cat ${my_pidfile})
+
+    if [ -z "${pid}" ]; then
+	log "${critical} Empty PID"
+	return 2
+    else
     # In simple cases, it's enough to kill the daemon
     # When the daemon spawns lots of childs, it's safer
     # to kill all of them by pgid
     # su pgid is different from pgid of the child process, hence
     # it's safer to get the gpid of the child
-    local pgid=$(ps --no-headers -o pgid --ppid ${pid})
-    [ -n "${pgid}" ] && kill -- -${pgid}
-    local waited=0
-    while [ -n "$(ps -o pid= -o comm= -p ${pid} )" ]; do
-	waited=$(( waited + 1 ))
-	if [ ${waited} -gt 15 ]; then
-	    kill -9 ${pid}
-	    break
+	local pgid=$(ps --no-headers -o pgid --ppid ${pid})
+	if [ -n "${pgid}" ]; then 
+	    kill -- -${pgid// }
+	    log_status $? "${pgid} killed" "${pgid} kill failed"
 	fi
-	sleep 1
-    done
-    log "${success} Daemon ${daemon_name} stopped"
+	
+	ps -p ${pid} > /dev/null
+	if [ $? -ne 0 ]; then
+	    log "${critical} Daemon with pid ${pid} not found"
+	else
+	    local waited=0
+	    kill -TERM ${pid}
+	    while [ -n "$(ps -o pid= -o comm= -p ${pid} )" ]; do
+		echo -n "."
+		waited=$(( waited + 1 ))
+		if [ ${waited} -gt 15 ]; then
+		    log "S{warning} Timeout stopping daemon ${daemon_name}"
+		    kill -9 ${pid}
+		    break
+		fi
+		sleep 1
+	    done
+	    log "${success} Daemon ${daemon_name} stopped"
+	fi
+    fi
 }
 
 
@@ -330,6 +379,10 @@ is_running(){
 
     if [ -f ${my_pid_file} ];then
 	local pid=$(cat ${my_pid_file})
+	if [ -z "${pid}" ]; then
+	    log "${warning} Empty PID"
+	    return 2
+	fi
 
 	local process_count=$(ps h ${pid} | wc -l)
 	if [ ${process_count} -gt 0 ]; then
@@ -362,3 +415,16 @@ cpu_count(){
     local cpus=$(( $(cat /sys/devices/system/cpu/online | cut -c 3-) + 1 ))
     echo ${cpus}
 }
+
+can_write(){
+    local user=$1
+    local file=$2
+    if [ ! -f ${file} ]; then 
+	log "${warning} File ${file} not found"
+	return 1
+    else
+	su ${user} -c "[ -w ${file} ]"
+	return $?
+    fi
+}
+

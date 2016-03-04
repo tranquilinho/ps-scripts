@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# install Python (devel version, with headers) and pip
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=Python
+readonly pkg_version=2.7.11
+pkg=${pkg_name}-${pkg_version}.tar.xz
+readonly url_base=https://www.python.org/ftp/python/2.7.11/
+
+build_preconditions
+
+readonly python_bin=${usr_prefix}/Python/bin
+[ -z "${python}" ] && readonly python=${python_bin}/python
+
+readonly available_python=$(${python} -V 2>&1 )
+
+if [[ "${available_python}" == Python* ]]; then
+    log "${warning} ${available_python} (${python}) already installed..."
+    exit 0
+fi
+
+# to check details on modules installation, read setup.py
+
+install_prereq zlib "mandatory"
+install_prereq openssl "mandatory"
+install_prereq bzip2 "mandatory"
+
+# patch to use service's zlib & openssl
+# !!!! maybe it's possible to install these 2 modules via setup.py (like bz2, see below)?
+readonly setup_file="${usr_prefix}/src/${pkg_dir}/Modules/Setup.dist"
+
+# important: keep every single char (like tabs) or the patch will fail...
+patch ${setup_file} <<EOF
+218,221c218,221
+< #SSL=/usr/local/ssl
+< #_ssl _ssl.c \\
+< #	-DUSE_SSL -I\$(SSL)/include -I\$(SSL)/include/openssl \\
+< #	-L\$(SSL)/lib -lssl -lcrypto
+---
+> SSL=${usr_prefix}/openssl
+> _ssl _ssl.c \\
+> 	-DUSE_SSL -I\$(SSL)/include -I\$(SSL)/include/openssl \\
+> 	-L\$(SSL)/lib -lssl -lcrypto
+467c467
+< #zlib zlibmodule.c -I\$(prefix)/include -L\$(exec_prefix)/lib -lz
+---
+> zlib zlibmodule.c -I${usr_prefix}/zlib/include -L${usr_prefix}/zlib/lib -lz
+EOF
+
+if [ $? -eq 0 ]; then
+    log "${ok} Python patched successfully"
+else
+    log "${critical} Problem patching python: ${setup_file}"
+    exit 2
+fi
+    
+# bz2 module is required to install things with pip (since 
+# most of its packages are tar.bz2...)
+# --enable-shared ? 
+# --enable-unicode=ucs4 ?
+# other: --with-system-expat --with-system-ffi  
+
+./configure --prefix=${prefix} 
+
+# available python modules:
+# _curses            _curses_panel      _dbm
+# _gdbm              _sqlite3           * _ssl
+# _tkinter            bz2                readline
+#  * zlib 
+
+standard_install
+
+readonly python=${usr_prefix}/Python/bin/python
+
+${python} setup.py build_ext -I ${usr_prefix}/bzip2/include -L ${usr_prefix}/bzip2/lib/
+${python} setup.py install
+
+# exit $?
+

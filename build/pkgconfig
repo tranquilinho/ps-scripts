@@ -1,0 +1,32 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+# to integrate pkg-config in the service, just add path to its binaries to $PATH
+# in either the installer or service.cfg
+# Additionally, you may need to define PKG_CONFIG_PATH and PKG_CONFIG_LIBDIR before
+# calling configure
+
+readonly pkg_name=pkg-config
+readonly pkg_version=0.29
+readonly url_base=https://pkg-config.freedesktop.org/releases/
+
+build_preconditions
+
+readonly pkg_config_dir=${prefix}
+[ -z "${pkg_config}" ] && readonly pkg_config=${prefix}/bin/pkg-config
+
+readonly available_pkg_config=$(${pkg_config} --version 2>&1 )
+
+if [ "${available_pkg_config}" == "${pkg_version}" ]; then
+    log "${warning} ${pkg_name} ${pkg_version} already installed..."
+    exit 0
+fi
+
+./configure --prefix=${prefix} --with-pc-path=${pkg_config_dir} --with-internal-glib  | logalize $(configure_log)
+
+standard_install
+
+echo "Add ${prefix}/bin to service.cfg"

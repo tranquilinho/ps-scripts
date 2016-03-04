@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Mozilla NSPR (portability)
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=nspr
+readonly pkg_version=4.10.10
+readonly url_base=https://ftp.mozilla.org/pub/nspr/releases/v4.10.10/src/
+
+build_preconditions
+
+cd nspr
+
+./configure --prefix=${prefix} --enable-64bit | logalize $(configure_log)
+
+standard_install
+

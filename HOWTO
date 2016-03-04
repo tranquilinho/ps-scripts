@@ -1,0 +1,14 @@
+
+I use /services as the root of service instances. I am not the first one: DJ Bernstein already advocated /service in daemontools (https://cr.yp.to/daemontools/faq/create.html#why)
+
+create service.cfg
+
+
+Apache
+------
+
+Create service config (config/apache2/mkservice_conf)
+
+Create apache config (config/apache2/mkhttpd_conf)
+
+Copy envvars file (config/apache2/envvars -> etc/apache2)

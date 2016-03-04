@@ -14,12 +14,20 @@ readonly daemon=${usr_prefix}/glassfish/bin/asadmin
 glassfish_start(){
     log "${info} Starting ${module}"
 
-    if [ ! -f ${daemon} ]; then
+    # jdk should have been installed with glassfish...
+
+    # if [ -z "${gfadmin_port}" -o -z "${gfdeployer_password_file} ]
+
+    if [ ! -f ${daemon} -o ! -d ${usr_prefix}/glassfish/glassfish/domains/domain1 ]; then
 	log "${info} Installing Glassfish"
 	${scripts_base}/build/glassfish
+	# log "${info} Deploying war"
+	# ${usr_prefix}/glassfish/bin/asadmin --port ${gfadmin_port} --passwordfile ${gfdeployer_password_file} deploy ${data_dir}/war/stable/3dembenchmark.war | logalize ${build_log}	
+    else
+	log "${info} Starting domain1"
+	${daemon} start-domain domain1
     fi
 
-    ${daemon} start-domain domain1
     log_status $? "${module} started" "Problem starting ${module}"
 }
 

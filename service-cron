@@ -2,24 +2,7 @@
 
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
-. ${service_cfg}
-readonly log_file=${service_log}
-readonly log_facility="${service}-cron"
-. ${scripts_base}/common
+. ${service_cfg} 
 
-# install the cron jobs needed by this service
-readonly service_cron_dir=${etc_dir}/cron
-readonly system_cron_dir=/etc/cron.d
-
-for cron_file in $(ls ${service_cron_dir}); do
-    if [ ! -s ${system_cron_dir}/${cron_file} ]; then 
-	ln -s ${service_cron_dir}/${cron_file} ${system_cron_dir}
-	if [ $? -eq 0 ]; then
-	    log "${success} ${cron_file} installed"
-	else
-	    log "${critical} Problem installing ${cron_file}"
-	fi
-    else
-	log "${warning} ${cron_file}  already installed"
-    fi
-done
+echo "WARNING: this script has been renamed to service-setup-cron"
+${scripts_base}/service-setup-cron

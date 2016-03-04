@@ -5,13 +5,21 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=openssl
-readonly pkg_version=1.0.1j
+readonly pkg_version=1.0.2f
 readonly url_base=http://www.openssl.org/source/
 
 build_preconditions
 
-./config --prefix=${prefix} --shared | logalize $(configure_log)
+install_prereq zlib "mandatory"
+
+# Using ps-scripts zlib...
+# 1) it seems there is no option in config to specify custom zlib location...
+export CPPFLAGS=-I${usr_prefix}/zlib/include
+export LDFLAGS=-L${usr_prefix}/zlib/lib
+# 2) Compilation uses CPPFLAGS, but in the end libs are linked against system's libz...
+#    One option would be to patch Makefile and set ZLIB_INCLUDE and LIBZLIB
+#    Another option would be to try the new integration of service's pkg-config
+./config --prefix=${prefix} shared zlib-dynamic | logalize $(configure_log)
 
 standard_install
 
-# !!!! it seems to not to finishthe first make... running a second time succeeds (???)

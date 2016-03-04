@@ -6,7 +6,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 log "${info} installing build environment"
 
-apt-get install -y build-essential 2>&1 | logalize ${log_dir}/apt.log
+apt-get install -y build-essential wget file 2>&1 | logalize ${log_dir}/apt.log
 
 if [ $? -eq 0 ];then
     log "${success} build environment installed"

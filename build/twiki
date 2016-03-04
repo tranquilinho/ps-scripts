@@ -1,0 +1,38 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=twiki
+readonly pkg_version=6.0.2
+readonly url_base=http://heanet.dl.sourceforge.net/project/twiki/TWiki%20for%20all%20Platforms/TWiki-${pkg_version}
+readonly pkg=TWiki-${pkg_version}.tgz
+
+install_prereq perl "mandatory"
+# perl dependencies: HTML::Entities 
+debian_install libhtml-parser-perl
+install_prereq apache "mandatory"
+debian_install rcs
+
+build_preconditions
+
+cd ${usr_prefix}
+cp -a src/twiki ${pkg_name}-${pkg_version}
+[ -h ${pkg_name} ] && rm ${pkg_name}
+ln -s ${pkg_name}-${pkg_version} ${pkg_name}
+
+if [ ! -h ${pkg_name}/data ]; then
+    mv ${pkg_name}/data ${pkg_name}/data.orig
+    ln -s ${data_dir}/twiki/data ${pkg_name}/
+fi
+
+if [ ! -h ${pkg_name}/pub ]; then
+    mv ${pkg_name}/pub ${pkg_name}/pub.orig
+    ln -s ${data_dir}/twiki/pub ${pkg_name}/
+fi
+
+if [ ! -h ${pkg_name}/lib/LocalSite.cfg ]; then
+    ln -s ${etc_dir}/twiki.cfg ${pkg_name}/lib/LocalSite.cfg
+fi

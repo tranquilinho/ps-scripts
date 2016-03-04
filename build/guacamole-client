@@ -1,0 +1,24 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=guacamole-client
+readonly pkg_version=0.9.9
+readonly url_base=http://downloads.sourceforge.net/project/guacamole/current/source/
+
+build_preconditions
+
+install_prereq maven "mandatory"
+# it seems the client only works with "old" servlet spec v2.5, 
+# which in Tomcat terms means Tomcat 6.X
+install_prereq tomcat "mandatory" 6
+
+# create the .war file
+${usr_prefix}/maven/bin/mvn package
+# install it in tomcat
+cp guacamole/target/guacamole-0.9.9.war ${usr_prefix}/apache-tomcat/webapps
+
+exit $?
+
