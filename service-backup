@@ -50,10 +50,13 @@ for d in ${data_dirs}; do
     dir="$(expr match "${d}" "data=\(.*\)")"
     backup_dest="${backup_host}:${backup_path}/"
     # if ${DIR} does not end in /, we should append it...
-    snapshot_dir="/nas/snapshots/${service}/$(date +%Y%m%d)"
+    if [ -z "${backup_snapshots}" -o "${backup_snapshots}" != "no" ]; then
+	snapshot_dir="/nas/snapshots/${service}/$(date +%Y%m%d)"
+	snapshot_opt="--backup --backup-dir=${snapshot_dir}"
+    fi
     log "${info} Backing up ${dir} to ${backup_dest}"
 
-    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" ${exclude_option} --delete --backup --backup-dir=${snapshot_dir} ${dir} ${backup_dest} | logalize ${log_file}
+    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" ${exclude_option} --delete ${snapshot_opt}  ${dir} ${backup_dest} | logalize ${log_file}
     # touch ${dir}/.last_vmsbackup
 done
 
