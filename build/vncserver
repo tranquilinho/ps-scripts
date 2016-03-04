@@ -1,0 +1,34 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+
+# light desktop -> LXDE
+debian_install lxde
+# by now, use OS vnc
+debian_install tightvncserver
+
+
+exit 0
+
+readonly pkg_name=tigervnc
+readonly pkg_version=1.6.0
+readonly pkg=v${pkg_version}.tar.gz
+readonly url_base=https://github.com/TigerVNC/tigervnc/archive/
+
+build_preconditions
+
+install_prereq zlib "mandatory"
+debian_install libjpeg-turbo8-dev
+debian_install cmake
+debian_install libfltk1.3-dev
+
+# @see http://www.linuxfromscratch.org/blfs/view/stable/xsoft/tigervnc.html
+mkdir build
+cd build
+
+#./configure --prefix=${prefix} --with-installbuilddir=${usr_prefix}/apache-build
+
+#standard_install
