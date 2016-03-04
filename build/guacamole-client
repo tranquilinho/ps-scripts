@@ -10,13 +10,15 @@ readonly url_base=http://downloads.sourceforge.net/project/guacamole/current/sou
 
 build_preconditions
 
-# Guacamole client
 install_prereq maven "mandatory"
+# it seems the client only works with "old" servlet spec v2.5, 
+# which in Tomcat terms means Tomcat 6.X
+install_prereq tomcat "mandatory" 6
 
 # create the .war file
 ${usr_prefix}/maven/bin/mvn package
-# install it in glassfish
-cp ./guacamole/target/guacamole-0.9.9.war ${usr_prefix}/glassfish/glassfish/domains/domain1/autodeploy
+# install it in tomcat
+cp guacamole/target/guacamole-0.9.9.war ${usr_prefix}/apache-tomcat/webapps
 
 exit $?
 
