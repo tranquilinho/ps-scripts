@@ -84,7 +84,7 @@ extract_pkg(){
 
     if echo ${pkg_file_info} | grep "tar\|tgz" > /dev/null 2>&1; then
 	echo ${pkg_file_info} | grep bzip2 > /dev/null 2>&1 && local decompress_option="j"
-	echo ${pkg_file_info} | grep gzip > /dev/null 2>&1 && local decompress_option="x"
+	echo ${pkg_file_info} | grep gzip > /dev/null 2>&1 && local decompress_option="z"
 	echo ${pkg_file_info} | grep XZ > /dev/null 2>&1 && local decompress_option="J"
 	tar xf${decompress_option} ${pkg}
 	if [ $? -ne 0 ]; then
