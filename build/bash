@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# build bash almost standalone (since some features in common module require
+# modern bash, for example), with the least requirements (just old bash and gcc buildchain)
+readonly service_root="${0%/scripts*}"
+# readonly service_cfg=/etc/service.cfg
+readonly usr_prefix=${service_root}/usr
+readonly build_dir=${usr_prefix}/src
+
+# . ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name="bash"
+readonly pkg_version="4.3"
+readonly pkg="${pkg_name}-${pkg_version}.tar.gz"
+readonly url_base="http://ftp.rediris.es/mirror/GNU/gnu/bash/${pkg}"
+
+# asume the OS build chain (gcc) is working
+
+cd ${build_dir}
+wget -c ${url_base}
+readonly hash=$(md5sum ${pkg} | cut -d " " -f 1)
+if [ "${hash}" != "81348932d5da294953e15d4814c74dd1" ]; then
+    echo "WARNING: MD5 hash of package does not match..."
+fi
+tar xvfz ${pkg}
+cd ${pkg_name}-${pkg_version}
+readonly prefix=${usr_prefix}/${pkg_name}
+./configure --prefix=${prefix} --without-bash-malloc
+make -j 2 install
+
+echo "Add ${prefix}/bin to your PATH variable..."
+
+exit 0
+
