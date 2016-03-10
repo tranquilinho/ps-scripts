@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=libffi
+readonly pkg_version=3.2.1
+readonly url_base=ftp://sourceware.org/pub/libffi/
+
+build_preconditions
+
+install_prereq pkgconfig "mandatory"
+#install_prereq libtasn "mandatory"
+
+export PATH=${usr_prefix}/pkg-config/bin:${PATH}
+
+./configure --prefix=${prefix} 
+
+standard_install
