@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
