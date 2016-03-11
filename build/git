@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
@@ -10,12 +10,12 @@ readonly pkg_name=git
 readonly pkg_version=2.7.1
 readonly url_base=https://www.kernel.org/pub/software/scm/git/
 
-build_preconditions
-
 readonly current_version=($(${usr_prefix}/git/bin/git --version))
 if [ "${current_version[2]}" == "${pkg_version}" ]; then
     log "${warning} ${pkg_name} ${pkg_version} already installed...."
 else
+    build_preconditions
+
     install_prereq zlib "mandatory"
     install_prereq pcre "mandatory"
     # install_prereq openssl "mandatory"
@@ -26,13 +26,14 @@ else
 # gettext includes the command "msgfmt" that git needs for localizing
     debian_install gettext
 
+export PATH=${usr_prefix}/pkg-config/bin:${PATH}
+
 # ssh is used to push and pull over the net.
 # A POSIX-compliant shell is required to run many scripts needed for everyday use (e.g. "bisect", "pull").
 # "Perl" version 5.8 or later is needed to use some of the features (e.g. preparing a partial commit using "git add -i/-p", interacting with svn repositories with "git svn").
 # Python version 2.4 or later (but not 3.x is needed to use the git-p4 interface  to Perforce.
-# --with-curl 
-    ./configure --prefix=${prefix} --with-zlib=${usr_prefix}/zlib
-
+# 
+    ./configure --prefix=${prefix} --with-zlib=${usr_prefix}/zlib --with-curl=${usr_prefix}/curl/
     standard_install
 
 fi
