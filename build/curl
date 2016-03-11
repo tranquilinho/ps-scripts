@@ -19,6 +19,11 @@ install_prereq openssl "mandatory"
 
 export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 # CA certs: https://curl.haxx.se/docs/sslcerts.html
+# --with-ca-bundle=FILE: use the specified file as CA certificate store. CA certificates need to be concatenated in PEM format into this file.
+# --with-ca-path=PATH: use the specified path as CA certificate store. CA certificates need to be stored as individual PEM files in this directory
+# If neither of the two options is specified, configure will try to auto-detect a setting.
+# It's also possible to explicitly not hardcode any default store but rely on the built in default the crypto library may provide instead.
+# You can achieve that by passing both --without-ca-bundle and --without-ca-path to the configure script.
 ./configure --prefix=${prefix} --with-ssl=${usr_prefix}/openssl --with-zlib=${usr_prefix}/zlib --with-ca-bundle=/etc/ssl/ca-bundle.crt
 
 standard_install
