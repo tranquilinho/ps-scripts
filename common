@@ -12,8 +12,8 @@ readonly build_log=${log_dir}/build.log
 # warning: appending logalize alters the value of $?, so you must use
 # ${PIPESTATUS[0]} instead
 logalize(){
-	local logalize_file=$1
-	[ -z "${log_facility}" ] && readonly log_facility=${service}-build
+	local logalize_file=${1:-${log_dir}/service.log}
+	[ -z "${log_facility}" ] && readonly log_facility=${service}
 
 	cat - | while read line_to_log ; do
 	    echo "${line_to_log}"
