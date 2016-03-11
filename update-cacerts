@@ -22,5 +22,10 @@ cp certs/*.pem /etc/ssl/certs
 cp ca-bundle*.crt /etc/ssl/ca-bundle.crt
 ln -s /etc/ssl/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
 
+# required in order to actually recognize the "new" certs
+# (c_rehash, rehash -> Create symbolic links to files named by the hash values)
+# (@see https://www.openssl.org/docs/manmaster/apps/c_rehash.html)
+c_rehash
+
 exit 0
 
