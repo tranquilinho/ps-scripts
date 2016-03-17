@@ -8,7 +8,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 readonly pkg_name=Python
 readonly pkg_version=2.7.11
-pkg=${pkg_name}-${pkg_version}.tar.xz
+readonly pkg_ext=tar.xz
 readonly url_base=https://www.python.org/ftp/python/2.7.11/
 
 build_preconditions
