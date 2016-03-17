@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 readonly     info="    "
 readonly  warning="WARN"
@@ -47,6 +47,11 @@ download_pkg(){
     local status=0
     local downloaded=1
 
+    if [ -f ${pkg} ]; then
+	log "${warning} File ${pkg} already exists..."
+	return
+    fi
+
     [ -z "$(which wget)" ] && debian_install wget
 
     if [ -n "${mirror_base}" ]; then
@@ -82,11 +87,17 @@ verify_pkg(){
 extract_pkg(){
     local pkg_file_info=$(file ${pkg})
 
-    if echo ${pkg_file_info} | grep "tar\|tgz" > /dev/null 2>&1; then
-	echo ${pkg_file_info} | grep bzip2 > /dev/null 2>&1 && local decompress_option="j"
-	echo ${pkg_file_info} | grep gzip > /dev/null 2>&1 && local decompress_option="z"
-	echo ${pkg_file_info} | grep XZ > /dev/null 2>&1 && local decompress_option="J"
+    if echo "${pkg_file_info}" | grep "tar\|tgz" > /dev/null 2>&1; then
+	echo "${pkg_file_info}" | grep bzip2 > /dev/null 2>&1 && local decompress_option="j"
+	echo "${pkg_file_info}" | grep gzip > /dev/null 2>&1 && local decompress_option="z"
+	echo "${pkg_file_info}" | grep XZ > /dev/null 2>&1 && local decompress_option="J"
 	tar xf${decompress_option} ${pkg}
+	if [ $? -ne 0 ]; then
+	    log "${critical} Could not extract package"
+	    exit 5
+	fi
+    elif echo "${pkg_file_info}" | grep "Zip archive data" > /dev/null 2>&1; then
+	unzip ${pkg}
 	if [ $? -ne 0 ]; then
 	    log "${critical} Could not extract package"
 	    exit 5
