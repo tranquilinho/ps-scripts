@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=freetype
+readonly pkg_version=2.6.3
+readonly url_base=http://download.savannah.gnu.org/releases/freetype/
+
+build_preconditions
+
+export PATH=${usr_prefix}/pkg-config/bin:${PATH}
+
+./configure --prefix=${prefix}   
+
+standard_install
+
