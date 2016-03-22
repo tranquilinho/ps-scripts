@@ -11,4 +11,4 @@ Clustering: Docker Swarm, consul, Zookeeper...
 
 Services:
 
-- logrotate -> testing, easy integration/configuration
+- logrotate -> testing (scripts/logrotate, config/mklogrotate_cfg), easy integration
