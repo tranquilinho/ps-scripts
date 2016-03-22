@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Logrotate is not a daemon, so 
+# this script should be run periodically
+# (for example, in service cron)
+
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg}
