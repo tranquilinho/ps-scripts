@@ -27,10 +27,15 @@ if [ -f ${exclude_file} ];then
     readonly exclude_option="--exclude-from=${exclude_file}"
 fi
 
-
 chmod 600 ${private_key}
 
-if [ -z "$(which rsync)" ]; then
+if [ -x ${usr_prefix}/rsync/bin/rsync ]; then
+    readonly rsync=${usr_prefix}/rsync/bin/rsync
+else
+    readonly rsync=$(which rsync)
+fi
+
+if [ -z "${rsync}" ]; then
     ${scripts_base}/build/rsync
 fi
 
@@ -57,7 +62,7 @@ for d in ${data_dirs}; do
     fi
     log "${info} Backup start: ${dir} to ${backup_dest}"
 
-    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" ${exclude_option} --delete ${snapshot_opt}  ${dir} ${backup_dest} | logalize ${log_file}
+    ${rsync} -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" ${exclude_option} --delete ${snapshot_opt}  ${dir} ${backup_dest} | logalize ${log_file}
     [ ${PIPESTATUS[0]} -ne 0 ] && backup_status=${critical}
     log "${backup_status} Backup finished: ${dir} to ${backup_dest}"
     # touch ${dir}/.last_vmsbackup
