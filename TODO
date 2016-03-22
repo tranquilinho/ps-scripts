@@ -8,3 +8,7 @@ Docker security best practices (https://www.ernw.de/download/ERNW_Stocard_Docker
 - drop capabilities
 
 Clustering: Docker Swarm, consul, Zookeeper...
+
+Services:
+
+- logrotate -> testing, easy integration/configuration
