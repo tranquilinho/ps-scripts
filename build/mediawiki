@@ -5,10 +5,12 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=mediawiki
-readonly pkg_version=1.24.1
-readonly url_base=http://releases.wikimedia.org/mediawiki/1.24/
-readonly expected_hash=9ad18d6f432bb77a27d5d3145278a296b15186db
+readonly pkg_version=1.26.2
+readonly url_base=https://releases.wikimedia.org/mediawiki/1.26/
+
 
 build_preconditions
 
 cp -a ${usr_prefix}/src/${pkg_dir} ${usr_prefix}/${pkg_name}
+mv ${usr_prefix}/${pkg_name}/mw-config ${usr_prefix}/${pkg_name}/mw-config.orig
+ln -s ${etc_dir}/mediawiki ${usr_prefix}/${pkg_name}/mw-config 
