@@ -1,0 +1,49 @@
+#!/bin/bash
+
+print_usage(){
+    echo "Print a logrotate.conf"
+    echo "Syntax: $0 -n service_name [-i logdir1,logdir2,...]"
+    exit 1
+}
+
+if [ "$#" -gt 0 ]; then
+    while getopts "i:n:" options; do
+	case "${options}" in
+            i)
+		readonly includes=${OPTARG}
+		;;
+	    n)
+		readonly service=${OPTARG}
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${service}" ] && print_usage
+
+readonly service_root="/services/${service}"
+
+cat <<EOF
+${service_root}/log/apache2/*.log{
+   size 20M
+   dateext
+   daily
+   missingok
+   rotate 52
+   compress
+   delaycompress
+   notifempty
+   create 640 root adm
+   sharedscripts
+   postrotate
+      ${service_root}/scripts/apache-service reload
+   endscript
+}
+EOF
+

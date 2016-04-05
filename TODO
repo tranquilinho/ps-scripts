@@ -1,0 +1,14 @@
+Add support for non-debian distros (CentOS)
+
+Docker security best practices (https://www.ernw.de/download/ERNW_Stocard_Docker-Devops-Security_fbarth-mluft.pdf)
+
+- namespaces
+- non root containers
+- seccomp
+- drop capabilities
+
+Clustering: Docker Swarm, consul, Zookeeper...
+
+Services:
+
+- logrotate -> testing (scripts/logrotate, config/mklogrotate_cfg), easy integration

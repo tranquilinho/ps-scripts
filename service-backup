@@ -38,7 +38,7 @@ log "${info} BACKUP STARTED"
 
 # the service is only interested in backing up itself
 data_dirs=$(grep data= ${config_file})
-log "${info} Backing-up data..."
+#log "${info} Backing-up data..."
 
 readonly rsync_options_line=$(grep rsync_options= ${config_file})
 readonly rsync_options=${rsync_options_line##rsync_options=}
@@ -47,14 +47,20 @@ line=$(grep backup= ${config_file})
 backup_host=$(expr match ${line} "backup=\(.*\):.*:.*:.*")
 backup_path=$(expr match ${line} "backup=.*:.*:.*:\(.*\)")
 for d in ${data_dirs}; do
+    backup_status="${success}"
     dir="$(expr match "${d}" "data=\(.*\)")"
     backup_dest="${backup_host}:${backup_path}/"
     # if ${DIR} does not end in /, we should append it...
-    snapshot_dir="/nas/snapshots/${service}/$(date +%Y%m%d)"
-    log "${info} Backing up ${dir} to ${backup_dest}"
+    if [ -z "${backup_snapshots}" -o "${backup_snapshots}" != "no" ]; then
+	snapshot_dir="/nas/snapshots/${service}/$(date +%Y%m%d)"
+	snapshot_opt="--backup --backup-dir=${snapshot_dir}"
+    fi
+    log "${info} Backup start: ${dir} to ${backup_dest}"
 
-    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" ${exclude_option} --delete --backup --backup-dir=${snapshot_dir} ${dir} ${backup_dest} | logalize ${log_file}
+    rsync -av ${rsync_options} -e "ssh -i ${private_key} -o StrictHostKeyChecking=no" ${exclude_option} --delete ${snapshot_opt}  ${dir} ${backup_dest} | logalize ${log_file}
+    [ ${PIPESTATUS[0]} -ne 0 ] && backup_status=${critical}
+    log "${backup_status} Backup finished: ${dir} to ${backup_dest}"
     # touch ${dir}/.last_vmsbackup
 done
 
-log "${success} BACKUP FINISHED"
+log "${info} BACKUP FINISHED"

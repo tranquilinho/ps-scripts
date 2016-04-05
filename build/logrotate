@@ -7,7 +7,6 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly pkg_name=logrotate
 readonly pkg_version=3.8.8
 readonly url_base=https://fedorahosted.org/releases/l/o/logrotate
-readonly expected_hash=e1acb9d15abc0d9f6a4f6e58409e0319e5d41f4e
 
 debian_install autoconf
 debian_install libtool
