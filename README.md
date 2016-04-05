@@ -26,7 +26,7 @@ Features
      missing ones
    - Integrated logging subsystem in log directory. There you will find apache logs, but also service backup logs, service deployment logs...
      Unified and simple format makes reading (or filtering) service logs a pleasure. The logs are kept outside Docker image, so you do not
-     need to worry about missing them.
+     need to worry about missing them. The logs can be rotated with the integrated logrotate.
 
 Coming soon...
 

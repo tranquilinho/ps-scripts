@@ -10,5 +10,3 @@ Docker security best practices (https://www.ernw.de/download/ERNW_Stocard_Docker
 Clustering: Docker Swarm, consul, Zookeeper...
 
 Services:
-
-- logrotate -> testing (scripts/logrotate, config/mklogrotate_cfg), easy integration
