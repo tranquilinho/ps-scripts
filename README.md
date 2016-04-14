@@ -159,8 +159,16 @@ tail -f log/*
 1445439388 2015-10-21 14:56:28 a12b328dc467                      CRIT Build environment not ready
 ~~~~~
 
+Log rotation is easy to enable:
 
-Since all the scripts are bash, you can dig into the details of any step invoking them with bash -x
+1. Configure logrotate:
+
+   /services/wp-example/scripts/config/mklogrotate_cfg -n wp-example > /services/wp-example/etc/logrotate.conf
+
+2. Add logrotate to service's cron:
+
+   echo "44 04  * * * root /services/wp-example/scripts/logrotate" > /services/wp-example/etc/cron/wp-example-logrotate
+
 
 Usage examples
 ==============
@@ -195,7 +203,9 @@ Related projects
 Issues and troubleshooting
 ==========================
 
-Currently, ps-scripts is tested only in Debian. Some minor issues might happen in other Linux flavours
+Currently, ps-scripts is tested only in Debian. Some minor issues might happen in other Linux flavours.
+
+Since all the scripts are bash, you can dig into the details of any step invoking them with bash -x
 
 Feel free to contact me regarding suggestions, requests or any issue you find.
 
