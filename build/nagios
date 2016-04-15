@@ -5,11 +5,10 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=nagios
-readonly pkg_version=4.0.7
-readonly url_base="http://optimate.dl.sourceforge.net/project/nagios/nagios-4.x/nagios-4.0.7/"
-readonly expected_hash=d2c4727ea34b4e1e865578c586aa128ce61f6a35
+readonly pkg_version=4.1.1
+readonly url_base=https://assets.nagios.com/downloads/nagioscore/releases/
 
-log "${info} ${pkg_name} install started"
+# log "${info} ${pkg_name} install started"
 
 # nagios user is already needed for nagios-plugins and nrpe
 ${scripts_base}/nagios-user
@@ -17,6 +16,7 @@ ${scripts_base}/nagios-user
 install_prereq nagios-plugins "mandatory"
 install_prereq nrpe "mandatory"
 install_prereq php "mandatory"
+debian_install unzip
 
 build_preconditions
 
