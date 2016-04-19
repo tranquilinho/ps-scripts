@@ -1,0 +1,52 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="vnc"
+readonly log_facility="${service}-${module}"
+readonly daemon=/usr/bin/vncserver
+readonly pidfile=${run_dir}/${module}.pid
+. ${scripts_base}/common
+
+[ -z "${vnc_user}" ] && vnc_user=ubuntu
+readonly vnc_display="1"
+readonly depth="16"
+readonly geometry="1024x768"
+readonly vnc_options="-depth ${depth} -geometry ${geometry} :${vnc_display} -localhost"
+
+service_start(){
+    log "${info} Starting ${module}"
+    su ${vnc_user} -c "${daemon} ${vnc_options}"
+    status=$? 
+    if [ ${status} -eq 0 ]; then
+	log "${success} ${daemon} started"
+    else
+	log "${critical} Problem starting ${daemon}"
+    fi
+}
+
+service_stop(){
+    log "${info} Stopping ${module}..."
+    su ${vnc_user} -c "${daemon} -kill :${vnc_display}" 2>&1 | logalize ${log_file}
+    log "${success} Stopped"
+}
+
+case "$1" in
+    "start")
+	service_start
+	;;
+    "stop")
+	service_stop
+	;;
+    "restart")
+	service_stop
+	service_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
