@@ -1,7 +1,7 @@
 ps-scripts
 ==========
 
-ps-scripts is a set of scripts that make deploying services on Linux a best practice.
+"A set of scripts that make deploying services on Linux a best practice."
 
 A service can be a simple WordPress blog, or a buildbot master, or a Django webapp...
 
@@ -84,6 +84,18 @@ Now apache config:
     /services/wp-example/scripts/config/apache2/mkhttpd_conf > /services/wp-example/etc/apache2/httpd.conf
     /services/wp-example/scripts/config/apache2/mkservice_conf > /services/wp-example/etc/apache2/service.conf
     cp /services/wp-example/scripts/config/apache2/envvars /services/wp-example/etc/apache2
+    # If you want to use HTTPs...
+    # ... 1) if you do not have a SSL keypair, create one (obviously, being "self-made" it will require explicit approval in the client browser):
+    /services/guacamole/scripts/config/make-snakeoil-cert -n wpe -C ES -c Madrid -O Organization -o Unit -F my-sample-domain.com -e info@my-sample-domain.com
+    # ... 2) add it to apache config:
+    Listen 443
+    <VirtualHost *:443>
+       # SSL configuration
+       SSLEngine on
+       # Self-generated
+       SSLCertificateFile      /services/wp-example/etc/apache2/ssl/wpe.pem
+       SSLCertificateKeyFile   /services/wp-example/etc/apache2/ssl/wpe-private.key
+		   
 
 Docker configuration:
 
