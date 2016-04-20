@@ -17,3 +17,5 @@ export LDFLAGS=-L${usr_prefix}/mesa/lib
 ./configure --prefix=${prefix}
 
 standard_install
+
+echo "Add ${prefix}/lib to LD_LIBRARY_PATH"
