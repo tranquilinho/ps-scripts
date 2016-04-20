@@ -33,6 +33,7 @@ Coming soon...
    - service mirroring: automatically keep a clone of a running service. If the "master" dies, you can switch to the clone while fixing
      the environment where master ran
    - instacreation script: collect all the preliminars in a single script
+   - tests: in the spirit of [Babushka][http://babushka.me/]
 
 Getting started
 ===============
