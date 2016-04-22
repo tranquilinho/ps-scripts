@@ -22,6 +22,7 @@ else
 
     # Buildbot dependencies
     # pycrypto: required for manhole
+    ${pip} install pysqlite
     ${pip} install pycrypto pyasn1 | logalize ${build_log}
     ${pip} install twisted | logalize ${build_log}
 
