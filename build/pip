@@ -12,6 +12,12 @@ readonly url_base=https://pypi.python.org/packages/source/p/pip
 
 build_preconditions
 
+readonly current_version=($(${usr_prefix}/Python/bin/pip --version))
+if [ "${current_version[1]}" == "${pkg_version}" ]; then
+    log "${warning} ${pkg_name} ${pkg_version} already installed...."
+    exit 0
+fi
+
 install_prereq python "mandatory"
 install_prereq setuptools "mandatory"
 
