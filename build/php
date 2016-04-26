@@ -21,7 +21,12 @@ build_preconditions
 # mbstring -> --enable-mbregex, --with-gd=DIR?
 # @see http://php.net/manual/en/mbstring.installation.php
 
-./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs --with-libxml-dir=${usr_prefix}/libxml2 --with-openssl=${usr_prefix}/openssl --with-pcre-regex=${usr_prefix}/pcre --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir=${usr_prefix}/zlib --with-config-file-path=${etc_dir} --enable-mbstring
+# Postgres module -> currently using libpq-dev package
+
+export PGSQL_INCLUDE=${usr_prefix}/postgresql/include
+export PGSQL_LIBDIR=${usr_prefix}/postgresql/lib
+
+./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs --with-libxml-dir=${usr_prefix}/libxml2 --with-openssl=${usr_prefix}/openssl --with-pcre-regex=${usr_prefix}/pcre --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir=${usr_prefix}/zlib --with-config-file-path=${etc_dir} --enable-mbstring --with-pgsql=${usr_prefix}/postgresql/
 
 # if apache-build libtool fails, replace it with php one
 standard_install
