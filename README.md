@@ -202,4 +202,4 @@ Feel free to contact me regarding suggestions, requests or any issue you find.
 Author
 ======
 
-Copyright 2014,2015 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com). Biocomputing Unit - CNB/CSIC.
+Copyright 2014-2016 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com). Biocomputing Unit - CNB/CSIC.
