@@ -9,12 +9,17 @@ readonly module="guacamole"
 readonly log_facility="${service}-${module}"
 readonly daemon=${usr_prefix}/guacamole-server/sbin/guacd
 readonly pidfile=${run_dir}/${module}.pid
+readonly default_address="127.0.0.1"
+# possible values: debug, info, warning, error
+# @see http://guac-dev.org/doc/0.9.9/gug/configuring-guacamole.html
+readonly guacd_log_level="debug"
+
 . ${scripts_base}/common
 
 
 service_start(){
     log "${info} Starting ${module}"
-    ${daemon} -p ${pidfile}
+    ${daemon} -p ${pidfile} -b ${default_address} -l ${guacd_port:-4822} -L ${guacd_log_level}
     status=$? ; pid=$!
     if [ ${status} -eq 0 ]; then
 	# echo ${pid} > ${pidfile}
