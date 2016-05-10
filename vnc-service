@@ -11,14 +11,12 @@ readonly daemon=/usr/bin/vncserver
 readonly pidfile=${run_dir}/${module}.pid
 . ${scripts_base}/common
 
-[ -z "${vnc_user}" ] && vnc_user=ubuntu
-readonly vnc_display="1"
 readonly depth="16"
 readonly geometry="1024x768"
-readonly vnc_options="-depth ${depth} -geometry ${geometry} :${vnc_display} -localhost"
 
 service_start(){
     log "${info} Starting ${module}"
+    local vnc_options="-depth ${depth} -geometry ${geometry} :${vnc_display} -localhost"
     su ${vnc_user} -c "${daemon} ${vnc_options}"
     status=$? 
     if [ ${status} -eq 0 ]; then
@@ -34,6 +32,12 @@ service_stop(){
     log "${success} Stopped"
 }
 
+[ -n "$2" ] && vnc_user="$2"
+[ -z "${vnc_user}" ] && vnc_user=ubuntu
+
+[ -n "$3" ] && vnc_display="$3"
+[ -z "${vnc_display}" ] && vnc_display="1"
+
 case "$1" in
     "start")
 	service_start
@@ -46,7 +50,7 @@ case "$1" in
 	service_start
 	;;
     *)
-	echo "Syntax: $0 [start|stop|restart]"
+	echo "Syntax: $0 {start|stop|restart} [user [display]]"
 esac
 
 exit 0
