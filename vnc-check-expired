@@ -1,0 +1,36 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+
+readonly log_file=${log_dir}/service.log
+readonly log_facility="vnc-service"
+
+readonly guacamole_user=${1:-scipion}
+
+check_expired_account(){
+    local user=$1
+    # expiry only checks "current" user -> need to run it as ${user}
+    su ${user} -c "expiry -c" >/dev/null 2>&1
+    return $?
+}
+
+check_expired_sessions(){
+    local active_vnc_users=($(ps -eo user,comm | grep vnc | cut -f 1 -d" "))
+    for u in ${active_vnc_users[@]};do
+	check_expired_account ${u}
+	if [ $? -ne 0 ]; then
+	    local display=$(ps -u ${u} -o args | grep vnc | grep : | sed 's_[^:]* :\([0-9]*\) [^:]*_\1_g')
+	    log "session for ${u} (${display}) expired - stopping"
+	    ${scripts_base}/vnc-service stop ${u} ${display}
+	fi
+    done
+}
+
+check_expired_sessions
+
+
+
+
