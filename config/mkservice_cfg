@@ -134,6 +134,7 @@ user_wants guacamole && cat <<"EOF"
 readonly guacamole_enabled=1
 readonly guacamole_keep_pass=1
 readonly vnc_on_demand=1
+readonly mod_proxy_enabled=1
 export GUACAMOLE_HOME=${etc_dir}/guacamole
 EOF
 
