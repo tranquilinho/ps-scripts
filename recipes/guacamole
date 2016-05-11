@@ -40,6 +40,7 @@ fi
 
 if [ ${step} -le 5  ]; then
     # Software dependencies
+    ${scripts_base}/build/tomcat
     ${scripts_base}/build/guacamole-server
     ${scripts_base}/build/guacamole-client
     ${scripts_base}/build/vncserver
