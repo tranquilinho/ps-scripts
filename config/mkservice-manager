@@ -33,6 +33,20 @@ EOF
 [ ${mysql_enabled} -eq 1 ] && cat <<"EOF"
     ${scripts_base}/mysql-service start
 EOF
+
+[ ${tomcat_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/tomcat-service start
+EOF
+
+[ ${guacamole_enabled} -eq 1 ] && cat <<"EOF"
+    # the "client" is a .war that runs inside tomcat 
+    # by default, reset password every 7 days - unless guacamole_keep_pass=1 
+    [ "G${guacamole_keep_pass}" == "G1" ] || ${scripts_base}/guacamole-change-password 
+    ${scripts_base}/guacamole-service start
+    # by default, run vnc service - unless vnc_on_demand=1 
+    [ "G${vnc_on_demand}" == "G1" ] || ${scripts_base}/vnc-service start
+EOF
+
 [ ${apache_enabled} -eq 1 ] && cat <<"EOF"
     ${scripts_base}/apache-service start
 EOF
@@ -49,6 +63,15 @@ EOF
 
 [ ${cron_enabled} -eq 1 ] && cat <<"EOF"
     ${scripts_base}/cron-service stop
+EOF
+
+[ ${tomcat_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/tomcat-service stop 
+EOF
+
+[ ${guacamole_enabled} -eq 1 ] && cat <<"EOF"
+    [ "G${vnc_on_demand}" == "G1" ] || ${scripts_base}/vnc-service stop
+    ${scripts_base}/guacamole-service stop
 EOF
 
 [ ${apache_enabled} -eq 1 ] && cat <<"EOF"
