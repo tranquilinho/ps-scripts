@@ -45,6 +45,7 @@ if [ ${step} -le 5  ]; then
     ${scripts_base}/build/vncserver
     ${scripts_base}/build/apache
     
+    ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
     cat <<EOFB
 cat > ${etc_dir}/service.apache <<EOF
    RewriteRule ^/guacamole$ /guacamole/ [R]
