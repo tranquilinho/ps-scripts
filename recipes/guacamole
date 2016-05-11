@@ -45,6 +45,6 @@ if [ ${step} -le 5  ]; then
     ${scripts_base}/build/vncserver
     ${scripts_base}/build/apache
     
-    ${scripts_base}/config/apache/mkservice_conf > ${etc_dir}apache2/service.conf
+    ${scripts_base}/config/apache/mkservice_conf > ${etc_dir}/apache2/service.conf
     cp ${scripts_base}/config/apache2/envvars ${etc_dir}/apache2/
 fi
