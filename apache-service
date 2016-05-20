@@ -11,6 +11,7 @@ readonly daemon="httpd"
 readonly log_facility="${service}-${module}"
 
 readonly pidfile=${run_dir}/${module}.pid
+[ ! -d ${run_dir} ] && mkdir -p ${run_dir}
 
 . ${scripts_base}/common
 
