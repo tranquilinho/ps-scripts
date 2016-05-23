@@ -28,6 +28,7 @@ if [ ${step} -le 3 ]; then
     [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,guacamole,tomcat,apache,https > ${service_root}/etc/service.cfg
 
     [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
+    chmod u+x ${service_root}/etc/service-manager
     # service-prereq
     (( step ++ ))
 fi
