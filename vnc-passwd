@@ -1,0 +1,31 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="vnc"
+readonly log_facility="${service}-${module}"
+. ${scripts_base}/common
+
+[ $# -ne 2 ] && echo "Syntax: $0 vnc_user vnc_pass" && exit 1
+
+vnc_user="$1"
+vnc_pass="$2"
+
+log "${info} Updating vnc pass for ${vnc_user}"
+readonly user_vnc_dir=$(eval echo ~${vnc_user}/.vnc)
+[ ! -d ${user_vnc_dir} ] && mkdir ${user_vnc_dir} && chown ${vnc_user} ${user_vnc_dir}
+vncpasswd -f <<< ${vnc_pass} >
+chown ${vnc_user}  ${user_vnc_dir}/passwd
+chmod 600  ${user_vnc_dir}/passwd
+status=$? 
+if [ ${status} -eq 0 ]; then
+    log "${success} Pass updated (${vnc_user})"
+else
+    log "${critical} Problem updating (${vnc_user})"
+fi
+
+
+
