@@ -17,7 +17,7 @@ vnc_pass="$2"
 log "${info} Updating vnc pass for ${vnc_user}"
 readonly user_vnc_dir=$(eval echo ~${vnc_user}/.vnc)
 [ ! -d ${user_vnc_dir} ] && mkdir ${user_vnc_dir} && chown ${vnc_user} ${user_vnc_dir}
-vncpasswd -f <<< ${vnc_pass} >
+vncpasswd -f <<< ${vnc_pass} > ${user_vnc_dir}/passwd
 chown ${vnc_user}  ${user_vnc_dir}/passwd
 chmod 600  ${user_vnc_dir}/passwd
 status=$? 
