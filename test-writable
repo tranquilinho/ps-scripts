@@ -1,0 +1,49 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+readonly log_file=${service_log}
+readonly log_facility="${service}"
+. ${scripts_base}/common
+
+check_params "target user" $0 $@
+
+readonly target=$1
+readonly user=$2
+
+# http://stackoverflow.com/a/14104522
+# http://stackoverflow.com/a/14318764
+# Use -L to get information about the target of a symlink,
+# not the link itself, as pointed out in the comments
+target_info=( $(stat -Lc "0%a %G %U" ${target}) )
+perm="${target_info[0]}"
+group="${target_info[1]}"
+owner="${target_info[2]}"
+
+access=1
+
+readonly aw=$((${perm}&0002))
+readonly gw=$((${perm}&0020))
+readonly uw=$((${perm}&0200))
+
+if [ ${aw} -ne 0 ]; then
+    # Everyone has write access
+    access=0
+elif [ ${gw} -ne 0 ]; then
+    # Some group has write access.
+    # Is user in that group?
+    gs=( $(groups ${user}) )
+    for g in "${gs[@]}"; do
+        if [[ ${group} == ${g} ]]; then
+            access=0
+            break
+        fi
+    done
+elif [ ${uw} -ne 0 ]; then 
+    # The owner has write access.
+    # Does the user own the file?
+    [[ ${user} == ${owner} ]] && access=0
+fi
+
+exit ${access}
