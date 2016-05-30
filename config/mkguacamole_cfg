@@ -38,7 +38,7 @@ auth-provider: net.sourceforge.guacamole.net.basic.BasicFileAuthenticationProvid
 basic-user-mapping: ${etc_dir}/guacamole/user-mapping.xml
 EOF
 
-[ ${guacamole_logging} -eq 1 ] && cat > ${etc_guacamole}/logback.xml <<EOF
+[ "A${guacamole_logging}" == "A1" ] && cat > ${etc_guacamole}/logback.xml <<EOF
 <!-- guacamole looks for GUACAMOLE_HOME/logback.xml -->
 <configuration>
     <!-- Appender for debugging -->
