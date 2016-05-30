@@ -11,6 +11,14 @@ readonly url_base=http://cache.ruby-lang.org/pub/ruby/1.9/
 install_prereq zlib "mandatory"
 install_prereq openssl "mandatory"
 
+readonly available_ruby=$(${usr_prefix}/ruby/bin/ruby -v 2>&1 )
+
+if [[ "${available_ruby}" == ruby* ]]; then
+    log "${warning} ${available_ruby} already installed..."
+    exit 0
+fi
+
+
 build_preconditions
 
 # export C_INCLUDE_PATH=/services/redmine/usr/include
