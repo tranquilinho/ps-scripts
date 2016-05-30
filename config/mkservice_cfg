@@ -2,7 +2,7 @@
 
 print_usage(){
     echo Make a service.cfg file into stdout
-    echo "Syntax: $0 -n service_name [-i feature1,feature2,...]"
+    echo "Syntax: $0 -n service_name [-m mirror -i feature1,feature2,...]"
     echo "Features available:"
     grep _enabled $0 | gawk '{ if (match($0, /^readonly (.*)_enabled.*/, matches)) print matches[1]}' | sort
     exit 1
@@ -15,13 +15,16 @@ user_wants(){
 }
 
 if [ "$#" -gt 0 ]; then
-    while getopts "i:n:" options; do
+    while getopts "i:n:m:" options; do
 	case "${options}" in
             i)
 		readonly includes=${OPTARG}
 		;;
 	    n)
 		readonly service=${OPTARG}
+		;;
+	    m)
+		readonly mirror="${OPTARG}"
 		;;
             *)
 		echo "Unknow option" 1>&2 
@@ -57,7 +60,19 @@ readonly key_path=${etc_dir}/service-keys
 readonly private_key=${key_path}/id_rsa
 readonly public_key=${key_path}/id_rsa.pub
 
+EOF
+
+if [ -z "${mirror}" ]; then
+cat<<EOF
 # readonly mirror_base=
+EOF
+else
+cat<<EOF
+readonly mirror_base=${mirror}
+EOF
+fi
+
+cat<<EOF
 
 # default value for paralelism (-j option in make, etc)
 readonly ps_paralel="-j 2"
