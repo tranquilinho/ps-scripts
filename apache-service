@@ -11,6 +11,7 @@ readonly daemon="httpd"
 readonly log_facility="${service}-${module}"
 
 readonly pidfile=${run_dir}/${module}.pid
+[ ! -d ${run_dir} ] && mkdir -p ${run_dir}
 
 . ${scripts_base}/common
 
@@ -52,7 +53,7 @@ apache_start(){
     # Clean inaccurate PID file
     is_running ${daemon} ${pidfile}
     local retcode=$?
-    if [ ${retcode} -eq 1 -a $( cat ${pidfile} | wc -l ) -gt 0 ]; then
+    if [ ${retcode} -eq 1 -a $( cat ${pidfile} 2> /dev/null | wc -l ) -gt 0 ]; then
 	rm ${pidfile}
     elif [ ${retcode} -eq 2 ]; then
 	rm ${pidfile}

@@ -19,10 +19,9 @@ readonly pidfile=${run_dir}/${module}.pid
 
 sshd_start(){
     log "${info} Starting ${module}"
-    ${daemon} -p ${ssh_port} -f ${etc_dir}/ssh/sshd_config
-    status=$? ; pid=$!
-    if [ ${status} -eq 0 ]; then
-	echo ${pid} > ${pidfile}
+    # Pid is managed by sshd itself, as configured in sshd_config
+    ${daemon} -p ${ssh_port} -f ${etc_dir}/ssh/sshd_config 
+    if [ $? -eq 0 ]; then
 	log "${success} ${daemon} started"
     else
 	log "${critical} Problem starting ${daemon}"

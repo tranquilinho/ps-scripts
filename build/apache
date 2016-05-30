@@ -13,7 +13,7 @@ log "${info} ${pkg_name} install started"
 
 install_prereq apr-util "mandatory"
 install_prereq pcre "mandatory"
-install_prereq openssl "mandatory"
+[ "${https_enabled}" == "1" ] && install_prereq openssl "mandatory"
 # libxml2 is required by proxy-html 
 install_prereq libxml2 "mandatory"
 
@@ -33,11 +33,13 @@ cat ${scripts_base}/build/apache-portable.layout >> config.layout
 # You can setup MPM as modules (--enable-mpms-shared=all) or static ( --with-mpm=module)
 
 # for ldap support in apache, apr-util must be build with ldap support too (specyfing where the ldap libs are)
+
 # There are 2 types of CGI support:
 # --enable-cgid  (default with threaded MPMs)
 # --enable-cgi   (default with non-threaded MPMs)
+[ "${cgi_enabled}" == "1" ] && cgi_param="--enable-cgi"
+[ "${https_enabled}" == "1" ] && ssl_param="--enable-ssl -with-ssl=${usr_prefix}/openssl"
 
-
-./configure --prefix=${prefix} --enable-layout=Portable --datadir=${data_dir} --localstatedir=${service_root} --enable-pie -enable-authn-dbm --enable-authz-dbm --enable-ratelimit --enable-log-debug --enable-ssl --with-apr=${usr_prefix}/apr --with-apr-util=${usr_prefix}/apr-util --with-pcre=${usr_prefix}/pcre -with-ssl=${usr_prefix}/openssl --enable-proxy-html | logalize $(configure_log)
+./configure --prefix=${prefix} --enable-layout=Portable --datadir=${data_dir} --localstatedir=${service_root} --enable-pie -enable-authn-dbm --enable-authz-dbm --enable-ratelimit --enable-log-debug ${cgi_param} ${ssl_param} --with-apr=${usr_prefix}/apr --with-apr-util=${usr_prefix}/apr-util --with-pcre=${usr_prefix}/pcre --enable-proxy-html | logalize $(configure_log)
 
 standard_install

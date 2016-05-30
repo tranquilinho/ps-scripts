@@ -1,0 +1,21 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=glu
+readonly pkg_version=9.0.0
+readonly url_base=ftp://ftp.freedesktop.org/pub/mesa/glu/
+
+build_preconditions
+
+install_prereq mesa "mandatory"
+
+export CPPFLAGS=-I${usr_prefix}/mesa/include
+export LDFLAGS=-L${usr_prefix}/mesa/lib
+./configure --prefix=${prefix}
+
+standard_install
+
+echo "Add ${prefix}/lib to LD_LIBRARY_PATH"

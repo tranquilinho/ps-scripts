@@ -1,7 +1,7 @@
 ps-scripts
 ==========
 
-ps-scripts is a set of scripts that make deploying services on Linux a best practice.
+"A set of scripts that make deploying services on Linux a best practice."
 
 A service can be a simple WordPress blog, or a buildbot master, or a Django webapp...
 
@@ -26,13 +26,14 @@ Features
      missing ones
    - Integrated logging subsystem in log directory. There you will find apache logs, but also service backup logs, service deployment logs...
      Unified and simple format makes reading (or filtering) service logs a pleasure. The logs are kept outside Docker image, so you do not
-     need to worry about missing them.
+     need to worry about missing them. The logs can be rotated with the integrated logrotate.
 
 Coming soon...
 
    - service mirroring: automatically keep a clone of a running service. If the "master" dies, you can switch to the clone while fixing
      the environment where master ran
    - instacreation script: collect all the preliminars in a single script
+   - tests: in the spirit of [Babushka][http://babushka.me/]
 
 Getting started
 ===============
@@ -84,6 +85,18 @@ Now apache config:
     /services/wp-example/scripts/config/apache2/mkhttpd_conf > /services/wp-example/etc/apache2/httpd.conf
     /services/wp-example/scripts/config/apache2/mkservice_conf > /services/wp-example/etc/apache2/service.conf
     cp /services/wp-example/scripts/config/apache2/envvars /services/wp-example/etc/apache2
+    # If you want to use HTTPs...
+    # ... 1) if you do not have a SSL keypair, create one (obviously, being "self-made" it will require explicit approval in the client browser):
+    /services/guacamole/scripts/config/make-snakeoil-cert -n wpe -C ES -c Madrid -O Organization -o Unit -F my-sample-domain.com -e info@my-sample-domain.com
+    # ... 2) add it to apache config:
+    Listen 443
+    <VirtualHost *:443>
+       # SSL configuration
+       SSLEngine on
+       # Self-generated
+       SSLCertificateFile      /services/wp-example/etc/apache2/ssl/wpe.pem
+       SSLCertificateKeyFile   /services/wp-example/etc/apache2/ssl/wpe-private.key
+		   
 
 Docker configuration:
 
@@ -159,8 +172,16 @@ tail -f log/*
 1445439388 2015-10-21 14:56:28 a12b328dc467                      CRIT Build environment not ready
 ~~~~~
 
+Log rotation is easy to enable:
 
-Since all the scripts are bash, you can dig into the details of any step invoking them with bash -x
+1. Configure logrotate:
+
+   /services/wp-example/scripts/config/mklogrotate_cfg -n wp-example > /services/wp-example/etc/logrotate.conf
+
+2. Add logrotate to service's cron:
+
+   echo "44 04  * * * root /services/wp-example/scripts/logrotate" > /services/wp-example/etc/cron/wp-example-logrotate
+
 
 Usage examples
 ==============
@@ -195,7 +216,9 @@ Related projects
 Issues and troubleshooting
 ==========================
 
-Currently, ps-scripts is tested only in Debian. Some minor issues might happen in other Linux flavours
+Currently, ps-scripts is tested only in Debian. Some minor issues might happen in other Linux flavours.
+
+Since all the scripts are bash, you can dig into the details of any step invoking them with bash -x
 
 Feel free to contact me regarding suggestions, requests or any issue you find.
 

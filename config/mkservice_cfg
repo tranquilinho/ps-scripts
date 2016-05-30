@@ -129,3 +129,21 @@ user_wants nagios && cat <<"EOF"
 readonly nagios_enabled=1
 export nagios_cfg=${etc_dir}/nagios/nagios.cfg
 EOF
+
+user_wants guacamole && cat <<"EOF"
+readonly guacamole_enabled=1
+readonly guacamole_keep_pass=1
+readonly vnc_on_demand=1
+readonly mod_proxy_enabled=1
+export GUACAMOLE_HOME=${etc_dir}/guacamole
+EOF
+
+user_wants tomcat && cat <<"EOF"
+readonly tomcat_enabled=1
+#readonly tomcat_server_port=
+#readonly tomcat_http_port=
+#readonly tomcat_https_port=
+export JAVA_HOME=${usr_prefix}/jdk
+export CATALINA_HOME=${usr_prefix}/apache-tomcat/
+export CATALINA_TMPDIR=${data_dir}/run/apache-tomcat/
+EOF

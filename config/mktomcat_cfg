@@ -9,50 +9,174 @@ readonly log_facility="${service}-gf-conf"
 
 . ${scripts_base}/common
 
-# Important parameters:
+readonly etc_tomcat=${etc_dir}/tomcat
+readonly tomcat_templates=${scripts_base}/config/tomcat
+[ -z "${tomcat_server_port}" ] && readonly tomcat_server_port=8005
+[ -z "${tomcat_http_port}" ] && readonly tomcat_http_port=8080
+[ -z "${tomcat_https_port}" ] && readonly tomcat_https_port=8443
 
-# server.xml:
-# <Server port="8005" shutdown="SHUTDOWN">
-#     <Connector port="8080" protocol="HTTP/1.1" 
-#     <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
-#
-# logging.properties -> path to logs
-#
-# tomcat-users.xml -> roles
+[ ! -d ${etc_tomcat} ] && mkdir  ${etc_dir}/tomcat
+
+# Usually default config is enough - just copy the files
+[ ! -f ${etc_tomcat}/catalina.policy ] && cp ${tomcat_templates}/catalina.policy ${etc_tomcat}
+
+[ ! -f ${etc_tomcat}/catalina.properties ] && cp ${tomcat_templates}/catalina.properties ${etc_tomcat}
+
+[ ! -f ${etc_tomcat}/context.xml ] && cp ${tomcat_templates}/context.xml ${etc_tomcat}
+
+[ ! -f ${etc_tomcat}/logging.properties ] && cp ${tomcat_templates}/logging.properties ${etc_tomcat}
+
+[ ! -f ${etc_tomcat}/tomcat-users.xml ] && cp ${tomcat_templates}/tomcat-users.xml ${etc_tomcat}
+
+[ ! -f ${etc_tomcat}/web.xml ] && cp ${tomcat_templates}/web.xml ${etc_tomcat}
+  
+
+cat > ${etc_tomcat}/server.xml <<EOF
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- Note:  A "Server" is not itself a "Container", so you may not
+     define subcomponents such as "Valves" at this level.
+     Documentation at /docs/config/server.html
+ -->
+<Server port="${tomcat_server_port}" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+  <!-- Security listener. Documentation at /docs/config/listeners.html
+  <Listener className="org.apache.catalina.security.SecurityListener" />
+  -->
+  <!--APR library loader. Documentation at /docs/apr.html -->
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <!--Initialize Jasper prior to webapps are loaded. Documentation at /docs/jasper-howto.html -->
+  <Listener className="org.apache.catalina.core.JasperListener" />
+  <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+  <!-- Global JNDI resources
+       Documentation at /docs/jndi-resources-howto.html
+  -->
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+    <Resource name="UserDatabase" auth="Container"
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml" />
+  </GlobalNamingResources>
+
+  <!-- A "Service" is a collection of one or more "Connectors" that share
+       a single "Container" Note:  A "Service" is not itself a "Container",
+       so you may not define subcomponents such as "Valves" at this level.
+       Documentation at /docs/config/service.html
+   -->
+  <Service name="Catalina">
+
+    <!--The connectors can use a shared executor, you can define one or more named thread pools-->
+    <!--
+    <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+        maxThreads="150" minSpareThreads="4"/>
+    -->
 
 
-exit 1
+    <!-- A "Connector" represents an endpoint by which requests are received
+         and responses are returned. Documentation at :
+         Java HTTP Connector: /docs/config/http.html (blocking & non-blocking)
+         Java AJP  Connector: /docs/config/ajp.html
+         APR (HTTP/AJP) Connector: /docs/apr.html
+         Define a non-SSL HTTP/1.1 Connector on port 8080
+    -->
+    <Connector port="${tomcat_http_port}" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               address="127.0.0.1"
+               redirectPort="${tomcat_https_port}" />
+    <!-- A "Connector" using the shared thread pool-->
+    <!--
+    <Connector executor="tomcatThreadPool"
+               port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" />
+    -->
+    <!-- Define a SSL HTTP/1.1 Connector on port 8443
+         This connector uses the BIO implementation that requires the JSSE
+         style configuration. When using the APR/native implementation, the
+         OpenSSL style configuration is required as described in the APR/native
+         documentation -->
+    <!--
+    <Connector port="8443" protocol="org.apache.coyote.http11.Http11Protocol"
+               maxThreads="150" SSLEnabled="true" scheme="https" secure="true"
+               clientAuth="false" sslProtocol="TLS" />
+    -->
 
-if [ $# -ne 1 ]; then
-    readonly version=4.0
-else
-    readonly version=$1
-fi
+    <!-- Define an AJP 1.3 Connector on port 8009 -->
+    <Connector port="8009" protocol="AJP/1.3" redirectPort="${tomcat_https_port}" />
 
-[ -z "${gfadmin_password_file}" ] && readonly gfadmin_password_file=${etc_dir}/gfadmin.password
 
-if [ ! -f ${gfadmin_password_file} ]; then
-    readonly gfadmin_password=$( random_str )
-    echo "AS_ADMIN_USERPASSWORD=${gfadmin_password}" > ${gfadmin_password_file} 
-else
-    readonly line=$(grep "AS_ADMIN_USERPASSWORD=" ${gfadmin_password_file})
-    readonly gfadmin_password=$( expr match "${line}" ".*=\(.*\)")
-fi
+    <!-- An Engine represents the entry point (within Catalina) that processes
+         every request.  The Engine implementation for Tomcat stand alone
+         analyzes the HTTP headers included with the request, and passes them
+         on to the appropriate Host (virtual host).
+         Documentation at /docs/config/engine.html -->
 
-# Check that all required vars are available
-if [ -z "${gfadmin_password}" -o -z "${gfadmin_port}" -o -z "${JAVA_HOME}" -o -z "${gfhttp_port}" ]; then
-    log "${critical} Missing glassfish parameters in service config"
-    exit 5
-fi
+    <!-- You should set jvmRoute to support load-balancing via AJP ie :
+    <Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
+    -->
+    <Engine name="Catalina" defaultHost="localhost">
 
-# customize the answers file using the env vars from service.cfg
-(
-cat - ${scripts_base}/config/glassfish-${version}.answers <( echo _myEOF)  <<EOF
-readonly service_cfg=${0%/scripts*}/etc/service.cfg
-. ${service_cfg}
-readonly gfadmin_password=${gfadmin_password}
-cat <<_myEOF
+      <!--For clustering, please take a look at documentation at:
+          /docs/cluster-howto.html  (simple how to)
+          /docs/config/cluster.html (reference documentation) -->
+      <!--
+      <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>
+      -->
+
+      <!-- Use the LockOutRealm to prevent attempts to guess user passwords
+           via a brute-force attack -->
+      <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <!-- This Realm uses the UserDatabase configured in the global JNDI
+             resources under the key "UserDatabase".  Any edits
+             that are performed against this UserDatabase are immediately
+             available for use by the Realm.  -->
+        <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+               resourceName="UserDatabase"/>
+      </Realm>
+
+      <Host name="localhost"  appBase="webapps"
+            unpackWARs="true" autoDeploy="true">
+
+        <!-- SingleSignOn valve, share authentication between web applications
+             Documentation at: /docs/config/valve.html -->
+        <!--
+        <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
+        -->
+
+        <!-- Access log processes all example.
+             Documentation at: /docs/config/valve.html
+             Note: The pattern used is equivalent to using pattern="common" -->
+        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+               prefix="localhost_access_log." suffix=".txt"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+
+      </Host>
+    </Engine>
+  </Service>
+</Server>
 EOF
-) | bash
 
-log "${info} glassfish.answers generated"
+log "${info} ${etc_tomcat} set up"
