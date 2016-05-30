@@ -25,7 +25,7 @@ fi
 
 if [ ${step} -le 3 ]; then
     # default: SSH 22
-    [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,guacamole,tomcat,apache,https > ${service_root}/etc/service.cfg
+    [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,guacamole,tomcat,apache,https -m http://biocomp.cnb.csic.es/packages  > ${service_root}/etc/service.cfg
 
     [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
     chmod u+x ${service_root}/etc/service-manager
@@ -46,10 +46,13 @@ if [ ${step} -le 5  ]; then
     ${scripts_base}/build/guacamole-client
     ${scripts_base}/build/vncserver
     ${scripts_base}/build/apache
-    
+fi
+
+if [ ${step} -le 6 ]; then    
     ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
-    cat <<EOFB
-cat > ${etc_dir}/service.apache <<EOF
+    cat > ${etc_dir}/service.apache <<EOFB
+#!/bin/bash
+cat <<EOF
    RewriteRule ^/guacamole$ /guacamole/ [R]
 
 <Location /guacamole/>
@@ -68,6 +71,9 @@ cat > ${etc_dir}/service.apache <<EOF
 </Location>
 EOF
 EOFB
-    ${scripts_base}/config/apache/mkservice_conf > ${etc_dir}/apache2/service.conf
+    chmod u+x ${etc_dir}/service.apache
+    ${scripts_base}/config/apache2/mkservice_conf > ${etc_dir}/apache2/service.conf
     cp ${scripts_base}/config/apache2/envvars ${etc_dir}/apache2/
+
+    [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
 fi
