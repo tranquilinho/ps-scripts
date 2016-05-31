@@ -58,16 +58,16 @@ cat <<EOF
 <Location /guacamole/>
     Order allow,deny
     Allow from all
-    ProxyPass http://localhost:8670/guacamole-0.9.9/ flushpackets=on
-    ProxyPassReverse http://localhost:8670/guacamole-0.9.9/
+    ProxyPass http://localhost:8090/guacamole-0.9.9/ flushpackets=on
+    ProxyPassReverse http://localhost:8090/guacamole-0.9.9/
     ProxyPassReverseCookiePath /guacamole/ /guacamole/
 </Location>
 
 <Location /guacamole/websocket-tunnel>
     Order allow,deny
     Allow from all
-    ProxyPass ws://localhost:8670/guacamole-0.9.9/websocket-tunnel
-    ProxyPassReverse ws://localhost:8670/guacamole-0.9.9/websocket-tunnel
+    ProxyPass ws://localhost:8090/guacamole-0.9.9/websocket-tunnel
+    ProxyPassReverse ws://localhost:8090/guacamole-0.9.9/websocket-tunnel
 </Location>
 EOF
 EOFB

@@ -11,9 +11,9 @@ readonly log_facility="${service}-gf-conf"
 
 readonly etc_tomcat=${etc_dir}/tomcat
 readonly tomcat_templates=${scripts_base}/config/tomcat
-[ -z "${tomcat_server_port}" ] && readonly tomcat_server_port=8005
-[ -z "${tomcat_http_port}" ] && readonly tomcat_http_port=8080
-[ -z "${tomcat_https_port}" ] && readonly tomcat_https_port=8443
+[ -z "${tomcat_server_port}" ] && readonly tomcat_server_port=8095
+[ -z "${tomcat_http_port}" ] && readonly tomcat_http_port=8090
+[ -z "${tomcat_https_port}" ] && readonly tomcat_https_port=8093
 
 [ ! -d ${etc_tomcat} ] && mkdir  ${etc_dir}/tomcat
 
