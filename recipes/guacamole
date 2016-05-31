@@ -76,4 +76,6 @@ EOFB
     cp ${scripts_base}/config/apache2/envvars ${etc_dir}/apache2/
 
     [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
+
+    /services/guacamole/scripts/config/mktomcat_cfg
 fi
