@@ -1,0 +1,27 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=heroku
+# no "real" version...
+readonly pkg_version=client
+readonly pkg_ext=tgz
+readonly url_base=https://s3.amazonaws.com/assets.heroku.com/heroku-client/
+
+build_preconditions
+
+install_prereq ruby "mandatory"
+
+readonly heroku_bin=${usr_prefix}/heroku/bin
+[ -z "${heroku}" ] && readonly heroku=${heroku_bin}/heroku
+
+readonly available_heroku=$(${heroku} version | grep toolbelt 2>&1 )
+
+if [[ "${available_python}" == heroku-toolbelt* ]]; then
+    log "${warning} ${available_heroku} (${heroku}) already installed..."
+    exit 0
+fi
+
+ln -s ${build_dir}/heroku-client ${usr_prefix}/heroku

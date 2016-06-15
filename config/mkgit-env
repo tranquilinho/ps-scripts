@@ -1,0 +1,11 @@
+
+if [ -z "${usr_prefix}" ]; then
+   readonly service_cfg=${0%/scripts*}/etc/service.cfg
+   . ${service_cfg} 
+fi
+
+if [ ! -f /etc/profile.d/git-env.sh ]; then
+cat >/etc/profile.d/git-env.sh <<EOF
+   export PATH=${usr_prefix}/git/bin:\${PATH}
+EOF
+fi
