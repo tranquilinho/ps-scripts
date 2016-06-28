@@ -204,6 +204,7 @@ install_prereq(){
 debian_install(){
     local my_package=$1
     log "${info} installing ${my_package}"
+    apt-get update
     apt-get install -y ${my_package} 2>&1 | logalize ${log_dir}/apt.log
     local my_status=${PIPESTATUS[0]}
     log_status ${my_status} "${my_package} installed" "Problem installing ${my_package}"
