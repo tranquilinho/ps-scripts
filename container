@@ -41,6 +41,10 @@ case "$1" in
 	    mkdir -p ${docker_run}
 	fi
 
+	[ -d ${etc_dir}/host-cron ] && for cronjob in $(ls ${etc_dir}/host-cron); do
+	    ln -s ${etc_dir}/host-cron/${cronjob} /etc/cron.d
+	done
+
 	# If the service has the same "service root" inside and outside, we can
 	# initialize this variable for him
 	[ -z "${container_init_outside}" ] && container_init_outside=${container_init}
