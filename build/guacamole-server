@@ -17,7 +17,7 @@ debian_install libjpeg-turbo8-dev
 debian_install libcairo2-dev
 debian_install libossp-uuid-dev
 debian_install libvncserver-dev
-# debian_install libfreerdp-dev
+debian_install libfreerdp-dev
 # !!!! libguac
 
 # it seems configure only uses pkg-config to detect pango...
