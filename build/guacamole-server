@@ -17,10 +17,11 @@ debian_install libjpeg-turbo8-dev
 debian_install libcairo2-dev
 debian_install libossp-uuid-dev
 debian_install libvncserver-dev
+# debian_install libfreerdp-dev
 # !!!! libguac
 
 # it seems configure only uses pkg-config to detect pango...
-CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole
+CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole --with-rdp
 
 standard_install
 
