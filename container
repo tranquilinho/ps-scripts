@@ -45,6 +45,8 @@ case "$1" in
 	    ln -s ${etc_dir}/host-cron/${cronjob} /etc/cron.d
 	done
 
+	[ -x ${etc_dir}/host-prereq ] && ${etc_dir}/host-prereq
+	
 	# If the service has the same "service root" inside and outside, we can
 	# initialize this variable for him
 	[ -z "${container_init_outside}" ] && container_init_outside=${container_init}
