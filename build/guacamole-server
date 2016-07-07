@@ -17,6 +17,7 @@ debian_install libjpeg-turbo8-dev
 debian_install libcairo2-dev
 debian_install libossp-uuid-dev
 debian_install libvncserver-dev
+# Even when using only RDP, vnc is used in the backstage (by xrdp)
 debian_install libfreerdp-dev
 # !!!! libguac
 
