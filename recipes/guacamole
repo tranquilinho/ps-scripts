@@ -77,5 +77,9 @@ EOFB
 
     [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
 
-    /services/guacamole/scripts/config/mktomcat_cfg
+    ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/sesman
+
+    ${scripts_base}/config/mktomcat_cfg
+
+    echo "If desktop environment is not running, add it to /etc/xrdp/startwm.sh (replacing XSession line)"
 fi
