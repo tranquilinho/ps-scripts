@@ -19,6 +19,9 @@ if grep ${user} ${plain_db} > /dev/null; then
     exit 2
 fi
 
+# db load command comes from  db5.1-util package (by now)
+debian_install db5.1-util
+
 log "${info} Creating xrdp user account ${user}"
 
 # pam_userdb.so typically only supports crypt hash

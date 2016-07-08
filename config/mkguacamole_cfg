@@ -13,6 +13,8 @@ readonly etc_guacamole=${etc_dir}/guacamole
 
 [ ! -d ${etc_guacamole} ] && mkdir  ${etc_guacamole}
 
+# Now we prefer xrdp by default
+create_vnc_mapping(){
 cat > ${etc_guacamole}/user-mapping.xml <<EOF
 <user-mapping>
     <!-- it is possible to use encoding parameter for authorize tag:
@@ -25,6 +27,26 @@ cat > ${etc_guacamole}/user-mapping.xml <<EOF
         <param name="password">aa</param>
     </authorize>
 
+</user-mapping>
+EOF
+}
+
+readonly random_pass=$(random_str)
+
+cat > ${etc_guacamole}/user-mapping.xml <<EOF
+<user-mapping>
+    <!-- it is possible to use encoding parameter for authorize tag:
+            <authorize ... encoding="md5">
+    -->
+    <authorize username="myuser" password="${random_pass}">
+        <param name="hostname">localhost</param>
+	<param name="username">myuser</param>
+        <param name="password">${random_pass}</param>
+        <protocol>rdp</protocol>
+	<param name="width">1400</param>
+	<param name="height">900</param>
+	<!-- <param name="initial-program">/services/guacamole/etc/kiosk-mode</param> -->
+    </authorize>
 </user-mapping>
 EOF
 
