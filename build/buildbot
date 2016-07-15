@@ -6,11 +6,17 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 
 readonly pkg_name=buildbot
-readonly pkg_version=
-readonly url_base=
+readonly pkg_version=0.8.12
+readonly download_url=https://pypi.python.org/packages/ee/cc/c157bab45cec48bf915ec3c46757143a221b85973faa7ac0b43b1c8ab387/buildbot-0.8.12.tar.gz
 
 readonly python_bin=${usr_prefix}/Python/bin
 [ -z "${python}" ] && readonly python=${python_bin}/python
+
+build_preconditions
+
+${python} setup.py install
+
+exit 2
 
 ${python} -c "import sys; print (sys.version)" | logalize ${build_log} > /dev/null
 
@@ -26,7 +32,7 @@ else
     ${pip} install pycrypto pyasn1 | logalize ${build_log}
     ${pip} install twisted | logalize ${build_log}
 
-    ${pip} install buildbot | logalize ${build_log}
+#    ${pip} install buildbot | logalize ${build_log}
 
     if [ ! -x ${usr_prefix}/buildbot/bin/master ]; then
        # wrapper for calling buildbot (master)
