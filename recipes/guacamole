@@ -1,0 +1,85 @@
+#!/bin/bash
+
+readonly service=guacamole
+readonly service_root=/services/${service}
+
+step=${1:-1}
+
+if [ ${step} -le 1 ]; then
+    # OS packages - none in this recipe ;-)
+    (( step ++ ))
+fi
+
+[ ! -d ${service_root} ] && mkdir -p ${service_root}
+cd ${service_root}
+
+if [ ${step} -le 2 ]; then
+    [ ! -d scripts ] && git clone https://github.com/tranquilinho/ps-scripts.git scripts
+    mkdir etc
+    mkdir -p usr/bin usr/lib usr/src
+    mkdir -p data/${service}/ data/run/apache-tomcat
+    mkdir -p etc/apache2
+    mkdir -p log/apache2 log/${service}
+    (( step ++ ))
+fi
+
+if [ ${step} -le 3 ]; then
+    # default: SSH 22
+    [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,guacamole,tomcat,apache,https -m http://biocomp.cnb.csic.es/packages  > ${service_root}/etc/service.cfg
+
+    [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
+    chmod u+x ${service_root}/etc/service-manager
+    # service-prereq
+    (( step ++ ))
+fi
+
+. ${service_root}/etc/service.cfg
+
+if [ ${step} -le 4 -a -n "${user_name}" ]; then
+    ${scripts_base}/create-user ${user_id} ${user_name} ${data_dir}/${service}
+fi
+
+if [ ${step} -le 5  ]; then
+    # Software dependencies
+    ${scripts_base}/build/tomcat
+    ${scripts_base}/build/guacamole-server
+    ${scripts_base}/build/guacamole-client
+    ${scripts_base}/build/vncserver
+    ${scripts_base}/build/apache
+fi
+
+if [ ${step} -le 6 ]; then    
+    ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
+    cat > ${etc_dir}/service.apache <<EOFB
+#!/bin/bash
+cat <<EOF
+   RewriteRule ^/guacamole$ /guacamole/ [R]
+
+<Location /guacamole/>
+    Order allow,deny
+    Allow from all
+    ProxyPass http://localhost:8090/guacamole-0.9.9/ flushpackets=on
+    ProxyPassReverse http://localhost:8090/guacamole-0.9.9/
+    ProxyPassReverseCookiePath /guacamole/ /guacamole/
+</Location>
+
+<Location /guacamole/websocket-tunnel>
+    Order allow,deny
+    Allow from all
+    ProxyPass ws://localhost:8090/guacamole-0.9.9/websocket-tunnel
+    ProxyPassReverse ws://localhost:8090/guacamole-0.9.9/websocket-tunnel
+</Location>
+EOF
+EOFB
+    chmod u+x ${etc_dir}/service.apache
+    ${scripts_base}/config/apache2/mkservice_conf > ${etc_dir}/apache2/service.conf
+    cp ${scripts_base}/config/apache2/envvars ${etc_dir}/apache2/
+
+    [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
+
+    ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/sesman
+
+    ${scripts_base}/config/mktomcat_cfg
+
+    echo "If desktop environment is not running, add it to /etc/xrdp/startwm.sh (replacing XSession line)"
+fi

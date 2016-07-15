@@ -44,7 +44,8 @@ EOF
     [ "G${guacamole_keep_pass}" == "G1" ] || ${scripts_base}/guacamole-change-password 
     ${scripts_base}/guacamole-service start
     # by default, run vnc service - unless vnc_on_demand=1 
-    [ "G${vnc_on_demand}" == "G1" ] || ${scripts_base}/vnc-service start
+    # Now with xrdp, we do not need to start vnc-service here
+    # [ "G${vnc_on_demand}" == "G1" ] || ${scripts_base}/vnc-service start
 EOF
 
 [ ${apache_enabled} -eq 1 ] && cat <<"EOF"
