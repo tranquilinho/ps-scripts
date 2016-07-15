@@ -8,7 +8,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 log "${info} installing exim4 server"
 
-debian_install_exim4
+debian_install exim4
 
 if [ $? -eq 0 ];then
     log "${success} Exim4 server installed"
