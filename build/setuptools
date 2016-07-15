@@ -5,13 +5,23 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=setuptools
-readonly pkg_version=latest
+readonly pkg_version=6.0.2
 readonly pkg=ez_setup.py
 readonly url_base=https://bootstrap.pypa.io
 
 [ -z "${python}" ] && readonly python=${usr_prefix}/Python/bin/python
 
-if ${python} -c "import ${pkg_name}" ; then
+update=1
+
+while getopts "u" options; do
+    case "${options}" in
+        u)
+	    update=0
+	    ;;
+    esac
+done
+
+if [ ${update} -eq 1 ] && ${python} -c "import ${pkg_name}" ; then
     log "${info} ${pkg_name} already available in ${python}"
 else
     build_preconditions
