@@ -28,6 +28,7 @@ fi
 install_prereq zlib "mandatory"
 install_prereq openssl "mandatory"
 install_prereq bzip2 "mandatory"
+debian_install libsqlite3-dev
 
 # patch to use service's zlib & openssl
 # !!!! maybe it's possible to install these 2 modules via setup.py (like bz2, see below)?
@@ -68,7 +69,7 @@ fi
 
 # available python modules:
 # _curses            _curses_panel      _dbm
-# _gdbm              _sqlite3           * _ssl
+# _gdbm               * _ssl
 # _tkinter            bz2                readline
 #  * zlib 
 
