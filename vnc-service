@@ -17,6 +17,8 @@ readonly geometry="1024x768"
 service_start(){
     log "${info} Starting ${module}"
     local vnc_options="-depth ${depth} -geometry ${geometry} :${vnc_display} -localhost"
+    local user_home=$(eval "echo ~${vnc_user}")
+    cd ${user_home}
     su ${vnc_user} -c "${daemon} ${vnc_options}"
     status=$? 
     if [ ${status} -eq 0 ]; then
