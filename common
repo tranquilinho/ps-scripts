@@ -59,7 +59,6 @@ download_pkg(){
 	wget -c ${download_url}
 	downloaded=$?
     fi
-
     [ ${downloaded} -ne 0 ] && log "${critical} Could not download package ${download_url}" && exit 3
 
 }
@@ -118,9 +117,19 @@ build_preconditions(){
     common_build_vars 
     log "${info} preconditions start ${pkg_name}"
 
-    download_pkg
-    verify_pkg
-    extract_pkg && cd ${pkg_dir}
+    # by now, we asume url_base ending in .git is to be cloned
+    # (instead of downloaded with wget)
+    if [[ ${url_base} == *.git ]]; then
+	# !!!! by default, git refuses to "overwrite" the target dir if it already exists...
+	# (returning an error status, as opposed to wget in the same situation)
+	# right now, we are ignoring git status code...
+	git clone ${url_base} ${pkg_dir}
+	cd ${pkg_dir}
+    else
+	download_pkg
+	verify_pkg
+	extract_pkg && cd ${pkg_dir}
+    fi
     log "${success} preconditions finish ${pkg_name}"
 }
 
