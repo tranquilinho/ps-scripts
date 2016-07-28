@@ -1,0 +1,100 @@
+#!/bin/bash
+# based on http://stackoverflow.com/a/10001357
+
+# it can also be done in expect
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+
+print_usage(){
+    echo "Syntax:"
+    echo "   $0 -s smtp_server [ -p smtp_port] [-f from] -t to [-S subject] [-T text]"
+#    echo "Example:"
+#    echo "   $0 -f server3:/nas/jdoe/work -t /services/svc1/data/jdoe"
+    exit 2
+}
+
+while getopts "f:t:s:p:S:T:" options; do
+    case "${options}" in
+        s)
+	    readonly smtp_server="${OPTARG}"
+	    ;;
+        p)
+	    readonly smtp_port="${OPTARG}"
+	    ;;
+        f)
+	    readonly from="${OPTARG}"
+	    ;;
+        t)
+	    readonly to="${OPTARG}"
+	    ;;
+        S)
+	    readonly subject="${OPTARG}"
+	    ;;
+        T)
+	    readonly text="${OPTARG}"
+	    ;;
+	*)
+		print_usage
+		;;
+    esac
+done
+
+
+
+checkStatus() {
+  local expect=250
+  if [ $# -eq 3 ] ; then
+    expect="${3}"
+  fi
+  if [ $1 -ne ${expect} ] ; then
+    echo "Error: ${2}"
+    exit
+  fi
+}
+
+readonly myhost=$(hostname)
+
+[ -z "${smtp_port}" ] && readonly smtp_port=25
+[ -z "${from}" ] && readonly from="smtp-test@${myhost}"
+[ -z "${subject}" ] && readonly subject="SMTP test"
+[ -z "${text}" ] && readonly text="SMTP test message text"
+
+
+[ -z "${smtp_server}" -o -z "${to}" ] && print_usage
+
+exec 3<>/dev/tcp/${smtp_server}/${smtp_port}
+
+read -u 3 sts line
+checkStatus "${sts}" "${line}" 220
+
+echo "HELO ${myhost}" >&3
+
+read -u 3 sts line
+checkStatus "${sts}" "${line}"
+
+echo "MAIL FROM: ${from}" >&3
+
+read -u 3 sts line
+checkStatus "${sts}" "${line}"
+
+echo "RCPT TO: ${to}" >&3
+
+read -u 3 sts line
+checkStatus "${sts}" "${line}"
+
+echo "DATA" >&3
+
+read -u 3 sts line
+checkStatus "${sts}" "${line}" 354
+
+echo "Subject: ${subject}" >&3
+echo "${message}" >&3
+echo "." >&3
+
+read -u 3 sts line
+checkStatus "${sts}" "$line"
+
+exit 0
