@@ -5,8 +5,10 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=xrdp
-readonly pkg_version=devel
-readonly url_base=https://github.com/neutrinolabs/xrdp.git
+readonly pkg_version=0.6.1
+readonly url_base=http://freefr.dl.sourceforge.net/project/xrdp/xrdp/${pkg_version}/
+readonly pkg=xrdp-v0.6.1.tar.gz
+readonly pkg_dir=xrdp-v0.6.1
 
 build_preconditions
 
@@ -19,12 +21,12 @@ export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 # base - xrdp itself
 ./bootstrap
 # !!!! set run_dir outside prefix (--localstatedir=run_dir)
-./configure --prefix=${prefix} 
+./configure --prefix=${prefix} --localstatedir=${run_dir} --sysconfdir=${etc_dir}
 standard_install
 
 # make sure run_dir is available
-# mkdir run/xrdp
-# chown xrdp.xrdp run/xrdp
+mkdir ${run_dir}/xrdp
+chown xrdp.xrdp ${run_dir}/xrdp
 
 # X11rdp building
 # debian packages needed
