@@ -16,11 +16,22 @@ debian_install libpam0g-dev
 
 export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 
+# base - xrdp itself
 ./bootstrap
-
+# !!!! set run_dir outside prefix (--localstatedir=run_dir)
 ./configure --prefix=${prefix} 
-
 standard_install
+
+# make sure run_dir is available
+# mkdir run/xrdp
+# chown xrdp.xrdp run/xrdp
+
+# X11rdp building
+# debian packages needed
+# flex bison libxml2-dev intltool xsltproc xutils-dev python-libxml2 g++ xutils
+#cd xorg/X11R7.6
+#./buildx.sh ${usr_prefix}/X11rdp
+# ln -s /opt/X11rdp/bin/X11rdp /usr/local/bin/X11rdp
 
 exit $?
 
