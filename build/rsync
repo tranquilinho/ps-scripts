@@ -10,6 +10,18 @@ readonly url_base=https://download.samba.org/pub/rsync/src
 
 build_preconditions
 
+readonly rsync_dir=${prefix}
+[ -z "${rsync}" ] && readonly rsync=${prefix}/bin/rsync
+
+readonly available_rsync_fields=($(${rsync} --version 2>&1 | head -1 ))
+readonly rsync_version=${available_rsync_fields[2]}
+
+if [ "${rsync_version}" == "${pkg_version}" ]; then
+    log "${warning} ${pkg_name} ${pkg_version} already installed..."
+    exit 0
+fi
+
+
 install_prereq pkgconfig "mandatory"
 install_prereq zlib "mandatory"
 
@@ -18,6 +30,8 @@ export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 ./configure --prefix=${prefix} 
 
 standard_install
+
+log "${warning} If standard users need rsync, add [ ! -s /usr/bin/rsync ] && ln -s ${usr_prefix}/rsync/bin/rsync /usr/bin to service-prereq"
 
 exit $?
 
