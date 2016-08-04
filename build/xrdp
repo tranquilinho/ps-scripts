@@ -20,15 +20,13 @@ export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 
 # base - xrdp itself
 ./bootstrap
-# !!!! set run_dir outside prefix (--localstatedir=run_dir)
-./configure --prefix=${prefix} --localstatedir=${run_dir} --sysconfdir=${etc_dir}
+./configure --prefix=${prefix} --localstatedir=${data_dir} --sysconfdir=${etc_dir} --enable-xrdpdebug
 standard_install
 
 # make sure run_dir is available
-mkdir ${run_dir}/xrdp
-chown xrdp.xrdp ${run_dir}/xrdp
+[ ! -d ${run_dir}/xrdp ] && mkdir ${run_dir}/xrdp && chown xrdp.xrdp ${run_dir}/xrdp
 
-# X11rdp building
+# X11rdp building (optional)
 # debian packages needed
 # flex bison libxml2-dev intltool xsltproc xutils-dev python-libxml2 g++ xutils
 #cd xorg/X11R7.6
