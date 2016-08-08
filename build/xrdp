@@ -13,6 +13,10 @@ readonly pkg_dir=xrdp-v0.6.1
 build_preconditions
 
 debian_install libpam0g-dev
+debian_install autoconf
+debian_install libtool
+debian_install libx11-dev
+debian_install libxfixes-dev
 #install_prereq pkgconfig "mandatory"
 #install_prereq zlib "mandatory"
 
