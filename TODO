@@ -1,5 +1,7 @@
 Add support for non-debian distros (CentOS)
 
+Simple self health-check (cron -> log/status.log)
+
 Use BASH_SOURCE instead of $0 (@see http://mywiki.wooledge.org/BashFAQ/028)
 
 Docker security best practices (https://www.ernw.de/download/ERNW_Stocard_Docker-Devops-Security_fbarth-mluft.pdf)
