@@ -136,6 +136,11 @@ readonly guacamole_keep_pass=1
 readonly vnc_on_demand=1
 readonly mod_proxy_enabled=1
 export GUACAMOLE_HOME=${etc_dir}/guacamole
+# !!!! set guacamole users
+EOF
+user_wants guacamole && cat <EOF
+readonly guacamole_user=${guacamole_user}
+readonly guac_os_user=${guac_os_user}
 EOF
 
 user_wants tomcat && cat <<"EOF"

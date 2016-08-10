@@ -41,7 +41,7 @@ EOF
 [ ${guacamole_enabled} -eq 1 ] && cat <<"EOF"
     # the "client" is a .war that runs inside tomcat 
     # by default, reset password every 7 days - unless guacamole_keep_pass=1 
-    [ "G${guacamole_keep_pass}" == "G1" ] || ${scripts_base}/guacamole-change-password 
+    [ "G${guacamole_keep_pass}" == "G1" ] || ${scripts_base}/guacamole-change-password -g ${guacamole_user} -o ${guac_os_user}
     ${scripts_base}/guacamole-service start
     # by default, run vnc service - unless vnc_on_demand=1 
     # Now with xrdp, we do not need to start vnc-service here
