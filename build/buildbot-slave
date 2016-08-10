@@ -43,16 +43,4 @@ fi
 
 log "${success} standard install finish ${pkg_name}"
 
-# Create a buildslave
-#cd ${HOME}/buildbot
-#buildslave create-slave ${BASEDIR} ${MASTER} ${NAME} ${PASS}
 
-# Remember to include the new slave in the master config,
-#    buildbot/scipion-master/master.cfg to add
-# for example:
-#   BuildSlave("${NAME}", "${PASS}")
-
-
-# environment
-# export PATH=${HOME}/buildbot/local/bin:\${PATH}
-# export PYTHONPATH=${HOME}/buildbot/local/lib/python2.7/site-packages:\${PYTHONPATH}
