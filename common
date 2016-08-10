@@ -421,7 +421,8 @@ make_log(){
 }
 
 random_str(){
-    tr -dc _A-H-J-N-P-Z-a-h-m-z-1-9 < /dev/urandom | head -c${1:-14}
+    # underscore might interfere with some sed regex...
+    tr -dc A-H-J-N-P-Z-a-h-m-z-1-9 < /dev/urandom | head -c${1:-14}
 }
 
 cpu_count(){
