@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Log connections to the service
+
+readonly service_cfg=$(dirname $0)/../etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+
+readonly log_file=${log_dir}/auth.log
+readonly log_facility="rdesktop-auth"
+
+
+# live-filter tomcat log
+# (it's a simple way to add a proper timestamp)
+tail -f ${log_dir}/tomcat/catalina.out /var/log/auth.log | stdbuf -oL egrep '(xrdp-sesman|AuthenticationService|TunnelRequestService)' | logalize ${log_file}
+
+
+
+
