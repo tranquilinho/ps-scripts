@@ -8,8 +8,6 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly log_file=${log_dir}/service.log
 readonly log_facility="vnc-service"
 
-readonly guacamole_user=${1:-scipion}
-
 check_expired_account(){
     local user=$1
     # expiry only checks "current" user -> need to run it as ${user}
