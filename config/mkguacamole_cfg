@@ -40,8 +40,7 @@ cat > ${etc_guacamole}/user-mapping.xml <<EOF
     -->
     <authorize username="myuser" password="${random_pass}">
         <param name="hostname">localhost</param>
-	<param name="username">myuser</param>
-        <param name="password">${random_pass}</param>
+	<param name="username">myuser</param><param name="password">${random_pass}</param>
         <protocol>rdp</protocol>
 	<param name="width">1400</param>
 	<param name="height">900</param>
