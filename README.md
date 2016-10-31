@@ -38,11 +38,22 @@ Coming soon...
 Getting started
 ===============
 
+You can either reuse a recipe from the "recipes" subdirectory, or build your custom service from smaller pieces.
+
+Recipes
+-------
+
+"High-level" scripts that deploy complex services making the most of the portable service architecture. ps-scripts recipes make deployemnt a breeze ^_^
+
+[guacamole]http://guacamole.incubator.apache.org/] - remote desktop service from a standard HTML5 browser
+
+Simply download the recipe script and run it
+
+Build your service step by step
+-------------------------------
+
 Let's deploy a WordPress-based service. We run all commands in the "server environment". In this case, the server hostname is "dockerserver"
 (the service will run inside a Docker container)
-
-Service root
-------------
 
 First, decide where you will deploy the service:
 
@@ -98,7 +109,8 @@ Now apache config:
        SSLCertificateKeyFile   /services/wp-example/etc/apache2/ssl/wpe-private.key
 		   
 
-Docker configuration:
+Docker configuration
+--------------------
 
        /services/wp-example/scripts/config/mkdocker_cfg -n wp-example > /services/wp-example/etc/docker.cfg
        /services/wp-example/scripts/config/mkcontainer_init -n wp-example > /services/wp-example/etc/container-init
@@ -225,4 +237,4 @@ Feel free to contact me regarding suggestions, requests or any issue you find.
 Author
 ======
 
-Copyright 2014,2015 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com). Biocomputing Unit - CNB/CSIC.
+Copyright 2014-2016 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com). Biocomputing Unit - CNB/CSIC.
