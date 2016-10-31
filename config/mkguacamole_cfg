@@ -33,14 +33,18 @@ EOF
 
 readonly random_pass=$(random_str)
 
+[ -z "${guacamole_user}" ] && guacamole_user="myuser"
+[ Z "${guac_os_user}" ] && guac_os_user=${guacamole_user}
+
+
 cat > ${etc_guacamole}/user-mapping.xml <<EOF
 <user-mapping>
     <!-- it is possible to use encoding parameter for authorize tag:
             <authorize ... encoding="md5">
     -->
-    <authorize username="myuser" password="${random_pass}">
+    <authorize username="${guacamole_user}" password="${random_pass}">
         <param name="hostname">localhost</param>
-	<param name="username">myuser</param><param name="password">${random_pass}</param>
+	<param name="username">${guac_os_user}</param><param name="password">${random_pass}</param>
         <protocol>rdp</protocol>
 	<param name="width">1400</param>
 	<param name="height">900</param>
