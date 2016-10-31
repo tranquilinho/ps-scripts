@@ -14,6 +14,7 @@ build_preconditions
 
 # Guacamole client
 # install_prereq maven "mandatory"
+install_prereq jdk "mandatory"
 
 # just link to source
 ln -s ${usr_prefix}/src/${pkg_name}-${pkg_version} ${prefix}
