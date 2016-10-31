@@ -68,7 +68,8 @@ if [ ${step} -le 3 ]; then
     #export guacamole_user="scipion"
     #export guac_os_user="ubuntu"
 
-    # use default tomcat_http_port in mkservice_cfg (8080)
+    # use default tomcat_http_port in mkservice_cfg (8080), for apache http_port=80
+    export http_port=80
     [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,guacamole,tomcat,apache,https -m http://biocomp.cnb.csic.es/packages  > ${service_root}/etc/service.cfg
 
     [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
@@ -77,6 +78,7 @@ if [ ${step} -le 3 ]; then
     (( step ++ ))
     [ -n "${pause}" ] && read
 fi
+
 
 . ${service_root}/etc/service.cfg
 
@@ -99,6 +101,7 @@ fi
 
 if [ ${step} -le 6 ]; then    
     ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
+# !!!! etc_dir == etc ? (service.apache is in etc, instead of etc/apache2)
     cat > ${etc_dir}/service.apache <<EOFB
 #!/bin/bash
 cat <<EOF
@@ -121,6 +124,7 @@ cat <<EOF
 EOF
 EOFB
     chmod u+x ${etc_dir}/service.apache
+    # apache should listen on port 80 by default
     ${scripts_base}/config/apache2/mkservice_conf > ${etc_dir}/apache2/service.conf
     cp ${scripts_base}/config/apache2/envvars ${etc_dir}/apache2/
 
