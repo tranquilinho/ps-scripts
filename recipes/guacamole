@@ -3,7 +3,47 @@
 readonly service=guacamole
 readonly service_root=/services/${service}
 
-step=${1:-1}
+# !!!! log recipe tasks & progress in log/recipe.log
+
+print_usage(){
+    echo "Deploy guacamole service"
+    echo "Syntax: $0 -g guacamole_user [-o os_user] [-s step] [-p]"
+    exit 1
+}
+
+
+
+if [ "$#" -gt 0 ]; then
+    while getopts "s:g:o:hp" options; do
+	case "${options}" in
+            s)
+		step=${OPTARG}
+		;;
+	    g)
+		readonly guacamole_user=${OPTARG}
+		;;
+	    o) 
+		readonly guac_os_user=${OPTARG}
+		;;
+	    p)
+		readonly pause=1
+		;;
+	    h)
+		print_usage
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${guacamole_user}" ] && print_usage
+[ -z "${guac_os_user}" ] && readonly guac_os_user=ubuntu
+[ -z "${step}" ] && step=1
 
 if [ ${step} -le 1 ]; then
     # OS packages - none in this recipe ;-)
@@ -21,25 +61,29 @@ if [ ${step} -le 2 ]; then
     mkdir -p etc/apache2
     mkdir -p log/apache2 log/${service}
     (( step ++ ))
+    [ -n "${pause}" ] && read
 fi
 
 if [ ${step} -le 3 ]; then
-    # default: SSH 22
-    # example values for mkservice_cfg - customize to your own needs
-    export guacamole_user="scipion"
-    export guac_os_user="ubuntu"
+    #export guacamole_user="scipion"
+    #export guac_os_user="ubuntu"
+
+    # use default tomcat_http_port in mkservice_cfg (8080)
     [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,guacamole,tomcat,apache,https -m http://biocomp.cnb.csic.es/packages  > ${service_root}/etc/service.cfg
 
     [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
     chmod u+x ${service_root}/etc/service-manager
     # service-prereq
     (( step ++ ))
+    [ -n "${pause}" ] && read
 fi
 
 . ${service_root}/etc/service.cfg
 
+# what users are needed?
 if [ ${step} -le 4 -a -n "${user_name}" ]; then
     ${scripts_base}/create-user ${user_id} ${user_name} ${data_dir}/${service}
+    [ -n "${pause}" ] && read
 fi
 
 if [ ${step} -le 5  ]; then
@@ -48,7 +92,9 @@ if [ ${step} -le 5  ]; then
     ${scripts_base}/build/guacamole-server
     ${scripts_base}/build/guacamole-client
     ${scripts_base}/build/vncserver
+    ${scripts_base}/build/xrdp
     ${scripts_base}/build/apache
+    [ -n "${pause}" ] && read
 fi
 
 if [ ${step} -le 6 ]; then    
@@ -61,16 +107,16 @@ cat <<EOF
 <Location /guacamole/>
     Order allow,deny
     Allow from all
-    ProxyPass http://localhost:8090/guacamole-0.9.9/ flushpackets=on
-    ProxyPassReverse http://localhost:8090/guacamole-0.9.9/
+    ProxyPass http://localhost:${tomcat_http_port}/guacamole-0.9.9/ flushpackets=on
+    ProxyPassReverse http://localhost:${tomcat_http_port}/guacamole-0.9.9/
     ProxyPassReverseCookiePath /guacamole/ /guacamole/
 </Location>
 
 <Location /guacamole/websocket-tunnel>
     Order allow,deny
     Allow from all
-    ProxyPass ws://localhost:8090/guacamole-0.9.9/websocket-tunnel
-    ProxyPassReverse ws://localhost:8090/guacamole-0.9.9/websocket-tunnel
+    ProxyPass ws://localhost:${tomcat_http_port}/guacamole-0.9.9/websocket-tunnel
+    ProxyPassReverse ws://localhost:${tomcat_http_port}/guacamole-0.9.9/websocket-tunnel
 </Location>
 EOF
 EOFB
