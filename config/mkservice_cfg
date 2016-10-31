@@ -2,7 +2,7 @@
 
 print_usage(){
     echo Make a service.cfg file into stdout
-    echo "Syntax: $0 -n service_name [-i feature1,feature2,...]"
+    echo "Syntax: $0 -n service_name [-i feature1,feature2,...] [-m mirror]"
     echo "Features available:"
     grep _enabled $0 | gawk '{ if (match($0, /^readonly (.*)_enabled.*/, matches)) print matches[1]}' | sort
     exit 1
@@ -15,13 +15,16 @@ user_wants(){
 }
 
 if [ "$#" -gt 0 ]; then
-    while getopts "i:n:" options; do
+    while getopts "i:n:m:" options; do
 	case "${options}" in
             i)
 		readonly includes=${OPTARG}
 		;;
 	    n)
 		readonly service=${OPTARG}
+		;;
+	    m)
+		readonly mirror_base=${OPTARG}
 		;;
             *)
 		echo "Unknow option" 1>&2 
@@ -56,9 +59,15 @@ readonly build_dir=${usr_prefix}/src
 readonly key_path=${etc_dir}/service-keys
 readonly private_key=${key_path}/id_rsa
 readonly public_key=${key_path}/id_rsa.pub
+EOF
 
-# readonly mirror_base=
+if [ -z "${mirror_base}" ]; then
+    echo "# readonly mirror_base="
+else
+    echo "readonly mirror_base=${mirror_base}"
+fi
 
+cat<<"EOF"
 # default value for paralelism (-j option in make, etc)
 readonly ps_paralel="-j 2"
 
@@ -138,7 +147,8 @@ readonly mod_proxy_enabled=1
 export GUACAMOLE_HOME=${etc_dir}/guacamole
 # !!!! set guacamole users
 EOF
-user_wants guacamole && cat <EOF
+
+user_wants guacamole && cat <<EOF
 readonly guacamole_user=${guacamole_user}
 readonly guac_os_user=${guac_os_user}
 EOF
@@ -146,7 +156,7 @@ EOF
 user_wants tomcat && cat <<"EOF"
 readonly tomcat_enabled=1
 #readonly tomcat_server_port=
-#readonly tomcat_http_port=
+readonly tomcat_http_port=8080
 #readonly tomcat_https_port=
 export JAVA_HOME=${usr_prefix}/jdk
 export CATALINA_HOME=${usr_prefix}/apache-tomcat/
