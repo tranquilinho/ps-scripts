@@ -79,12 +79,16 @@ readonly ssh_port=22
 # readonly id=1103
 EOF
 
+[ -z "${http_port}" ] && readonly http_port=8080
+
 user_wants apache && cat <<"EOF"
 readonly apache_enabled=1
 readonly web_home=${data_dir}/htdocs
-readonly http_port=8080
 readonly https_enabled=1
 readonly default_server=default.kewl.com
+EOF
+user_wants apache && cat <<EOF
+readonly http_port=${http_port}
 EOF
 
 user_wants php && cat <<"EOF"
