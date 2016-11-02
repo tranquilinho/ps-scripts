@@ -134,7 +134,9 @@ EOFB
 
     # config file name must match daemon name
     [ ! -f /etc/pam.d/xrdp-sesman ] && ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/xrdp-sesman
-
+    ${scripts_base}/config/xrdp/sesman.ini > ${etc_dir}/xrdp/sesman.ini
+    cp ${scripts_base}/config/xrdp/startwm.sh ${etc_dir}/xrdp
+    
     ${scripts_base}/config/mktomcat_cfg
 
 
