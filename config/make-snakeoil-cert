@@ -5,7 +5,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 print_usage(){
-   echo "Syntax: $0 -n cert_name [-C country_code -c city -O organization -o org_unit -F fqdn -e email -f -h -d days -k rsa_key_length]"
+   echo "Syntax: $0 -n cert_name [-C country_code -c city -O organization -o org_unit -F fqdn -e email]  [-f -h -d days -k rsa_key_length]"
    echo "If there is a snake_oil.cfg available, you can skip all parameters (except cert_name)"
    echo "Please note that country_code is limited to 2 letters"
    echo "-f overwrites all config files"
@@ -68,7 +68,7 @@ while getopts "n:C:c:O:o:F:e:d:k:fh" options; do
 
 if [ -f ${cert_cfg} -a -n "${cert_name}" ]; then
     echo "Reusing ${cert_cfg}"
-elif [ -z "${cert_name}" -z "${country}" -o -z "${city}" -o -z "${organization}" -o -z "${org_unit}" -o -z "${fqdn}" -o -z "${email}" ]; then
+elif [ -z "${cert_name}" -o -z "${country}" -o -z "${city}" -o -z "${organization}" -o -z "${org_unit}" -o -z "${fqdn}" -o -z "${email}" ]; then
     print_usage
 fi
 
