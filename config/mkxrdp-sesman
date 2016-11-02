@@ -10,11 +10,14 @@ readonly log_facility="${service}-gf-conf"
 . ${scripts_base}/common
 
 
+# this pam.d config file must have the same name as the daemon (typically, xrdp-sesman)
+
 cat  <<EOF
 #%PAM-1.0
 # Warning: .db is automatically appended, so the final DB path is...
 # ${etc_dir}/rdp-user.db
-# Troubleshooting: add "debug" param
+# Troubleshooting: add "debug" param (or dump, to log the DB contents...)
+# Example: auth       required     pam_userdb.so debug dump db=/services/guacamole/etc/rdp-user crypt=crypt 
 auth       required     pam_userdb.so db=${etc_dir}/rdp-user crypt=crypt 
 account    required     pam_userdb.so db=${etc_dir}/rdp-user crypt=crypt 
 session    required     pam_loginuid.so

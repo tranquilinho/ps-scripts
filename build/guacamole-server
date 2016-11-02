@@ -13,6 +13,7 @@ build_preconditions
 install_prereq pkgconfig "mandatory"
 install_prereq libpng "mandatory"
 # use OS packages by now
+# !!!! in Debian, there is no libjpeg-turbo8-dev...
 debian_install libjpeg-turbo8-dev
 debian_install libcairo2-dev
 debian_install libossp-uuid-dev

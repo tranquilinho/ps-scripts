@@ -100,6 +100,8 @@ if [ ${step} -le 5  ]; then
 fi
 
 if [ ${step} -le 6 ]; then    
+    # "final" config: apache, tomcat, xrdp...
+
     ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
 # !!!! etc_dir == etc ? (service.apache is in etc, instead of etc/apache2)
     cat > ${etc_dir}/service.apache <<EOFB
@@ -130,9 +132,29 @@ EOFB
 
     [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
 
-    ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/sesman
+    # config file name must match daemon name
+    [ ! -f /etc/pam.d/xrdp-sesman ] && ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/xrdp-sesman
 
     ${scripts_base}/config/mktomcat_cfg
 
-    echo "If desktop environment is not running, add it to /etc/xrdp/startwm.sh (replacing XSession line)"
+
+cat <<EOF
+Desktop environment:
+Change the system default:
+update-alternatives --config x-session-manager
+
+...or add it to /etc/xrdp/startwm.sh (replacing XSession line). Examples:
+# For LXDE
+lxsession -s LXDE &
+#For Gnome
+gnome-session
+# For XFCE
+startxfce4
+
+To start the service on boot (in Debian / Ubuntu), add a symlink to service-manager in init.d, and enable the service:
+
+ln -s /services/guacamole/etc/service-manager /etc/init.d/guacamole
+update-rc.d -f guacamole enable
+
+EOF
 fi

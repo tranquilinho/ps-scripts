@@ -6,7 +6,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 readonly pkg_name=xrdp
 readonly pkg_version=0.6.1
-readonly url_base=http://freefr.dl.sourceforge.net/project/xrdp/xrdp/${pkg_version}/
+readonly url_base=http://netix.dl.sourceforge.net/project/xrdp/xrdp/${pkg_version}
 readonly pkg=xrdp-v0.6.1.tar.gz
 readonly pkg_dir=xrdp-v0.6.1
 
@@ -14,6 +14,7 @@ build_preconditions
 
 debian_install libpam0g-dev
 debian_install autoconf
+# !!!! in Debian, libtool-bin is also needed...
 debian_install libtool
 debian_install libx11-dev
 debian_install libxfixes-dev
@@ -36,6 +37,10 @@ standard_install
 #cd xorg/X11R7.6
 #./buildx.sh ${usr_prefix}/X11rdp
 # ln -s /opt/X11rdp/bin/X11rdp /usr/local/bin/X11rdp
+
+echo "Remember to config xrdp (mkxrdp-sesman)"
+
+# !!!! customize etc/xrdp/sesman.ini (LogFile, for example)
 
 exit $?
 
