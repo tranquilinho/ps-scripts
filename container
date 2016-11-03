@@ -16,7 +16,7 @@ fi
 
 [ -z "${docker_run}" ] && readonly docker_run=${service_root}/data/run/docker
 readonly hash_file=${docker_run}/${container}
-readonly log_file=${service_root}/log/service.log
+readonly log_file=${service_root}/log/docker.log
 readonly log_facility="${service}"
 
 . ${scripts_base}/common
@@ -27,8 +27,6 @@ docker=$(which docker)
 
 container_start(){
     # log "${info} docker run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr}"
-    # !!!! log docker log ;-)
-
     [ -z "${docker_options}" ] && docker_options="-d"
 
     hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} ${docker_options} -t ${image} ${container_init} 2> ${docker_stderr})
@@ -47,6 +45,8 @@ case "$1" in
 
 	[ -x ${etc_dir}/host-prereq ] && ${etc_dir}/host-prereq
 	
+	[  -z "${container_init}" ] && readonly container_init=${etc_dir}/container-init
+
 	# If the service has the same "service root" inside and outside, we can
 	# initialize this variable for him
 	[ -z "${container_init_outside}" ] && container_init_outside=${container_init}
@@ -64,8 +64,12 @@ case "$1" in
 	    readonly previous_hash=$( ${docker} ps -a | grep ${container} | cut -c1-12)
 	    ${docker} rm ${previous_hash}
 	    container_start
+	    status=$?
 	fi
-	if [ -n "${hash}" ]; then
+	if [ ${status} -ne 0 ]; then
+	    tail -1 ${docker_stderr} | logalize ${log_file}
+	    exit 3
+	elif [ -n "${hash}" ]; then
 	    echo ${hash} > ${hash_file}
 	    log "${success} Container ${container} (${hash}) started"
 	else
