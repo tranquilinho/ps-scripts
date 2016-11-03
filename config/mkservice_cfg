@@ -2,7 +2,7 @@
 
 print_usage(){
     echo Make a service.cfg file into stdout
-    echo "Syntax: $0 -n service_name [-i feature1,feature2,...] [-m mirror]"
+    echo "Syntax: $0 -n service_name [-i feature1,feature2,...] [-m mirror] [-s ssh_port]"
     echo "Features available:"
     grep _enabled $0 | gawk '{ if (match($0, /^readonly (.*)_enabled.*/, matches)) print matches[1]}' | sort
     exit 1
@@ -15,7 +15,7 @@ user_wants(){
 }
 
 if [ "$#" -gt 0 ]; then
-    while getopts "i:n:m:" options; do
+    while getopts "i:n:m:s:" options; do
 	case "${options}" in
             i)
 		readonly includes=${OPTARG}
@@ -25,6 +25,9 @@ if [ "$#" -gt 0 ]; then
 		;;
 	    m)
 		readonly mirror_base=${OPTARG}
+		;;
+	    s)
+		readonly ssh_port=${OPTARG}
 		;;
             *)
 		echo "Unknow option" 1>&2 
@@ -72,9 +75,6 @@ cat<<"EOF"
 # default value for paralelism (-j option in make, etc)
 readonly ps_paralel="-j 2"
 
-
-readonly ssh_port=22
-
 # other useful variables (under specific circumstances)
 # readonly user=repo
 # readonly id=1103
@@ -89,6 +89,7 @@ readonly https_enabled=1
 readonly default_server=default.kewl.com
 EOF
 user_wants apache && cat <<EOF
+readonly ssh_port=${ssh_port}
 readonly http_port=${http_port}
 EOF
 
