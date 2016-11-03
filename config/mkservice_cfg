@@ -43,7 +43,7 @@ readonly service=${service}
 EOF
 
 cat <<"EOF"
-readonly service_root=/services/${service}
+[ -z "${service_root}" ] && readonly service_root=/services/${service}
 readonly scripts_base=${service_root}/scripts
 
 readonly data_dir=${service_root}/data
