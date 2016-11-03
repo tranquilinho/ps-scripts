@@ -74,7 +74,8 @@ if [ ${step} -le 2 ]; then
     mkdir -p usr/bin usr/lib usr/src
     mkdir -p data/${service}/ data/run/apache-tomcat
     mkdir -p etc/apache2
-    mkdir -p log/apache2 log/${service}
+    # in log, it is better to keep the standard "guacamole" name, instead of the user-defined ${service}
+    mkdir -p log/apache2 log/guacamole
     (( step ++ ))
     [ -n "${pause}" ] && read
 fi
@@ -82,8 +83,10 @@ fi
 # this step can be performed directly on docker host
 if [ ${step} -le 3 ]; then
     # use default tomcat_http_port in mkservice_cfg (8080), for apache http_port=80
+    # if port 80 is busy, the user can choose another port in service.cfg
     export http_port=80
-    [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,guacamole,tomcat,apache,https -m http://biocomp.cnb.csic.es/packages  > ${service_root}/etc/service.cfg
+    # by default, use port 8022 to connect to the container via ssh
+    [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -s 8022 -i cron,guacamole,tomcat,apache,https -m http://biocomp.cnb.csic.es/packages  > ${service_root}/etc/service.cfg
 
     [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
     chmod u+x ${service_root}/etc/service-manager
@@ -95,7 +98,7 @@ fi
 if [ ${step} -le 4 ]; then
     ${service_root}/scripts/config/mkdocker_cfg -n ${service} ${docker_image} > ${service_root}/etc/docker.cfg
     ${service_root}/scripts/config/mkcontainer_init -n ${service} > ${service_root}/etc/container-init
-
+    chmod u+x  ${service_root}/etc/container-init
     (( step ++ ))
     [ -n "${pause}" ] && read
 fi
