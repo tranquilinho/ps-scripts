@@ -81,15 +81,21 @@ readonly ps_paralel="-j 2"
 EOF
 
 [ -z "${http_port}" ] && readonly http_port=8080
+[ -z "${https_port}" ] && readonly https_port=8043
 
 user_wants apache && cat <<"EOF"
 readonly apache_enabled=1
 readonly web_home=${data_dir}/htdocs
-readonly https_enabled=1
+
 readonly default_server=default.kewl.com
 EOF
 user_wants apache && cat <<EOF
 readonly ssh_port=${ssh_port}
+readonly http_port=${http_port}
+EOF
+
+user_wants https && cat <<EOF
+readonly https_enabled=1
 readonly http_port=${http_port}
 EOF
 
