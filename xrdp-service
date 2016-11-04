@@ -67,10 +67,15 @@ case "$1" in
         check_root
         exitval=0
         log "${info} Starting xrdp " 
-#	if is_running ${daemon} ${pidfile}; then
-#            log "${warning} ${module} apparently already running"
-#            exit 0
-#        fi
+	if [ -f ${pidfile} ]; then
+	    if is_running ${daemon} ${pidfile}; then
+		log "${warning} ${module} apparently already running"
+		exit 0
+	    else
+		# pid files were not removed on last stop - clean them
+		rm ${pidfile} ${spidfile}
+            fi
+	fi
 
 	# xrdp handles the pidfile itself
 	# daemon_start ${daemon} " " ${pidfile}
