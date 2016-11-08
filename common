@@ -153,7 +153,6 @@ standard_install(){
     
     # make clean &&  
     make $1 ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
-
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
 	log "${critical} Problem building ${pkg_name}"
 	exit 8
@@ -162,14 +161,9 @@ standard_install(){
     if [ "a$2" != "anoinstall" ]; then
 	make install ${ps_paralel} 2>&1 | logalize $(make_log)
 	if [ ${PIPESTATUS[0]} -ne 0 ]; then
-	    log "${critical} Problem installing ${pkg_name}"
-	    exit 8
+	    log "${warning} Issue installing ${pkg_name}. Check $(make_log)"
+	    # exit 8
 	fi
-    fi
-
-    if [ $? -ne 0 ]; then
-	log "${critical} Problem installing ${pkg_name}"
-	exit 8
     fi
 
     if [ -d ${prefix} ]; then
@@ -191,7 +185,9 @@ standard_install(){
 }
 
 install_prereq(){
-    prereq=$1
+    local prereq=$1
+    local strength=$2
+    local version=$3
     # by now, asume prereq is installed if both the directory and the symlink exist
     local installed=1
     link=${usr_prefix}/${prereq}
@@ -200,10 +196,10 @@ install_prereq(){
 	[ $? -eq 0 ] && installed=0
     fi
     if [ ${installed} -ne 0 ]; then
-	${scripts_base}/build/${prereq}
+	${scripts_base}/build/${prereq} ${version}
 	if [ $? -ne 0 ]; then
 	    log "${critical} Problem installing prereq ${prereq}"
-	    [ "k$2" == "kmandatory" ] && exit 7
+	    [ "k${strength}" == "kmandatory" ] && exit 7
 	fi
     else
 	log "${warning} Prereq ${prereq} already installed"
