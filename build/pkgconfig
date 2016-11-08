@@ -29,4 +29,5 @@ fi
 
 standard_install
 
-echo "Add ${prefix}/bin to service.cfg"
+# echo "Add ${prefix}/bin to service.cfg"
+grep PATH ${etc_dir}/service.cfg | grep ${prefix} || echo "export PATH=${prefix}/bin:"'${PATH}' >> ${etc_dir}/service.cfg
