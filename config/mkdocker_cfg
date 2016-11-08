@@ -34,8 +34,9 @@ cat <<EOF
 readonly container=${service}
 readonly image=${image}
 EOF
+# With service ssh, the port that will be commonly used is $ssh_port in both sides
 cat <<"EOF"
 readonly docker_mounts="-v /services/${container}:/services/${container}:rw"
-readonly docker_ports="-p ${http_port}:${http_port} -p ${ssh_port}:22"
+readonly docker_ports="-p ${http_port}:${http_port} -p ${ssh_port}:${ssh_port}"
 readonly container_init="/services/${container}/etc/container-init"
 EOF
