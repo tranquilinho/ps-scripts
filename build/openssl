@@ -4,22 +4,45 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
+series=1.1
+if [ $# -eq 1 ]; then
+    if [[ "$1" =~ 1.1\\? ]]; then
+	readonly pkg_version=1.1.0b
+    elif [[ "$1" =~ 1.0\\? ]]; then
+	readonly pkg_version=1.0.2j
+	series=1.0
+    fi
+fi
+
 readonly pkg_name=openssl
-readonly pkg_version=1.0.2f
+[ -z "${pkg_version}" ] && readonly pkg_version=1.1.0b
 readonly url_base=http://www.openssl.org/source/
 
 build_preconditions
 
+# pkg-config not recognized by ./config...
+# install_prereq pkg-config "mandatory"
+
 install_prereq zlib "mandatory"
 
-# Using ps-scripts zlib...
+# !!!! Using ps-scripts zlib...
 # 1) it seems there is no option in config to specify custom zlib location...
-export CPPFLAGS=-I${usr_prefix}/zlib/include
-export LDFLAGS=-L${usr_prefix}/zlib/lib
+# export CPPFLAGS=-I${usr_prefix}/zlib/include
+# export LDFLAGS=-L${usr_prefix}/zlib/lib
 # 2) Compilation uses CPPFLAGS, but in the end libs are linked against system's libz...
 #    One option would be to patch Makefile and set ZLIB_INCLUDE and LIBZLIB
-#    Another option would be to try the new integration of service's pkg-config
 ./config --prefix=${prefix} shared zlib-dynamic | logalize $(configure_log)
+
+# 3) Patch Makefile (1.1 series)
+if [ ${series} == 1.1 ]; then
+    sed -i "s_^CFLAGS=_CFLAGS=-I${usr_prefix}/zlib/include/_g" Makefile
+    sed -i "s_^LDFLAGS=_LDFLAGS=-L${usr_prefix}/zlib/lib/_g" Makefile
+else
+    sed -i "s@^ZLIB_INCLUDE=@ZLIB_INCLUDE=-I${usr_prefix}/zlib/include/@g" Makefile
+    sed -i "s@^LIBZLIB=@LIBZLIB=-L${usr_prefix}/zlib/lib/@g" Makefile
+fi
+
+export LD_LIBRARY_PATH=${usr_prefix}/zlib/lib/:${LD_LIBRARY_PATH}
 
 standard_install
 
