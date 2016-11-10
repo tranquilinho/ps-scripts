@@ -1,0 +1,25 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=autoconf
+readonly pkg_version=2.69
+readonly pkg_ext=tar.xz
+readonly url_base=ftp://ftp.rediris.es/mirror/GNU/gnu/autoconf/
+
+install_prereq libtool "mandatory"
+
+build_preconditions
+
+#export LD_LIBRARY_PATH=${usr_prefix}/zlib/lib:${LD_LIBRARY_PATH}
+# !!!! this should be done by pkg-config...
+# export CFLAGS=-L${usr_prefix}/zlib/lib
+# export CPPFLAGS=-I${usr_prefix}/zlib/include
+export PATH=${usr_prefix}/libtool/bin:${PATH}
+./configure --prefix=${prefix} 
+
+standard_install
+
+

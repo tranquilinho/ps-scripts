@@ -1,0 +1,22 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=libtool
+readonly pkg_version=2.4
+readonly pkg_ext=tar.xz
+readonly url_base=ftp://ftp.rediris.es/mirror/GNU/gnu/libtool/
+
+# install_prereq autoconf "mandatory"
+
+build_preconditions
+
+
+# export PATH=${usr_prefix}/autoconf/bin:${PATH}
+./configure --prefix=${prefix} 
+
+standard_install
+
+
