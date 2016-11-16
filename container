@@ -25,6 +25,7 @@ readonly docker_stderr=$(mktemp)
 docker=$(which docker)
 [ -z "${docker}" ] && docker=$(which docker.io)
 
+
 container_start(){
     # log "${info} docker run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr}"
     [ -z "${docker_options}" ] && docker_options="-d"
@@ -32,9 +33,44 @@ container_start(){
     hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} ${docker_options} -t ${image} ${container_init} 2> ${docker_stderr})
 }
 
+
+container_ip_setup(){
+    if [ -n "${public_ip_addr}" -a -n "${public_ip_iface}" -a -n "${public_ip_mask}" ]; then
+	ip -o addr | grep ${public_ip_addr} > /dev/null && log "${warning} Container IP already set up" && return
+	ifconfig ${public_ip_iface} add ${public_ip_addr} netmask ${public_ip_mask} 
+	[ $? -ne 0 ] && log "${critical} Error setting up container IP ${public_ip_iface} ${public_ip_mask} on ${public_ip_iface}" && exit 4
+	local ip_alias=$(ip addr | grep ${public_ip_addr} | awk '{print $8}')
+	echo ${ip_alias} > ${etc_dir}/container_ip_alias
+	log "${success} IP ${public_ip_iface} ${public_ip_addr} ${public_ip_mask} on ${ip_alias}"
+    fi
+}
+
+
+container_ip_release(){
+    if [ -n "${public_ip_addr}" ]; then
+	local self_cid=$( ${docker} ps -a | grep ${container} | cut -c1-12)
+	[ -z "${self_cid}" ] && log "${warning} No running container found" 
+	${docker} ps -q | while read cid; do
+	    if [ "${cid}" != "${self_cid}" ]; then
+		${docker} inspect ${cid} | grep ${public_ip_addr} > /dev/null && log "${warning} The IP of this container is shared by another container in this host" && return
+	    fi
+	done
+	# No container is using the IP of this container
+	[ ! -f ${etc_dir}/container_ip_alias ] && log "${critical} No interface alias found" && return
+	local ip_alias=$(cat ${etc_dir}/container_ip_alias)
+	ifconfig ${ip_alias} down 
+	if [ $? -eq 0 ]; then
+	    log "${success} interface ${public_ip_alias} ${public_ip_addr} released"
+	else
+	    log "${critical} Error releasing interface ${public_ip_alias} ${public_ip_addr}"
+	fi
+    fi
+}
+
 case "$1" in
     "start")
 	log "${info} Docker container start"
+	status=0
 	if [ ! -d ${docker_run} ]; then
 	    mkdir -p ${docker_run}
 	fi
@@ -55,6 +91,8 @@ case "$1" in
 	    echo "${container_init} must have executable permission"
 	    exit 3
 	fi
+
+	container_ip_setup
 
 	container_start
 	egrep "Abort due to constraint violation: UNIQUE| is already assigned" ${docker_stderr} >/dev/null
@@ -84,12 +122,16 @@ case "$1" in
 	    log "${info} Stopping service..."
 	    watchdog 5 ssh -p ${ssh_port} localhost "${etc_dir}/service-manager stop" 
 	    ${docker} stop -t=15 ${hash}
-	    ${docker} rm ${hash}
+	    ${docker} rm ${hash} && container_ip_release
 	    log "${success} Stopped"
 	else
 	    log "${critical} hashfile ${hash_file} not found"
 	    exit 2
-		fi
+	fi
+	;;
+    "test")
+	#container_ip_release
+	# container_ip_setup
 	;;
     *)
 	echo "Syntax: $0 [start|stop]"
