@@ -15,7 +15,7 @@ build_preconditions
 
 
 # export PATH=${usr_prefix}/autoconf/bin:${PATH}
-./configure --prefix=${prefix} 
+./configure --prefix=${prefix} --datadir=${usr_prefix}/share
 
 standard_install
 

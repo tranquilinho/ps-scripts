@@ -11,6 +11,7 @@ readonly url_base=ftp://ftp.rediris.es/mirror/GNU/gnu/autoconf/
 
 install_prereq libtool "mandatory"
 
+# autoconf also depends on m4, but it is autoinstalled by build_preconditions
 build_preconditions
 
 #export LD_LIBRARY_PATH=${usr_prefix}/zlib/lib:${LD_LIBRARY_PATH}
@@ -18,7 +19,7 @@ build_preconditions
 # export CFLAGS=-L${usr_prefix}/zlib/lib
 # export CPPFLAGS=-I${usr_prefix}/zlib/include
 export PATH=${usr_prefix}/libtool/bin:${PATH}
-./configure --prefix=${prefix} 
+./configure --prefix=${prefix}  --datadir=${usr_prefix}/share
 
 standard_install
 

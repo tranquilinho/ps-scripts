@@ -13,7 +13,10 @@ install_prereq autoconf "mandatory"
 build_preconditions
 
 export PATH=${usr_prefix}/autoconf/bin:${PATH}
-./configure --prefix=${prefix} 
+# it is simpler to collect all .m4 macros in a single dir (--datadir)
+# though this breaks the principle of versioning
+# !!!! version-friendly share directory
+./configure --prefix=${prefix} --datadir=${usr_prefix}/share
 
 standard_install
 
