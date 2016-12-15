@@ -149,7 +149,7 @@ configure(){
 # $1 make option
 # $2 (noinstall)
 standard_install(){
-    log "${info} standard install start (${ps_paralel}) ${pkg_name}"
+    log "${info} standard install start (${ps_paralel}) ${pkg_name} ${pkg_version}"
     
     # make clean &&  
     make $1 ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
