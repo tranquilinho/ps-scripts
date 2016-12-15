@@ -5,17 +5,19 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=httpd
-readonly pkg_version=2.4.18
-# !!!! this mirror keeps only the latest stable version...
-readonly url_base=http://ftp.cixug.es/apache/httpd
+readonly pkg_version=2.4.23
+# !!!! this mirror keeps only the latest stable version?
+readonly url_base=http://apache.rediris.es//httpd/
 
 log "${info} ${pkg_name} install started"
 
-install_prereq apr-util "mandatory"
-install_prereq pcre "mandatory"
-[ "${https_enabled}" == "1" ] && install_prereq openssl "mandatory"
 # libxml2 is required by proxy-html 
 install_prereq libxml2 "mandatory"
+# currently openssl 1.1 is not supported ("undefined reference to CRYPTO_malloc_init")
+# !!!! remove 1.0 when 1.1 or newer is supported
+[ "${https_enabled}" == "1" ] && install_prereq openssl "mandatory" 1.0
+install_prereq apr-util "mandatory"
+install_prereq pcre "mandatory"
 
 readonly os_aux=$(grep "^ID=" /etc/os-release)
 readonly os=${os_aux##ID=}
