@@ -140,7 +140,7 @@ EOFB
 
     [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
 
-    [ ! -f ${etc_dir}/rdp-user.db ] && ${scripts_base}/
+    [ ! -f ${etc_dir}/rdp-user.db ] && ${scripts_base}/guacamole-change-password -g ${guacamole_user} -o ${guac_os_user}
 
     # config file name must match daemon name
     [ ! -f /etc/pam.d/xrdp-sesman ] && ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/xrdp-sesman
