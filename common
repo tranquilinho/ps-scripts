@@ -5,6 +5,9 @@ readonly  warning="WARN"
 readonly critical="CRIT"
 readonly  success=" OK "
 
+readonly TRUE=0
+readonly FALSE=1
+
 readonly log_hostname=$(hostname)
 readonly log_format='${log_timestamp} ${log_hostname} "$(printf "%16s" ${log_facility})"'
 readonly build_log=${log_dir}/build.log
@@ -188,14 +191,14 @@ install_prereq(){
     local prereq=$1
     local strength=$2
     local version=$3
-    # by now, asume prereq is installed if both the directory and the symlink exist
-    local installed=1
+    local installed=${FALSE}
     link=${usr_prefix}/${prereq}
+    # by now, asume prereq is installed if both the directory and the symlink exist
     if [ -s ${link} ];then
 	ls  --dereference-command-line-symlink-to-dir ${link} > /dev/null
-	[ $? -eq 0 ] && installed=0
+	[ $? -eq 0 ] && installed=${TRUE}
     fi
-    if [ ${installed} -ne 0 ]; then
+    if [ ${installed} -eq ${FALSE} ]; then
 	${scripts_base}/build/${prereq} ${version}
 	if [ $? -ne 0 ]; then
 	    log "${critical} Problem installing prereq ${prereq}"
