@@ -169,7 +169,7 @@ standard_install(){
     if [ -d ${prefix} ]; then
     # make sure the symlink points to what it was just installed,
     # instead to some random version (for example, in a different but similar service...)
-	rm ${usr_prefix}/${pkg_name}
+	[ -s ${usr_prefix}/${pkg_name} ] && rm ${usr_prefix}/${pkg_name}
 	ln -s ${prefix} ${usr_prefix}/${pkg_name}
     fi
 
