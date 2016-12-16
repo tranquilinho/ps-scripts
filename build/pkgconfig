@@ -26,6 +26,10 @@ if [ "${available_pkg_config}" == "${pkg_version}" ]; then
 fi
 
 ./configure --prefix=${prefix} --with-pc-path=${pkg_config_dir} --with-internal-glib  | logalize $(configure_log)
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    log "${critical} Problem configuring ${pkg_name}"
+    exit 6
+fi
 
 standard_install
 
