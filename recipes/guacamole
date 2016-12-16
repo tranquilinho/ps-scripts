@@ -12,18 +12,19 @@ print_usage(){
 }
 
 
-
 if [ "$#" -gt 0 ]; then
     while getopts "s:g:o:hp" options; do
 	case "${options}" in
             s)
 		step=${OPTARG}
 		;;
+	    # guac user params will be needed in scripts like mkservice_cfg,
+	    # hence the export
 	    g)
-		readonly guacamole_user=${OPTARG}
+		export guacamole_user=${OPTARG}
 		;;
 	    o) 
-		readonly guac_os_user=${OPTARG}
+		export guac_os_user=${OPTARG}
 		;;
 	    p)
 		readonly pause=1
@@ -42,7 +43,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 [ -z "${guacamole_user}" ] && print_usage
-[ -z "${guac_os_user}" ] && readonly guac_os_user=ubuntu
+[ -z "${guac_os_user}" ] && export guac_os_user=ubuntu
 [ -z "${step}" ] && step=1
 
 if [ ${step} -le 1 ]; then
