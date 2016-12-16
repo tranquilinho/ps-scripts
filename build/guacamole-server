@@ -10,7 +10,7 @@ readonly url_base=http://downloads.sourceforge.net/project/guacamole/current/sou
 
 build_preconditions
 
-install_prereq pkgconfig "mandatory"
+install_prereq pkg-config "mandatory"
 install_prereq libpng "mandatory"
 # use OS packages by now
 # !!!! in Debian, there is no libjpeg-turbo8-dev...
