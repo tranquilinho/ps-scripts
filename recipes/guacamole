@@ -56,6 +56,8 @@ cd ${service_root}
 if [ ${step} -le 2 ]; then
     # !!!! remove git checkout when the recipe works in master
     [ ! -d scripts ] && git clone https://github.com/tranquilinho/ps-scripts.git scripts && cd scripts && git checkout testing
+    echo "Creating directories"
+    cd ${service_root}
     mkdir etc
     mkdir -p usr/bin usr/lib usr/src
     mkdir -p data/${service}/ data/run/apache-tomcat
@@ -66,6 +68,7 @@ if [ ${step} -le 2 ]; then
 fi
 
 if [ ${step} -le 3 ]; then
+    echo "Creating configuration files"
     #export guacamole_user="scipion"
     #export guac_os_user="ubuntu"
 
@@ -85,11 +88,13 @@ fi
 
 # what users are needed?
 if [ ${step} -le 4 -a -n "${user_name}" ]; then
+    echo "Creating users"
     ${scripts_base}/create-user ${user_id} ${user_name} ${data_dir}/${service}
     [ -n "${pause}" ] && read
 fi
 
 if [ ${step} -le 5  ]; then
+    echo "Installing software dependencies"
     # Software dependencies
     ${scripts_base}/build/apache
     ${scripts_base}/build/tomcat
@@ -101,6 +106,7 @@ if [ ${step} -le 5  ]; then
 fi
 
 if [ ${step} -le 6 ]; then    
+    echo "Creating config files"
     # "final" config: apache, tomcat, xrdp...
 
     ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
