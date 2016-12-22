@@ -10,7 +10,17 @@ readonly url_base=ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/
 
 build_preconditions
 
-./configure --prefix=${prefix} 
+install_prereq zlib "mandatory"
+
+# configure offers --with-zlib-prefix option, but it seems to be ignored...
+export CPPFLAGS=-I${usr_prefix}/zlib/include
+export LDFLAGS=-L${usr_prefix}/zlib/lib
+
+# --with-system-zlib seems to be a gcc option, so it should not interfere with using a non-system zlib...
+./configure --prefix=${prefix} --disable-static
+# Other ideas to compile against ps zlib (didn't work...)
+# --with-pkgconfigdir=${usr_prefix}/pkgconfig
+# --libdir=${usr_prefix}/zlib/lib
 
 standard_install
 
