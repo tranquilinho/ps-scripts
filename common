@@ -441,3 +441,10 @@ can_write(){
     fi
 }
 
+is_os_ubuntu(){
+    grep "NAME" /etc/os-release | grep "Ubuntu" > /dev/null
+}
+
+is_os_debian(){
+    grep "NAME" /etc/os-release | grep "Debian" > /dev/null
+}
