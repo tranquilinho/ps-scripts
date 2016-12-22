@@ -14,8 +14,6 @@ build_preconditions
 
 debian_install libpam0g-dev
 debian_install autoconf
-# !!!! in Debian, libtool-bin is also needed...
-debian_install libtool
 debian_install libx11-dev
 debian_install libxfixes-dev
 #install_prereq pkg-config "mandatory"
@@ -23,21 +21,32 @@ debian_install libxfixes-dev
 
 export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 
-# base - xrdp itself
-./bootstrap
-./configure --prefix=${prefix} --localstatedir=${data_dir} --sysconfdir=${etc_dir} --enable-xrdpdebug
-standard_install
+# In Ubuntu it is easier to go with OS package
+if is_os_ubuntu; then
+   debian_install xrdp
+elif is_os_debian; then
+    # in Debian, libtool-bin is also needed...
+    debian_install libtool
+
+    # base - xrdp itself
+    ./bootstrap
+    ./configure --prefix=${prefix} --localstatedir=${data_dir} --sysconfdir=${etc_dir} --enable-xrdpdebug
+    standard_install
+
+    # X11rdp building (optional)
+    # debian packages needed
+    # flex bison libxml2-dev intltool xsltproc xutils-dev python-libxml2 g++ xutils
+    #cd xorg/X11R7.6
+    #./buildx.sh ${usr_prefix}/X11rdp
+    # ln -s /opt/X11rdp/bin/X11rdp /usr/local/bin/X11rdp
+else
+    log "${critical} Unsupported OS"
+fi
 
 # make sure run_dir is available
 [ ! -d ${run_dir}/xrdp ] && mkdir ${run_dir}/xrdp && chown xrdp.xrdp ${run_dir}/xrdp
 
-# X11rdp building (optional)
-# debian packages needed
-# flex bison libxml2-dev intltool xsltproc xutils-dev python-libxml2 g++ xutils
-#cd xorg/X11R7.6
-#./buildx.sh ${usr_prefix}/X11rdp
-# ln -s /opt/X11rdp/bin/X11rdp /usr/local/bin/X11rdp
-
+    
 echo "Remember to config xrdp (mkxrdp-sesman)"
 
 # !!!! customize etc/xrdp/sesman.ini (LogFile, for example)
