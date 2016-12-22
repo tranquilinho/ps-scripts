@@ -140,11 +140,12 @@ EOFB
 
     [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
 
-    [ ! -f ${etc_dir}/rdp-user.db ] && ${scripts_base}/guacamole-change-password -g ${guacamole_user} -o ${guac_os_user}
+    [ ! -f ${etc_dir}/rdp-user.db ] && ${scripts_base}/guacamole-change-password -g ${guacamole_user} -o ${guac_os_user} -f
 
     # config file name must match daemon name
     [ ! -f /etc/pam.d/xrdp-sesman ] && ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/xrdp-sesman
-    grep "db="  /etc/pam.d/xrdp-sesman || echo "WARNING - no DB set in /etc/pam.d/xrdp-sesman"
+    # !!!! recipe option to overwrite xrdp sesman instead of showing a warning
+    grep "db="  /etc/pam.d/xrdp-sesman || echo "WARNING - no DB set in /etc/pam.d/xrdp-sesman. See mkxrdp-sesman"
     mkdir ${etc_dir}/xrdp
     ${scripts_base}/config/xrdp/sesman.ini > ${etc_dir}/xrdp/sesman.ini
     cp ${scripts_base}/config/xrdp/startwm.sh ${etc_dir}/xrdp
