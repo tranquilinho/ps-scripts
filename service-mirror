@@ -1,11 +1,15 @@
 #!/bin/bash
 
+# It seems simpler and safer to run mirroring from the host...
+# for each running service, execute this script
+
+# By now, we only support "active-passive" clusters (2 nodes)
+
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg}
 
 readonly backup_cfg_dir=${etc_dir}/backup
-
 readonly config_file=${backup_cfg_dir}/main.cfg
 readonly exclude_file=${backup_cfg_dir}/exclude.cfg
 # readonly private_key=${backup_cfg_dir}/id_rsa
@@ -16,46 +20,56 @@ readonly log_facility="${service}-mirror"
 
 . ${scripts_base}/common
 
-if [ ! -f ${private_key} ];then
-        log "${critical} Service backup private key ${private_key} missing"
-        exit 3
+# the host may not be able to run rsync of service...
+# if [ -x ${usr_prefix}/rsync/bin/rsync ]; then
+#    readonly rsync=${usr_prefix}/rsync/bin/rsync
+#else
+readonly rsync=$(which rsync)
+#fi
+
+if [ -z "${rsync}" ]; then
+    log "${critical} rsync missing"
 fi
 
-chmod 600 ${private_key}
+log "${info} MIRRORING STARTED"
 
-if [ -z "$(which rsync)" ]; then
-    ${scripts_base}/build/rsync
+line=$(grep cluster= ${config_file})
+cluster_host_list=$(expr match ${line} "cluster=\(.*\)")
+[ -z "${cluster_host_list}" ] && log "${critical} No cluster found in ${config_file}" && exit 7
+declare -a cluster_hosts
+IFS=', ' read -r -a cluster_hosts <<< "${cluster_host_list}"
+# 2 node clusters -> use the first host (excluding ourself)
+if [ "${cluster_hosts[0]}" == $(hostname -s) ]; then
+    mirror_host="${cluster_hosts[1]}"
+else
+    mirror_host="${cluster_hosts[0]}"
 fi
 
-log "${info} MIRROR-PULL STARTED"
-line=$(grep mirror= ${config_file})
-readonly mirror_host=$(expr match ${line} "mirror=\(.*\):.*:.*:.*")
-if [ $(hostname) != ${mirror_host} ]; then
-    log "${success} Skipping (I am not the mirror host, ${mirror_host})"
-    exit 0
-fi
+[ -z "${mirror_host}" ] && log "${critical} No mirror host" && exit 6
 
-readonly mirror_path=$(expr match ${line} "mirror=.*:.*:.*:\(.*\)")
-line=$(grep frontend= ${config_file})
-readonly frontend_host=$(expr match ${line} "frontend=\(.*\):.*:.*:.*")
-if [ $(hostname) == ${frontend_host} ]; then    
-    log "${critical} Skipping (mirror host can not be the frontend)"
-    exit 2
-fi
+# path -> same as where the service is running now
+readonly mirror_path=${service_root}
+
+[ "${service_root}" == "/" -o "${mirror_path}" == "/" ] && log "${warning} rsync will delete from / ..." && exit 8
 
 log "${info} Mirroring..."
-readonly data_dirs=$(grep data= ${config_file})
-readonly rsync_options_line=$(grep rsync_options= ${config_file})
-readonly rsync_options=${rsync_options_line##rsync_options=}
 
-for d in ${data_dirs}; do
-    dir="$(expr match "${d}" "data=\(.*\)")"
-    from="${frontend_host}:${dir}"
-    mirror_dest="${mirror_path}/"
-    log "${info} Mirroring ${from} to ${mirror_dest}"
+# By now, we only mirror service root
+# readonly data_dirs=$(grep data= ${config_file})
+#readonly rsync_options_line=$(grep rsync_options= ${config_file})
+#readonly rsync_options=${rsync_options_line##rsync_options=}
 
-    rsync -a ${rsync_options} -e "ssh -o StrictHostKeyChecking=no" --delete ${from}  ${mirror_dest} | logalize ${log_file}
+#for d in ${data_dirs}; do
+#    dir="$(expr match "${d}" "data=\(.*\)")"
+#    from="${frontend_host}:${dir}"
 
-done
+mirror_dest="${mirror_host}:${mirror_path}"
 
-log "${success} MIRROR-PULL FINISHED"
+log "${info} Mirroring ${from} to ${mirror_dest}"
+mirror_status="${success}"
+# if some specific ssh key is need, add -e "ssh -i ${private_key} -o StrictHostKeyChecking=no"
+${rsync} -av ${rsync_options} ${exclude_option} --delete ${service_root}/ ${mirror_dest}/ | logalize ${log_file}
+[ ${PIPESTATUS[0]} -ne 0 ] && mirror_status=${critical}
+log "${mirror_status} Mirror finished: ${from} to ${mirror_dest}"
+#done
+
