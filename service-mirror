@@ -34,8 +34,8 @@ fi
 log "${info} MIRRORING STARTED"
 
 line=$(grep cluster= ${config_file})
+[ -z "${line}" ] && log "${critical} No cluster found in ${config_file}" && exit 7
 cluster_host_list=$(expr match ${line} "cluster=\(.*\)")
-[ -z "${cluster_host_list}" ] && log "${critical} No cluster found in ${config_file}" && exit 7
 declare -a cluster_hosts
 IFS=', ' read -r -a cluster_hosts <<< "${cluster_host_list}"
 # 2 node clusters -> use the first host (excluding ourself)
