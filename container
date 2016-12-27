@@ -34,6 +34,7 @@ container_start(){
 }
 
 
+# !!!! check services with no public_ip_addr (which should listen to 0.0.0.0). docker.cfg seems to need an specific IP...
 container_ip_setup(){
     if [ -n "${public_ip_addr}" -a -n "${public_ip_iface}" -a -n "${public_ip_mask}" ]; then
 	ip -o addr | grep ${public_ip_addr} > /dev/null && log "${warning} Container IP ${public_ip_addr} already set up" && return
