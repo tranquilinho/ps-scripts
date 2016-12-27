@@ -55,9 +55,16 @@ container_ip_release(){
 	    ${docker} inspect ${cid} | grep ${public_ip_addr} > /dev/null && log "${warning} The IP of this container is shared by another container in this host" && return 1
 	    # fi
 	done
-	# No container is using the IP of this container
-	local ip_alias=$(ip addr | grep ${public_ip_addr} | awk '{print $8}')
-	ifconfig ${ip_alias} down 
+	# No container is using the IP of this container, but
+	# it may be used somewhere else (for example, by the host itself)
+	# !!! Add tests for other uses
+	local ip_alias=$(field "$(ip addr | grep ${public_ip_addr})" 7)
+	local host_ip=$(field "$(host $(hostname))" 3)
+	if [ "${host_ip}" == "${public_ip_addr%%/*}" ]; then 
+	    log "${info} ${ip_alias} is in use by the host"
+	else
+	    ifconfig ${ip_alias} down 
+	fi
 	if [ $? -eq 0 ]; then
 	    log "${success} interface ${ip_alias} ${public_ip_addr} released"
 	else
@@ -134,7 +141,7 @@ case "$1" in
 	fi
 	;;
     "test")
-	# container_ip_release
+	#container_ip_release
 	# container_ip_setup
 	;;
     *)
