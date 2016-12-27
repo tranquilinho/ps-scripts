@@ -448,3 +448,11 @@ is_os_ubuntu(){
 is_os_debian(){
     grep "NAME" /etc/os-release | grep "Debian" > /dev/null
 }
+
+# return the Nth field of a string, starting at 0
+field(){
+    local -a fields
+    read -r -a fields <<< "$1"
+    local n=$2
+    echo "${fields[$n]}"
+}
