@@ -34,7 +34,7 @@ EOF
 readonly random_pass=$(random_str)
 
 [ -z "${guacamole_user}" ] && guacamole_user="myuser"
-[ Z "${guac_os_user}" ] && guac_os_user=${guacamole_user}
+[ -z "${guac_os_user}" ] && guac_os_user=${guacamole_user}
 
 
 cat > ${etc_guacamole}/user-mapping.xml <<EOF

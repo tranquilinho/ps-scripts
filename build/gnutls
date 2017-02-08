@@ -14,7 +14,7 @@ build_preconditions
 
 install_prereq zlib "mandatory"
 # nettle is found via pkg-config
-install_prereq pkgconfig "mandatory"
+install_prereq pkg-config "mandatory"
 install_prereq nettle "mandatory"
 export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 

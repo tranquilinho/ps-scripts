@@ -12,18 +12,19 @@ print_usage(){
 }
 
 
-
 if [ "$#" -gt 0 ]; then
     while getopts "s:g:o:hp" options; do
 	case "${options}" in
             s)
 		step=${OPTARG}
 		;;
+	    # guac user params will be needed in scripts like mkservice_cfg,
+	    # hence the export
 	    g)
-		readonly guacamole_user=${OPTARG}
+		export guacamole_user=${OPTARG}
 		;;
 	    o) 
-		readonly guac_os_user=${OPTARG}
+		export guac_os_user=${OPTARG}
 		;;
 	    p)
 		readonly pause=1
@@ -42,7 +43,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 [ -z "${guacamole_user}" ] && print_usage
-[ -z "${guac_os_user}" ] && readonly guac_os_user=ubuntu
+[ -z "${guac_os_user}" ] && export guac_os_user=ubuntu
 [ -z "${step}" ] && step=1
 
 if [ ${step} -le 1 ]; then
@@ -54,7 +55,10 @@ fi
 cd ${service_root}
 
 if [ ${step} -le 2 ]; then
-    [ ! -d scripts ] && git clone https://github.com/tranquilinho/ps-scripts.git scripts
+    # !!!! remove git checkout when the recipe works in master
+    [ ! -d scripts ] && git clone https://github.com/tranquilinho/ps-scripts.git scripts && cd scripts && git checkout testing
+    echo "Creating directories"
+    cd ${service_root}
     mkdir etc
     mkdir -p usr/bin usr/lib usr/src
     mkdir -p data/${service}/ data/run/apache-tomcat
@@ -65,6 +69,7 @@ if [ ${step} -le 2 ]; then
 fi
 
 if [ ${step} -le 3 ]; then
+    echo "Creating configuration files"
     #export guacamole_user="scipion"
     #export guac_os_user="ubuntu"
 
@@ -84,22 +89,25 @@ fi
 
 # what users are needed?
 if [ ${step} -le 4 -a -n "${user_name}" ]; then
+    echo "Creating users"
     ${scripts_base}/create-user ${user_id} ${user_name} ${data_dir}/${service}
     [ -n "${pause}" ] && read
 fi
 
 if [ ${step} -le 5  ]; then
+    echo "Installing software dependencies"
     # Software dependencies
+    ${scripts_base}/build/apache
     ${scripts_base}/build/tomcat
     ${scripts_base}/build/guacamole-server
     ${scripts_base}/build/guacamole-client
     ${scripts_base}/build/vncserver
     ${scripts_base}/build/xrdp
-    ${scripts_base}/build/apache
     [ -n "${pause}" ] && read
 fi
 
 if [ ${step} -le 6 ]; then    
+    echo "Creating config files"
     # "final" config: apache, tomcat, xrdp...
 
     ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
@@ -132,8 +140,13 @@ EOFB
 
     [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
 
+    [ ! -f ${etc_dir}/rdp-user.db ] && ${scripts_base}/guacamole-change-password -g ${guacamole_user} -o ${guac_os_user} -f
+
     # config file name must match daemon name
     [ ! -f /etc/pam.d/xrdp-sesman ] && ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/xrdp-sesman
+    # !!!! recipe option to overwrite xrdp sesman instead of showing a warning
+    grep "db="  /etc/pam.d/xrdp-sesman || echo "WARNING - no DB set in /etc/pam.d/xrdp-sesman. See mkxrdp-sesman"
+    mkdir ${etc_dir}/xrdp
     ${scripts_base}/config/xrdp/sesman.ini > ${etc_dir}/xrdp/sesman.ini
     cp ${scripts_base}/config/xrdp/startwm.sh ${etc_dir}/xrdp
     
@@ -157,6 +170,25 @@ To start the service on boot (in Debian / Ubuntu), add a symlink to service-mana
 
 ln -s /services/guacamole/etc/service-manager /etc/init.d/guacamole
 update-rc.d -f guacamole enable
+
+To enable SSL support...
+
+Add a certificate in etc/apache2/ssl (you can create one with scripts/config/make-snakeoil-cert)
+
+Add a HTTPs VirtualHost to etc/apache2/service.conf (you may just replace the HTTP virtualhost definition and use only HTTPs)
+-----
+Listen 443
+<VirtualHost  myserver.com:443>
+   # SSL configuration
+   SSLEngine on
+   # Self-generated
+   SSLCertificateFile      /services/guacamole/etc/apache2/ssl/guacamole.pem
+   SSLCertificateKeyFile   /services/guacamole/etc/apache2/ssl/guacamole-private.key
+
+   Include /services/guacamole/etc/apache2/service-common.conf
+</VirtualHost>
+(...)
+-------
 
 EOF
 fi

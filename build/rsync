@@ -22,7 +22,7 @@ if [ "${rsync_version}" == "${pkg_version}" ]; then
 fi
 
 
-install_prereq pkgconfig "mandatory"
+install_prereq pkg-config "mandatory"
 install_prereq zlib "mandatory"
 
 export PATH=${usr_prefix}/pkg-config/bin:${PATH}

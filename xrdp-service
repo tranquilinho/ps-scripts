@@ -23,21 +23,24 @@ readonly log_file=${service_log}
 readonly module="xrdp"
 readonly log_facility="${service}-${module}"
 
-
-BASE=/services/guacamole/usr/xrdp
+if is_os_ubuntu; then
+    BASE=/usr
+else
+    BASE=/services/guacamole/usr/xrdp
+fi
 PATH=${BASE}/bin:${BASE}/sbin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
 daemon=${BASE}/sbin/xrdp
 sdaemon=${BASE}/sbin/xrdp-sesman
+
 readonly pidfile=${run_dir}/${module}.pid
 readonly spidfile=${run_dir}/xrdp-sesman.pid
-#USERID=xrdp
-# the X11rdp backend only works as root at the moment - GH 20/03/2013
+# !!!! xrdp can run as non-root?
 USERID=root
 
 test -x ${daemon} || exit 0
 
-# . /lib/lsb/init-functions
-
+# !!!! add this check to other service scripts?
 check_root()  {
     if [ "$(id -u)" != "0" ]; then
         log "${error} You must be root to start, stop or restart ${module}."
@@ -64,7 +67,13 @@ force_stop() {
 
 case "$1" in
   start)
-        check_root
+      if is_os_ubuntu; then
+	  # by now, we are using OS xrdp - reuse its service manager
+	  # !!!! integrate when ps xrdp is used in ubuntu
+	  service xrdp start
+	  status=$?
+      else
+	check_root
         exitval=0
         log "${info} Starting xrdp " 
 	if [ -f ${pidfile} ]; then
@@ -86,18 +95,18 @@ case "$1" in
 	if [ ${status} -eq 0 ]; then
 	    ${sdaemon}
 	    status=$?
-        # start-stop-daemon --start --quiet --oknodo  --pidfile $PIDDIR/$NAME.pid   --chuid $USERID:$USERID --exec $DAEMON | logalize ${log_file}
-        # exitval=$?
-        # start-stop-daemon --start --quiet --oknodo --pidfile $PIDDIR/xrdp-sesman.pid --exec $SDAEMON  | logalize ${log_file}
 	fi
         # Make pidfile readables for all users (for status to work)
         [ -e ${spidfile} ] && chmod 0644 ${spidfile}
         [ -e ${pidfile} ] && chmod 0644 ${pidfile}
-
-	log_status ${status} "${module} started" "Problem starting ${module}"
-	;;
+      fi
+      log_status ${status} "${module} started" "Problem starting ${module}"
+      ;;
   stop)
-        check_root
+      if is_os_ubuntu; then
+	  service stop xrdp
+      else
+	check_root
         log "${info} Stopping xrdp"
 
 	# !!!! xrdp has a -kill option. Maybe it is a better way to stop it?
@@ -108,7 +117,7 @@ case "$1" in
 	else
 	    log "${error} Problem stopping xrdp"
 	fi
-	 
+      fi 
 	;;
   force-stop)
 	$0 stop
@@ -124,18 +133,20 @@ case "$1" in
 	;;
   status)
         exitval=0
-
-        if is_running ${daemon} ${pidfile}; then
-            log "${info} ${DAEMON} running"
-        else
-            log "${warning} ${DAEMON} apparently not running"
-        fi
-	if  is_running ${sdaemon} ${spidfile}; then
-            log "${info} ${SDAEMON} running"
-        else
-            log "${warning} ${SDAEMON} apparently not running"
+	if is_os_ubuntu; then
+	    service xrdp status
+	else
+            if is_running ${daemon} ${pidfile}; then
+		log "${info} ${DAEMON} running"
+            else
+		log "${warning} ${DAEMON} apparently not running"
+            fi
+	    if  is_running ${sdaemon} ${spidfile}; then
+		log "${info} ${SDAEMON} running"
+            else
+		log "${warning} ${SDAEMON} apparently not running"
+	    fi
 	fi
-
         ;;
   *)
 	echo "Usage: $0 {start|stop|force-stop|restart|status}" >&2
