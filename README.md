@@ -33,7 +33,7 @@ Coming soon...
    - service mirroring: automatically keep a clone of a running service. If the "master" dies, you can switch to the clone while fixing
      the environment where master ran
    - instacreation script: collect all the preliminars in a single script
-   - tests: in the spirit of [Babushka][http://babushka.me/]
+   - tests: in the spirit of [Babushka](http://babushka.me/)
 
 Getting started
 ===============
@@ -45,14 +45,12 @@ Recipes
 
 "High-level" scripts that deploy complex services making the most of the portable service architecture. 
 
-   - [guacamole][https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole] - remote desktop service from a standard HTML5 browser. Based on [guacamole]http://guacamole.incubator.apache.org/]
+   - [guacamole](https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole) - remote desktop service from a standard HTML5 browser. Based on [guacamole](http://guacamole.incubator.apache.org/)
 
    1. Download the recipe
-   wget https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole
-
+   `wget https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole`
    2. Run the recipe
-   bash guacamole
-
+   `bash guacamole`
    3. Check the final configuration files, as indicated by the recipe
 
 Build your service step by step
@@ -70,8 +68,8 @@ Installation
 
 Actual installation of the scripts is pretty simple: clone them from this repo as "scripts":
 
-       git clone https://github.com/tranquilinho/ps-scripts.git scripts
-
+    git clone https://github.com/tranquilinho/ps-scripts.git scripts
+    
 To keep track of all the configuration, one can use a git repository:
 
     git init
@@ -79,15 +77,15 @@ To keep track of all the configuration, one can use a git repository:
 
 In this example I will use git sparringly (since git is not the focus of the example). Feel free to apply your own revision policy.
 
-~~~~
+```
    # create the basic layout
    mkdir -p etc/backup
    mkdir -p usr/bin usr/lib usr/src
    mkdir -p data/
    mkdir etc/apache2
    mkdir -p log/apache2
-~~~~
-
+```
+   
 Configuration
 -------------
 
@@ -163,7 +161,7 @@ And you are done!
 
 All the required software packages are built from source the first time the service runs. You can follow the progress in log/service.log and log/build.log:
 
-~~~~
+```
 tail -f log/*
 ==> log/apt.log <==
 1445440531 2015-10-21 15:15:31 fa185b5333ad     wp-example-build      debconf: falling back to frontend: Readline
@@ -188,7 +186,7 @@ tail -f log/*
 1445439388 2015-10-21 14:56:28 a12b328dc467               -httpd      Starting web server apache2
 1445439388 2015-10-21 14:56:28 a12b328dc467               -httpd      Installing apache2
 1445439388 2015-10-21 14:56:28 a12b328dc467                      CRIT Build environment not ready
-~~~~~
+```
 
 Log rotation is easy to enable:
 
