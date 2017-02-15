@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# !!!! In some cases (when deploying with guacamole recipe) http_port appears twice in service.cfg?
+# As it is readonly, it may make fail some scripts that source the config (. service.cfg)
+
 print_usage(){
     echo Make a service.cfg file into stdout
     echo "Syntax: $0 -n service_name [-i feature1,feature2,...] [-m mirror] [-s ssh_port]"
