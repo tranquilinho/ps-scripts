@@ -140,8 +140,9 @@ EOFB
 
     [ ! -f ${etc_dir}/guacamole/user-mapping.xml ] && ${scripts_base}/config/mkguacamole_cfg
 
+    # !!!! In Ubuntu 16.04, the steps for creating /etc/pam.d/xrdp-sesman, /etc/xrdp/sesman.ini and ${etc}/rdp-user are failing...    
     [ ! -f ${etc_dir}/rdp-user.db ] && ${scripts_base}/guacamole-change-password -g ${guacamole_user} -o ${guac_os_user} -f
-
+  
     # config file name must match daemon name
     [ ! -f /etc/pam.d/xrdp-sesman ] && ${scripts_base}/config/mkxrdp-sesman > /etc/pam.d/xrdp-sesman
     # !!!! recipe option to overwrite xrdp sesman instead of showing a warning
