@@ -43,11 +43,17 @@ You can either reuse a recipe from the "recipes" subdirectory, or build your cus
 Recipes
 -------
 
-"High-level" scripts that deploy complex services making the most of the portable service architecture. ps-scripts recipes make deployemnt a breeze ^_^
+"High-level" scripts that deploy complex services making the most of the portable service architecture. 
 
-[guacamole]http://guacamole.incubator.apache.org/] - remote desktop service from a standard HTML5 browser
+   - [guacamole][https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole] - remote desktop service from a standard HTML5 browser. Based on [guacamole]http://guacamole.incubator.apache.org/]
 
-Simply download the recipe script and run it
+   1. Download the recipe
+   wget https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole
+
+   2. Run the recipe
+   bash guacamole
+
+   3. Check the final configuration files, as indicated by the recipe
 
 Build your service step by step
 -------------------------------
