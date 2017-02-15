@@ -172,10 +172,11 @@ To start the service on boot (in Debian / Ubuntu)...
 1. create an init.d script:
 
   ./config/mkdebian_init -n guacamole > /etc/init.d/guacamole
+  chmod a+x /etc/init.d/guacamole
 
 2. enable the script:
 
-  update-rc.d -f guacamole enable
+  update-rc.d -f guacamole defaults
 
 To enable SSL support...
 
