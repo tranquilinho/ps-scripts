@@ -104,7 +104,7 @@ case "$1" in
       ;;
   stop)
       if is_os_ubuntu; then
-	  service stop xrdp
+	  service xrdp stop
       else
 	check_root
         log "${info} Stopping xrdp"
