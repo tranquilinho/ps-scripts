@@ -166,10 +166,15 @@ gnome-session
 # For XFCE
 startxfce4
 
-To start the service on boot (in Debian / Ubuntu), add a symlink to service-manager in init.d, and enable the service:
+To start the service on boot (in Debian / Ubuntu)...
 
-ln -s /services/guacamole/etc/service-manager /etc/init.d/guacamole
-update-rc.d -f guacamole enable
+1. create an init.d script:
+
+  ./config/mkdebian_init -n guacamole > /etc/init.d/guacamole
+
+2. enable the script:
+
+  update-rc.d -f guacamole enable
 
 To enable SSL support...
 
@@ -190,5 +195,7 @@ Listen 443
 (...)
 -------
 
-EOF
+You can find these instructions in  ${etc_dir}/post_install_instructions.txt
+
+EOF > ${etc_dir}/post_install_instructions.txt
 fi

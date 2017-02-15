@@ -1,0 +1,83 @@
+#!/bin/bash
+
+print_usage(){
+    echo "Generate a basic init.d script to start a service"
+    echo "Syntax: $0 -n service_name [-D -h]"
+    exit 1
+}
+
+if [ "$#" -gt 0 ]; then
+    while getopts "n:Dh" options; do
+	case "${options}" in
+            D)
+		readonly docker="docker"
+		;;
+	    n)
+		readonly service=${OPTARG}
+		;;
+	    h)
+		print_usage
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${service}" ] && print_usage
+
+readonly service_root="/services/${service}"
+
+if [ -n "${docker}" ]; then
+    readonly service_script="${service_root}/scripts/container"
+else	    
+    readonly service_script="${service_root}/etc/service-manager"
+fi
+    
+cat <<EOF
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:             ps
+# Required-Start:       ${docker} sshd
+EOF
+
+cat <<"EOF"
+# Required-Stop:        $remote_fs $syslog
+# Default-Start:        2 3 4 5
+# Default-Stop:
+EOF
+cat <<EOF
+# Short-Description:    Start portable service ${service}
+### END INIT INFO
+
+start() {
+    echo "Starting portable service ${service}..."
+    # wait_for_docker? @see common
+    ${service_script} start
+    exit $?
+}
+
+stop() {
+    echo "Stopping portable service ${service}"
+    ${service_script} stop
+    exit $?
+}
+EOF
+
+cat <<"EOF"
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+esac
+
+exit 0
+EOF
