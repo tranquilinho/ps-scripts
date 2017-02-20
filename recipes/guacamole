@@ -111,7 +111,7 @@ if [ ${step} -le 6 ]; then
     # "final" config: apache, tomcat, xrdp...
 
     ${scripts_base}/config/apache2/mkhttpd_conf > ${etc_dir}/apache2/httpd.conf
-# !!!! etc_dir == etc ? (service.apache is in etc, instead of etc/apache2)
+    # !!!! etc_dir == etc ? (service.apache is in etc, instead of etc/apache2)
     cat > ${etc_dir}/service.apache <<EOFB
 #!/bin/bash
 cat <<EOF
@@ -152,9 +152,7 @@ EOFB
     cp ${scripts_base}/config/xrdp/startwm.sh ${etc_dir}/xrdp
     
     ${scripts_base}/config/mktomcat_cfg
-
-
-cat <<EOF
+cat <<EOF | tee ${etc_dir}/post_install_instructions.txt
 Desktop environment:
 Change the system default:
 update-alternatives --config x-session-manager
@@ -199,5 +197,6 @@ Listen 443
 
 You can find these instructions in  ${etc_dir}/post_install_instructions.txt
 
-EOF > ${etc_dir}/post_install_instructions.txt
+EOF
+
 fi
