@@ -16,6 +16,8 @@ fi
 
 [ -z "${docker_run}" ] && readonly docker_run=${service_root}/data/run/docker
 readonly hash_file=${docker_run}/${container}
+# hash is set in container_start and used later
+hash=""
 readonly log_file=${service_root}/log/docker.log
 readonly log_facility="${service}"
 
@@ -102,7 +104,7 @@ case "$1" in
 	container_ip_setup
 
 	container_start
-	egrep "Abort due to constraint violation: UNIQUE| is already assigned" ${docker_stderr} >/dev/null
+	egrep "Abort due to constraint violation: UNIQUE| is already assigned|Error response from daemon: Conflict" ${docker_stderr} >/dev/null
 	if [ $? -eq 0 ]; then
 	    # maybe the container was not stopped properly... remove previous instance
 	    log "${critical} Container name not unique - removing previous instance"
@@ -135,6 +137,7 @@ case "$1" in
 		log "${success} Stopped"
 	    else
 		log "${critical} Problem stopping container"
+		exit 3
 	    fi
 	else
 	    log "${critical} hashfile ${hash_file} not found"
