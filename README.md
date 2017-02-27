@@ -1,38 +1,37 @@
 ps-scripts
 ==========
 
-"A set of scripts that make deploying services on Linux a best practice."
+_A set of scripts that make deploying services on Linux a best practice._
 
-A service can be a simple WordPress blog, or a buildbot master, or a Django webapp...
+A service can be a simple WordPress blog, or a buildbot master, or a Django webapp, or a guacamole-based remote desktop...
 
-ps stands for Portable Services, since one of the core ideas is that it should be easy to migrate a service to a
+"ps" stands for **P**ortable **S**ervices, since one of the core ideas is that it should be easy to migrate a service to a
 different "server", be it a Docker container, a real server, or a virtual machine.
 
 Features
 ========
 
-   - Run your service in a Docker container, in a virtual machine or in real hardware. No need to worry about
+   - Run your service in a Docker container, in a virtual machine or in real hardware ("bare-metal"). No need to worry about
      the environment.
    - Everything shares a single root, so it is trivial to move the service with all its dependencies.
-   - All the configuration is under the service's etc - no need to wonder where a config file might be
-   - The key parameters of the service are collected in service.cfg. This allows for easy mutation of
-     the service
-   - Create your custom configuration easily with the configuration scripts
-   - Simple versioning and updates: automatically build the versions of your dependencies that you need, then use
-     the one that suits you best. Or try different versions in different instances of the service.
-   - Start the service as a whole with a single script. Or restart one of the dependencies.
-   - Simple backup system included: service files, MySQL databases
-   - Popular packages like apache, gunicorn, nagios, openssl or wordpress already included. Easy to add new build scripts for the
-     missing ones
-   - Integrated logging subsystem in log directory. There you will find apache logs, but also service backup logs, service deployment logs...
-     Unified and simple format makes reading (or filtering) service logs a pleasure. The logs are kept outside Docker image, so you do not
-     need to worry about missing them. The logs can be rotated with the integrated logrotate.
+   - All the configuration is under `etc` directory - no need to wonder where a config file might be.
+   - The key parameters of the service are collected in `etc/service.cfg`. This allows for easy adaptation/refinement of
+     the service.
+   - Create your custom configuration easily with the configuration scripts (under `config` subdirectory).
+   - Simple versioning and updates: automatically build the versions of the dependencies that you need; then, use
+     the version that suits you best. Or try different versions in different instances of the service.
+   - Start the service as a whole with a single script (@see [Operation summary](#operation-summary)). Or restart only one of the dependencies.
+   - Simple backup system included, covering service data and MySQL databases.
+   - Popular packages like apache, gunicorn, nagios, openssl or wordpress already supported/available. Easy to add new build scripts for the
+     missing ones.
+   - Integrated logging in `log` directory: apache logs, service logs (backup, deployment...)
+     Unified and simple format makes reading (or filtering) service logs a pleasure. The logs persist outside Docker image, so you do not
+     need to worry about missing them. Logs can be rotated with the integrated `logrotate`.
 
 Coming soon...
 
    - service mirroring: automatically keep a clone of a running service. If the "master" dies, you can switch to the clone while fixing
      the environment where master ran
-   - instacreation script: collect all the preliminars in a single script
    - tests: in the spirit of [Babushka](http://babushka.me/)
 
 Getting started
@@ -43,17 +42,21 @@ You can either reuse a recipe from the "recipes" subdirectory, or build your cus
 Recipes
 -------
 
-"High-level" scripts that deploy complex services making the most of the portable service architecture. 
+"High-level" scripts that deploy complex services, making the most of the "portable service architecture". 
 
-   - [guacamole](https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole) - remote desktop service from a standard HTML5 browser. Based on [guacamole](http://guacamole.incubator.apache.org/)
+### [guacamole](https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole)
+
+Remote desktop service from a standard HTML5 browser. Based on [guacamole](http://guacamole.incubator.apache.org/)
 
    1. Download the recipe
-   ```wget https://raw.githubusercontent.com/tranquilinho/ps-scripts/testing/recipes/guacamole
-   ```
+
+```wget https://raw.githubusercontent.com/tranquilinho/ps-scripts/testing/recipes/guacamole
+```
 
    2. Run the recipe. In this example, the web user is john
-   ```bash guacamole -g john
-   ```
+
+```bash guacamole -g john
+```
 
    3. Check the final configuration files, as indicated by the recipe
 
@@ -146,9 +149,9 @@ Docker configuration
        /services/wp-example/scripts/config/mkdocker_cfg -n wp-example > /services/wp-example/etc/docker.cfg
        /services/wp-example/scripts/config/mkcontainer_init -n wp-example > /services/wp-example/etc/container-init
 
-Currently, you need to review docker.cfg to set which image to use. You may also want to take a look at etc/container-init.
+Currently, you need to review docker.cfg to set which image to use. You may also want to take a look at `etc/container-init`.
 
-service-manager will start and stop apache and cron. There are some additional prerrequisites that can be made explicit in etc/service-prereq:
+`service-manager` will start and stop apache and cron. There are some additional prerrequisites that can be made explicit in `etc/service-prereq`:
 
 		/services/wp-example/scripts/config/mkservice-manager > /services/wp-example/etc/service-manager
 		cat > /services/wp-example/etc/service-prereq <<"EOF"
@@ -186,7 +189,7 @@ And you are done!
     CONTAINER ID        IMAGE               COMMAND                CREATED             STATUS              PORTS                                                                  NAMES
     9425ae35ff5b        debian:stable-ssh   "/services/wp-exampl   3 seconds ago       Up 2 seconds        0.0.0.0:9632->22/tcp, 0.0.0.0:9680->9680/tcp                           wp-example 
 
-All the required software packages are built from source the first time the service runs. You can follow the progress in log/service.log and log/build.log:
+All the required software packages are built from source the first time the service runs. You can follow the progress in `log/service.log` and `log/build.log`:
 
 ```
 tail -f log/*
@@ -203,8 +206,8 @@ tail -f log/*
 1445511361 2015-10-22 10:56:01 fa185b5333ad     wp-example-build      standard install start apr
 
 ==> log/service.log <==
-1445439388 2015-10-21 16:56:28 heisenberg.cnb.csic.es                           Docker container start
-1445439388 2015-10-21 16:56:28 heisenberg.cnb.csic.es                       OK  Container wp-example (a12b328dc4676c9982d5556ac1dbeee78dd44e664f266796acb0172ccb5969cc) started
+1445439388 2015-10-21 16:56:28 dockerserver                           Docker container start
+1445439388 2015-10-21 16:56:28 dockerserver                       OK  Container wp-example (a12b328dc4676c9982d5556ac1dbeee78dd44e664f266796acb0172ccb5969cc) started
 1445439388 2015-10-21 14:56:28 a12b328dc467                       OK  Docker service start fix applied
 1445439388 2015-10-21 14:56:28 a12b328dc467               -admin      installing admin pub key
 1445439388 2015-10-21 14:56:28 a12b328dc467               -admin  OK  Admin key installed
@@ -213,33 +216,43 @@ tail -f log/*
 1445439388 2015-10-21 14:56:28 a12b328dc467               -httpd      Starting web server apache2
 1445439388 2015-10-21 14:56:28 a12b328dc467               -httpd      Installing apache2
 1445439388 2015-10-21 14:56:28 a12b328dc467                      CRIT Build environment not ready
+......
 ```
 
 Log rotation is easy to enable:
 
 1. Configure logrotate:
 
-   /services/wp-example/scripts/config/mklogrotate_cfg -n wp-example > /services/wp-example/etc/logrotate.conf
+```
+/services/wp-example/scripts/config/mklogrotate_cfg -n wp-example > /services/wp-example/etc/logrotate.conf
+```
 
 2. Add logrotate to service's cron:
 
-   echo "44 04  * * * root /services/wp-example/scripts/logrotate" > /services/wp-example/etc/cron/wp-example-logrotate
-
+```
+echo "44 04  * * * root /services/wp-example/scripts/logrotate" > /services/wp-example/etc/cron/wp-example-logrotate
+```
 
 Service management
 ==================
 
 To start our example service as a container:
 
-    /services/wp-example/scripts/container start
+```
+/services/wp-example/scripts/container start
+```
 
 You can ssh into your container. Following the example,
 
-    ssh -p 9632 root@dockerserver
+```
+ssh -p 9632 root@dockerserver
+```
 
 To stop the service:
 
-    /services/wp-example/scripts/container stop
+```
+/services/wp-example/scripts/container stop
+```
 
 To start a service automatically, it must be called from boot scripts. Create an "init.d-compatible" boot script with `config/mkdebian_init`. In bare-metal and Virtualbox, you only need to place the boot script in `/etc/init.d` and enable it with `update-rc.d`.
 
@@ -263,13 +276,13 @@ Related projects
 Issues and troubleshooting
 ==========================
 
-Currently, ps-scripts is tested only in Debian. Some minor issues might happen in other Linux flavours.
+Currently, ps-scripts is tested only in Debian/Ubuntu. Some minor issues might happen in other Linux flavours.
 
-Since all the scripts are bash, you can dig into the details of any step invoking them with bash -x
+Since all the scripts are bash, you can dig into the details of any step using `bash -x`
 
 Feel free to contact me regarding suggestions, requests or any issue you find.
 
 Author
 ======
 
-Copyright 2014-2016 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com). Biocomputing Unit - CNB/CSIC.
+Copyright 2014-2017 by Jesus Cuenca-Alba (jesus.cuenca@gmail.com). Biocomputing Unit - CNB/CSIC.
