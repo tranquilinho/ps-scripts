@@ -48,15 +48,40 @@ Recipes
    - [guacamole](https://github.com/tranquilinho/ps-scripts/blob/testing/recipes/guacamole) - remote desktop service from a standard HTML5 browser. Based on [guacamole](http://guacamole.incubator.apache.org/)
 
    1. Download the recipe
-   wget https://raw.githubusercontent.com/tranquilinho/ps-scripts/testing/recipes/guacamole
+   ```wget https://raw.githubusercontent.com/tranquilinho/ps-scripts/testing/recipes/guacamole
+   ```
 
    2. Run the recipe. In this example, the web user is john
-   bash guacamole -g john
+   ```bash guacamole -g john
+   ```
 
    3. Check the final configuration files, as indicated by the recipe
 
+Operation summary
+-----------------
+
+In general, the main "entry point" to any service is the `service-manager` script, which handles service start & stop.
+
+Since (in this architecture) persistence is only ensured for data inside the service root (for example, `/services/mediawiki`), the `service-prereq` script is called from `service-manager` to perform the one-time ("boot") initial setup.
+
+Depending upon the specifics of the service and the virtualization environment, other scripts might be used (@see [Service management](#service-management) below):
+
+   - in the case of docker containers, the container is first instantiated with the `container` script. Once the container is up and running, the
+`service-manager` script is called as usual. By default, when the container is stopped (`container stop`) everything outside service root is lost, and the next time the container is created, it will start "from scratch" (more precisely, from the Docker image specified in `etc/docker.cfg`)
+
+   - in the case of "bare-metal" servers and virtual machines (Virtualbox), the `service-manager` script is called directly (typically, from the init.d subsystem). Virtualbox may (or may not) have persistence at image level. "Bare-metal" servers usually are persistant by default.
+
+Configuration is centralized in `etc/service.cfg`. When other configuration files are derived from `service.cfg`, its "transform script" should be called again to update the derived config. For example: after changing apache2-related settings in `service.cfg`, rerun the `config/apache2/mkservice_conf`. All the "transform" scripts are available under `config` subdirectory.
+
+In short:
+
+DOCKER: `container start` > `etc/container-init` > `etc/service-manager` > `etc/service-prereq` > `service-specific daemons` > `sshd`
+
+BARE-METAL / VM: `etc/service-manager` > `etc/service-prereq` > `service-specific daemons` 
+
+
 Build your service step by step
--------------------------------
+===============================
 
 Let's deploy a WordPress-based service. We run all commands in the "server environment". In this case, the server hostname is "dockerserver"
 (the service will run inside a Docker container)
@@ -201,8 +226,8 @@ Log rotation is easy to enable:
    echo "44 04  * * * root /services/wp-example/scripts/logrotate" > /services/wp-example/etc/cron/wp-example-logrotate
 
 
-Usage examples
-==============
+Service management
+==================
 
 To start our example service as a container:
 
@@ -216,10 +241,14 @@ To stop the service:
 
     /services/wp-example/scripts/container stop
 
+To start a service automatically, it must be called from boot scripts. Create an "init.d-compatible" boot script with `config/mkdebian_init`. In bare-metal and Virtualbox, you only need to place the boot script in `/etc/init.d` and enable it with `update-rc.d`.
+
+`config/mkdebian_init -D` creates a boot script that is able to start the container (calling `container start`). Again, copy the script to `/etc/init.d` (in the container server) and enable it.
+
 Under the hood
 ==============
 
-To document: architecture details
+!!!! Document: architecture details
 
 Licensing
 =========
