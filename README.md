@@ -48,19 +48,15 @@ Recipes
 
 Remote desktop service from a standard HTML5 browser. Based on [guacamole](http://guacamole.incubator.apache.org/)
 
-   1. Download the recipe
-
 ```
+# 1. Download the recipe:
 wget https://raw.githubusercontent.com/tranquilinho/ps-scripts/testing/recipes/guacamole
-```
 
-   2. Run the recipe. In this example, the web user is john
-
-```
+# 2. Run the recipe. In this example, the web user is john:
 bash guacamole -g john
-```
 
-   3. Check the final configuration files, as indicated by the recipe
+# 3. Check the final configuration files, as indicated by the recipe
+```
 
 Operation summary
 -----------------
