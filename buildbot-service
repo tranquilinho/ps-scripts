@@ -1,0 +1,86 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+[ -z "${role}" ] && role=slave
+readonly module="buildbot-${role}"
+readonly log_facility="${service}-${module}"
+readonly pid_file=${run_dir}/${module}.pid
+
+. ${scripts_base}/common
+
+if [ "${role}" == "master" ]; then
+    readonly daemon=${usr_prefix}/buildbot/bin/master
+else
+    readonly daemon=${usr_prefix}/buildbot/bin/slave
+fi
+
+buildbot_master_start(){
+    log "${info} Starting ${module}"
+
+    if [ ! -f ${daemon} ]; then
+	log "${info} Installing ${module}"
+	${scripts_base}/build/buildbot
+    fi
+    # on clean boot, libcurl (installed by git) may be missing
+    ${scripts_base}/build/git
+
+    if [ ! -f ${data_dir}/master/buildbot.tac ]; then
+	log "${critical} Missing buildbot.tac"
+    elif [ ! -f ${data_dir}/master/state.sqlite ]; then
+	log "${critical} Missing buildbot database"
+	echo "Run:"
+	echo "/services/buildbot/usr/buildbot/bin/master upgrade-master /services/buildbot/data/master"
+    else
+	cd ${data_dir}/master
+	export PATH=${usr_prefix}/git/bin:${PATH}
+	${usr_prefix}/buildbot/bin/master start
+    fi
+}
+
+buildbot_slave_start(){
+    if [ ! -f ${daemon} ]; then
+	${scripts_base}/build/buildbot-slave
+    fi
+	# export PATH=${HOME}/buildbot/local/bin:\${PATH}
+    export PYTHONPATH=${usr_prefix}/buildbot-slave/lib/python2.7/site-packages:${PYTHONPATH}
+
+    cd ${data_dir}/slave
+    ${usr_prefix}/buildbot/bin/slave start
+}
+
+buildbot_master_stop(){
+    cd ${data_dir}/master
+    ${usr_prefix}/buildbot/bin/master stop
+}
+
+buildbot_slave_stop(){
+    cd ${data_dir}/slave
+    ${usr_prefix}/buildbot/bin/slave stop
+}
+
+[ -n "$2" ] && role=$2
+
+case "$1" in
+    "start")
+	[ ${role} == "master" ] && buildbot_master_start
+	[ ${role} == "slave" ] && buildbot_slave_start
+	;;
+    "stop")
+	[ ${role} == "master" ] && buildbot_master_stop
+	[ ${role} == "slave" ] && buildbot_slave_stop
+	;;
+    "restart")
+	[ ${role} == "master" ] && buildbot_master_stop
+	[ ${role} == "slave" ] && buildbot_slave_stop
+	[ ${role} == "master" ] && buildbot_master_start
+	[ ${role} == "slave" ] && buildbot_slave_start
+	;;
+    *)
+	echo "Syntax: $0 {start|stop|restart} [master|slave]"
+esac
+
+exit 0

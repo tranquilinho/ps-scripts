@@ -16,7 +16,9 @@ fi
 
 [ -z "${docker_run}" ] && readonly docker_run=${service_root}/data/run/docker
 readonly hash_file=${docker_run}/${container}
-readonly log_file=${service_root}/log/service.log
+# hash is set in container_start and used later
+hash=""
+readonly log_file=${service_root}/log/docker.log
 readonly log_facility="${service}"
 
 . ${scripts_base}/common
@@ -25,21 +27,70 @@ readonly docker_stderr=$(mktemp)
 docker=$(which docker)
 [ -z "${docker}" ] && docker=$(which docker.io)
 
+
 container_start(){
     # log "${info} docker run ${docker_mounts} ${docker_ports} --name ${container} -d -t ${image} ${container_init} 2> ${docker_stderr}"
-    # !!!! log docker log ;-)
-
     [ -z "${docker_options}" ] && docker_options="-d"
 
     hash=$(${docker} run ${docker_mounts} ${docker_ports} --name ${container} ${docker_options} -t ${image} ${container_init} 2> ${docker_stderr})
 }
 
+
+# !!!! check services with no public_ip_addr (which should listen to 0.0.0.0). docker.cfg seems to need an specific IP...
+container_ip_setup(){
+    if [ -n "${public_ip_addr}" -a -n "${public_ip_iface}" -a -n "${public_ip_mask}" ]; then
+	ip -o addr | grep ${public_ip_addr} > /dev/null && log "${warning} Container IP ${public_ip_addr} already set up" && return
+	ifconfig ${public_ip_iface} add ${public_ip_addr} netmask ${public_ip_mask} 
+	[ $? -ne 0 ] && log "${critical} Error setting up container IP ${public_ip_addr} ${public_ip_mask} on ${public_ip_iface}" && exit 4
+	local ip_alias=$(ip addr | grep ${public_ip_addr} | awk '{print $8}')
+	log "${success} IP ${public_ip_iface} ${public_ip_addr} ${public_ip_mask} on ${ip_alias}"
+    fi
+}
+
+
+container_ip_release(){
+    if [ -n "${public_ip_addr}" ]; then
+	# currently, release is called after the container has been stopped...
+	# local self_cid=$( ${docker} ps -a | grep ${container} | cut -c1-12)
+	# [ -z "${self_cid}" ] && log "${warning} No running container found" 
+	for cid in $(${docker} ps -q); do
+	    # if [ "${cid}" != "${self_cid}" ]; then
+	    ${docker} inspect ${cid} | grep ${public_ip_addr} > /dev/null && log "${warning} The IP of this container is shared by another container in this host" && return 1
+	    # fi
+	done
+	# No container is using the IP of this container, but
+	# it may be used somewhere else (for example, by the host itself)
+	# !!! Add tests for other uses
+	local ip_alias=$(field "$(ip addr | grep ${public_ip_addr})" 7)
+	local host_ip=$(field "$(host $(hostname))" 3)
+	if [ "${host_ip}" == "${public_ip_addr%%/*}" ]; then 
+	    log "${info} ${ip_alias} is in use by the host"
+	else
+	    ifconfig ${ip_alias} down 
+	fi
+	if [ $? -eq 0 ]; then
+	    log "${success} interface ${ip_alias} ${public_ip_addr} released"
+	else
+	    log "${critical} Error releasing interface ${ip_alias} ${public_ip_addr}"
+	fi
+    fi
+}
+
 case "$1" in
     "start")
 	log "${info} Docker container start"
+	status=0
 	if [ ! -d ${docker_run} ]; then
 	    mkdir -p ${docker_run}
 	fi
+
+	[ -d ${etc_dir}/host-cron ] && for cronjob in $(ls ${etc_dir}/host-cron); do
+	    ln -s ${etc_dir}/host-cron/${cronjob} /etc/cron.d
+	done
+
+	[ -x ${etc_dir}/host-prereq ] && ${etc_dir}/host-prereq
+	
+	[  -z "${container_init}" ] && readonly container_init=${etc_dir}/container-init
 
 	# If the service has the same "service root" inside and outside, we can
 	# initialize this variable for him
@@ -50,16 +101,22 @@ case "$1" in
 	    exit 3
 	fi
 
+	container_ip_setup
+
 	container_start
-	egrep "Abort due to constraint violation: UNIQUE| is already assigned" ${docker_stderr} >/dev/null
+	egrep "Abort due to constraint violation: UNIQUE| is already assigned|Error response from daemon: Conflict" ${docker_stderr} >/dev/null
 	if [ $? -eq 0 ]; then
 	    # maybe the container was not stopped properly... remove previous instance
 	    log "${critical} Container name not unique - removing previous instance"
 	    readonly previous_hash=$( ${docker} ps -a | grep ${container} | cut -c1-12)
 	    ${docker} rm ${previous_hash}
 	    container_start
+	    status=$?
 	fi
-	if [ -n "${hash}" ]; then
+	if [ ${status} -ne 0 ]; then
+	    tail -1 ${docker_stderr} | logalize ${log_file}
+	    exit 3
+	elif [ -n "${hash}" ]; then
 	    echo ${hash} > ${hash_file}
 	    log "${success} Container ${container} (${hash}) started"
 	else
@@ -73,13 +130,23 @@ case "$1" in
 	    log "${info} Stopping ${hash}..."
 	    log "${info} Stopping service..."
 	    watchdog 5 ssh -p ${ssh_port} localhost "${etc_dir}/service-manager stop" 
-	    ${docker} stop -t=15 ${hash}
-	    ${docker} rm ${hash}
-	    log "${success} Stopped"
+	    ${docker} stop -t=15 ${hash} && \
+	    ${docker} rm ${hash} 
+	    if [ $? -eq 0 ]; then
+		container_ip_release
+		log "${success} Stopped"
+	    else
+		log "${critical} Problem stopping container"
+		exit 3
+	    fi
 	else
 	    log "${critical} hashfile ${hash_file} not found"
 	    exit 2
-		fi
+	fi
+	;;
+    "test")
+	#container_ip_release
+	# container_ip_setup
 	;;
     *)
 	echo "Syntax: $0 [start|stop]"

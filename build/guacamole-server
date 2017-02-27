@@ -10,17 +10,24 @@ readonly url_base=http://downloads.sourceforge.net/project/guacamole/current/sou
 
 build_preconditions
 
-install_prereq pkgconfig "mandatory"
+install_prereq pkg-config "mandatory"
 install_prereq libpng "mandatory"
 # use OS packages by now
+# !!!! in Debian, there is no libjpeg-turbo8-dev...
 debian_install libjpeg-turbo8-dev
 debian_install libcairo2-dev
 debian_install libossp-uuid-dev
+# RDP support: library & xrdp server
+debian_install libfreerdp-dev
+install_prereq xrdp "mandatory"
+# Even when using only RDP, vnc is used in the backstage (by xrdp)
 debian_install libvncserver-dev
 # !!!! libguac
+# As lightweight desktop environment, we currently use XFCE
+debian_install xfce4
 
 # it seems configure only uses pkg-config to detect pango...
-CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole
+CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole --with-rdp
 
 standard_install
 

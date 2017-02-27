@@ -15,16 +15,34 @@ install_prereq httpd "mandatory"
 
 build_preconditions
 
+readonly current_version=($(${usr_prefix}/php/bin/php -v ))
+if [ "${current_version[1]}" == "${pkg_version}" ]; then
+    log "${warning} ${pkg_name} ${pkg_version} already installed...."
+    exit 0
+fi
+
 # php.ini location check: run php --ini
 
 # multibyte string required by phpmyadmin
 # mbstring -> --enable-mbregex, --with-gd=DIR?
 # @see http://php.net/manual/en/mbstring.installation.php
 
-./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs --with-libxml-dir=${usr_prefix}/libxml2 --with-openssl=${usr_prefix}/openssl --with-pcre-regex=${usr_prefix}/pcre --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir=${usr_prefix}/zlib --with-config-file-path=${etc_dir} --enable-mbstring
+
+# Postgres module -> currently using libpq-dev package
+
+export PGSQL_INCLUDE=${usr_prefix}/postgresql/include
+export PGSQL_LIBDIR=${usr_prefix}/postgresql/lib
+
+# pear packages, like mail, are used by apps like mediawiki
+# !!!! by default, pear installs things at php root, which it is not in the default include path (usr/php/lib/php)
+# One option is to move all (PEAR*, Mail, etc) to usr/php/lib/php
+
+./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs --with-libxml-dir=${usr_prefix}/libxml2 --with-openssl=${usr_prefix}/openssl --with-pcre-regex=${usr_prefix}/pcre --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir=${usr_prefix}/zlib --with-config-file-path=${etc_dir} --enable-mbstring --with-pgsql=${usr_prefix}/postgresql/ --with-pear=${prefix}
 
 # if apache-build libtool fails, replace it with php one
 standard_install
 
 # --with-config-file-path seems to be ignored, so we link to php.ini in the default location (lib)
-ln -s ${etc_dir}/php.ini ${usr_prefix}/php/lib
+mkdir ${etc_dir}/php
+[ ! -f ${etc_dir}/php/php.ini ] && cp php.ini-production ${etc_dir}/php/php.ini
+ln -s ${etc_dir}/php/php.ini ${usr_prefix}/php/lib

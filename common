@@ -5,6 +5,9 @@ readonly  warning="WARN"
 readonly critical="CRIT"
 readonly  success=" OK "
 
+readonly TRUE=0
+readonly FALSE=1
+
 readonly log_hostname=$(hostname)
 readonly log_format='${log_timestamp} ${log_hostname} "$(printf "%16s" ${log_facility})"'
 readonly build_log=${log_dir}/build.log
@@ -59,7 +62,6 @@ download_pkg(){
 	wget -c ${download_url}
 	downloaded=$?
     fi
-
     [ ${downloaded} -ne 0 ] && log "${critical} Could not download package ${download_url}" && exit 3
 
 }
@@ -118,9 +120,19 @@ build_preconditions(){
     common_build_vars 
     log "${info} preconditions start ${pkg_name}"
 
-    download_pkg
-    verify_pkg
-    extract_pkg && cd ${pkg_dir}
+    # by now, we asume url_base ending in .git is to be cloned
+    # (instead of downloaded with wget)
+    if [[ ${url_base} == *.git ]]; then
+	# !!!! by default, git refuses to "overwrite" the target dir if it already exists...
+	# (returning an error status, as opposed to wget in the same situation)
+	# right now, we are ignoring git status code...
+	git clone ${url_base} ${pkg_dir}
+	cd ${pkg_dir}
+    else
+	download_pkg
+	verify_pkg
+	extract_pkg && cd ${pkg_dir}
+    fi
     log "${success} preconditions finish ${pkg_name}"
 }
 
@@ -140,11 +152,10 @@ configure(){
 # $1 make option
 # $2 (noinstall)
 standard_install(){
-    log "${info} standard install start (${ps_paralel}) ${pkg_name}"
+    log "${info} standard install start (${ps_paralel}) ${pkg_name} ${pkg_version}"
     
     # make clean &&  
     make $1 ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
-
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
 	log "${critical} Problem building ${pkg_name}"
 	exit 8
@@ -153,20 +164,15 @@ standard_install(){
     if [ "a$2" != "anoinstall" ]; then
 	make install ${ps_paralel} 2>&1 | logalize $(make_log)
 	if [ ${PIPESTATUS[0]} -ne 0 ]; then
-	    log "${critical} Problem installing ${pkg_name}"
-	    exit 8
+	    log "${warning} Issue installing ${pkg_name}. Check $(make_log)"
+	    # exit 8
 	fi
-    fi
-
-    if [ $? -ne 0 ]; then
-	log "${critical} Problem installing ${pkg_name}"
-	exit 8
     fi
 
     if [ -d ${prefix} ]; then
     # make sure the symlink points to what it was just installed,
     # instead to some random version (for example, in a different but similar service...)
-	rm ${usr_prefix}/${pkg_name}
+	[ -s ${usr_prefix}/${pkg_name} ] && rm ${usr_prefix}/${pkg_name}
 	ln -s ${prefix} ${usr_prefix}/${pkg_name}
     fi
 
@@ -182,19 +188,21 @@ standard_install(){
 }
 
 install_prereq(){
-    prereq=$1
-    # by now, asume prereq is installed if both the directory and the symlink exist
-    local installed=1
+    local prereq=$1
+    local strength=$2
+    local version=$3
+    local installed=${FALSE}
     link=${usr_prefix}/${prereq}
+    # by now, asume prereq is installed if both the directory and the symlink exist
     if [ -s ${link} ];then
 	ls  --dereference-command-line-symlink-to-dir ${link} > /dev/null
-	[ $? -eq 0 ] && installed=0
+	[ $? -eq 0 ] && installed=${TRUE}
     fi
-    if [ ${installed} -ne 0 ]; then
-	${scripts_base}/build/${prereq}
+    if [ ${installed} -eq ${FALSE} ]; then
+	${scripts_base}/build/${prereq} ${version}
 	if [ $? -ne 0 ]; then
 	    log "${critical} Problem installing prereq ${prereq}"
-	    [ "k$2" == "kmandatory" ] && exit 7
+	    [ "k${strength}" == "kmandatory" ] && exit 7
 	fi
     else
 	log "${warning} Prereq ${prereq} already installed"
@@ -204,6 +212,10 @@ install_prereq(){
 debian_install(){
     local my_package=$1
     log "${info} installing ${my_package}"
+    # http://www.microhowto.info/howto/perform_an_unattended_installation_of_a_debian_package.html
+    export DEBIAN_FRONTEND="noninteractive"
+    dpkg -s ${my_package} > /dev/null  && log "${warning} Package ${my_package} already installed" && return 0
+    apt-get update -q
     apt-get install -y ${my_package} 2>&1 | logalize ${log_dir}/apt.log
     local my_status=${PIPESTATUS[0]}
     log_status ${my_status} "${my_package} installed" "Problem installing ${my_package}"
@@ -408,7 +420,8 @@ make_log(){
 }
 
 random_str(){
-    tr -dc _A-H-J-N-P-Z-a-h-m-z-1-9 < /dev/urandom | head -c${1:-14}
+    # underscore might interfere with some sed regex...
+    tr -dc A-H-J-N-P-Z-a-h-m-z-1-9 < /dev/urandom | head -c${1:-14}
 }
 
 cpu_count(){
@@ -428,3 +441,18 @@ can_write(){
     fi
 }
 
+is_os_ubuntu(){
+    grep "NAME" /etc/os-release | grep "Ubuntu" > /dev/null
+}
+
+is_os_debian(){
+    grep "NAME" /etc/os-release | grep "Debian" > /dev/null
+}
+
+# return the Nth field of a string, starting at 0
+field(){
+    local -a fields
+    read -r -a fields <<< "$1"
+    local n=$2
+    echo "${fields[$n]}"
+}

@@ -7,20 +7,57 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly log_file=${service_log}
 readonly module="sshd"
 readonly log_facility="${service}-${module}"
-# if service has its own sshd, use it
+
+# usually it is OK to run sshd in the background, but sometimes
+# it is needed in the foreground (for example, as base service of a container)
+# Hence the support of -D option
+
+print_usage(){
+    echo "Syntax: $0 [-h -D]"
+    exit 1
+}
+
+# "Order of defaults": use service SSHd, use system SSHd, install service SSHd
 if [ -x ${usr_prefix}/openssh/sbin/sshd ]; then
     readonly daemon=${usr_prefix}/openssh/sbin/sshd
-else
+    export LD_LIBRARY_PATH=${usr_prefix}/openssl/lib/
+elif [ -x /usr/sbin/sshd ]; then
     readonly daemon=/usr/sbin/sshd
+else
+    ${scripts_base}/build/openssh
+    readonly daemon=${usr_prefix}/openssh/sbin/sshd
+    export LD_LIBRARY_PATH=${usr_prefix}/openssl/lib/
 fi
+
 readonly pidfile=${run_dir}/${module}.pid
 . ${scripts_base}/common
 
-
+# options for sshd daemon can be passed as parameters to sshd_start()
 sshd_start(){
     log "${info} Starting ${module}"
+
+    # Set up everything that may be missing
+    [ ! -d ${etc_dir}/ssh ] && mkdir ${etc_dir}/ssh
+    [ ! -f ${etc_dir}/ssh/sshd_config ] && cp ${usr_prefix}/openssh/etc/sshd_config ${etc_dir}/ssh
+    # by default, sshd is required (for privilege separation)
+    id sshd > /dev/null
+    if [ $? -ne 0 ]; then
+	${scripts_base}/create-user - sshd ${run_dir}/sshd /usr/sbin/nologin
+    fi
+
+    # hostkeys
+    readonly sshkeygen=${usr_prefix}/openssh/bin/ssh-keygen
+    [ ! -f ${etc_dir}/ssh/ssh_host_rsa_key ] && ${sshkeygen} -f ${etc_dir}/ssh/ssh_host_rsa_key -N '' -t rsa
+    [ ! -f ${etc_dir}/ssh/ssh_host_dsa_key ] && ${sshkeygen} -f ${etc_dir}/ssh/ssh_host_dsa_key -N '' -t dsa
+    [ ! -f ${etc_dir}/ssh/ssh_host_ecdsa_key ] && ${sshkeygen} -f ${etc_dir}/ssh/ssh_host_ecdsa_key -N '' -t ecdsa
+    [ ! -f ${etc_dir}/ssh/ssh_host_ed25519_key ] && ${sshkeygen} -f ${etc_dir}/ssh/ssh_host_ed25519_key -N '' -t ed25519
+
+    # privilege separation dir
+    [ ! -d /var/empty ] && mkdir /var/empty
+
+
     # Pid is managed by sshd itself, as configured in sshd_config
-    ${daemon} -p ${ssh_port} -f ${etc_dir}/ssh/sshd_config 
+    ${daemon} -p ${ssh_port} -f ${etc_dir}/ssh/sshd_config $1
     if [ $? -eq 0 ]; then
 	log "${success} ${daemon} started"
     else
@@ -34,9 +71,27 @@ sshd_stop(){
     log "${success} Stopped"
 }
 
-case "$1" in
+readonly action=$1
+shift
+while getopts "Dh" options; do
+    case "${options}" in
+        D)
+	    sshd_options="-D"
+	    ;;
+	h)
+	    print_usage
+		;;
+        *)
+	    echo "Unknow option" 1>&2 
+	    print_usage
+	    ;;
+	
+    esac
+done
+
+case "${action}" in
     "start")
-	sshd_start
+	sshd_start ${sshd_options}
 	;;
     "stop")
 	sshd_stop

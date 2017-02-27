@@ -12,6 +12,9 @@ readonly url_base=https://www.kernel.org/pub/software/scm/git/
 
 build_preconditions
 
+# ensure libcurl.so.4 is available
+debian_install libcurl4-openssl-dev
+
 readonly current_version=($(${usr_prefix}/git/bin/git --version))
 if [ "${current_version[2]}" == "${pkg_version}" ]; then
     log "${warning} ${pkg_name} ${pkg_version} already installed...."

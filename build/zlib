@@ -8,6 +8,8 @@ readonly pkg_name=zlib
 readonly pkg_version=1.2.8
 readonly url_base=http://zlib.net/
 
+install_prereq pkg-config "mandatory"
+
 build_preconditions
 
 ./configure --prefix=${prefix} --64

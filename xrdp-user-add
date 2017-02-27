@@ -1,0 +1,46 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+readonly log_file=${service_log}
+readonly log_facility="${service}"
+. ${scripts_base}/common
+
+check_params "login" $0 $@
+
+readonly plain_db=${etc_dir}/rdp-user.txt
+readonly berkeley_db=${etc_dir}/rdp-user.db
+
+# "user" var is already in use (service.cfg)
+readonly login=$1
+
+if grep ${login} ${plain_db} > /dev/null; then
+    log "${info} User account ${login} already available"
+    exit 2
+fi
+
+# db load command comes from  db5.1-util package (by now)
+which db5.1_load > /dev/null || debian_install db5.1-util
+which mkpasswd > /dev/null || debian_install whois
+
+log "${info} Creating xrdp user account ${login}"
+
+# pam_userdb.so typically only supports crypt hash
+# in mkpasswd, crypt means DES
+# Get password from stdin
+readonly cryptpass=$(mkpasswd -s -m des)
+
+echo ${login} >> ${plain_db}
+echo ${cryptpass} >> ${plain_db}
+
+# PAM can read root-only files ^_^
+chown root.root ${plain_db} ${berkeley_db}
+chmod 600 ${plain_db} ${berkeley_db}
+
+db5.1_load -T -t hash -f ${plain_db} ${berkeley_db}
+
+if [ $? -eq 0 ]; then
+    log "${success} Xrdp user account ${login} created"
+fi
+exit 0

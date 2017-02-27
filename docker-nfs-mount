@@ -14,8 +14,6 @@ print_usage(){
     exit 2
 }
 
-
-
 while getopts "f:t:" options; do
     case "${options}" in
         f)
@@ -33,7 +31,11 @@ fi
 
 [ ! -d ${to} ] && log "${critical} Destination directory does not exist..." && exit 3
 
-log "${info} Mounting ${from} in ${to}"
+
 readonly target=$(docker inspect --format "{{.State.Pid}}" ${container})
-nsenter --target ${target} --mount --uts --ipc --net --pid -- mount -t nfs ${from} ${to}
-log "${info} Mount status: $?"
+nsenter --target ${target} --mount --uts --ipc --net --pid -- mountpoint -q ${to}
+if [ $? -ne 0 ]; then
+    log "${info} Mounting ${from} in ${to}"
+    nsenter --target ${target} --mount --uts --ipc --net --pid -- mount -t nfs ${from} ${to}
+    log "${info} Mount status: $?"
+fi

@@ -1,17 +1,20 @@
 #!/bin/bash
 
 print_usage(){
-    echo Create a docker.cfg file
+    echo "Create a docker.cfg file"
     echo "Syntax: $0 -n container_name"
     exit 1
 }
 
 
 if [ "$#" -gt 0 ]; then
-    while getopts "n:" options; do
+    while getopts "n:i:" options; do
 	case "${options}" in
 	    n)
 		readonly service=${OPTARG}
+		;;
+	    i)
+		readonly image=${OPTARG}
 		;;
             *)
 		echo "Unknow option" 1>&2 
@@ -24,13 +27,16 @@ if [ "$#" -gt 0 ]; then
 fi
 
 [ -z "${service}" ] && print_usage
+[ -z "${image}" ] && readonly image="debian:stable-ssh"
+
 
 cat <<EOF
 readonly container=${service}
+readonly image=${image}
 EOF
+# With service ssh, the port that will be commonly used is $ssh_port in both sides
 cat <<"EOF"
-readonly image=debian:stable-ssh
 readonly docker_mounts="-v /services/${container}:/services/${container}:rw"
-readonly docker_ports="-p ${http_port}:${http_port} -p ${ssh_port}:22"
+readonly docker_ports="-p ${http_port}:${http_port} -p ${ssh_port}:${ssh_port}"
 readonly container_init="/services/${container}/etc/container-init"
 EOF

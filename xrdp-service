@@ -1,0 +1,157 @@
+#!/bin/bash -e
+#
+# start/stop xrdp and sesman daemons
+#
+### BEGIN INIT INFO
+# Provides:          xrdp
+# Required-Start:    $network $remote_fs
+# Required-Stop:     $network $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start xrdp and sesman daemons
+# Description:       XRDP uses the Remote Desktop Protocol to present a
+#                    graphical login to a remote client allowing connection
+#                    to a VNC server or another RDP server.
+### END INIT INFO
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+
+readonly log_file=${service_log}
+readonly module="xrdp"
+readonly log_facility="${service}-${module}"
+
+if is_os_ubuntu; then
+    BASE=/usr
+else
+    BASE=/services/guacamole/usr/xrdp
+fi
+PATH=${BASE}/bin:${BASE}/sbin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+daemon=${BASE}/sbin/xrdp
+sdaemon=${BASE}/sbin/xrdp-sesman
+
+readonly pidfile=${run_dir}/${module}.pid
+readonly spidfile=${run_dir}/xrdp-sesman.pid
+# !!!! xrdp can run as non-root?
+USERID=root
+
+test -x ${daemon} || exit 0
+
+# !!!! add this check to other service scripts?
+check_root()  {
+    if [ "$(id -u)" != "0" ]; then
+        log "${error} You must be root to start, stop or restart ${module}."
+        exit 4
+    fi
+}
+
+force_stop() {
+   local DELAY=1
+   local PROCLIST="xrdp-sesman xrdp-sessvc xrdp-chansrv X11rdp Xvnc"
+
+    for p in $PROCLIST; do
+      pgrep -x $p >/dev/null && pkill  -x $p
+      sleep $DELAY
+      pgrep -x $p >/dev/null && pkill -9 -x $p
+    done
+    # let's not kill ourselves - the init script is called xrdp as well
+    pgrep -fx ${daemon}  >/dev/null && pkill -fx ${daemon}
+    sleep $DELAY
+    pgrep -fx ${daemon}  >/dev/null && pkill -9 -fx ${daemon}
+
+    rm -f ${pidfile} ${spidfile}
+}
+
+case "$1" in
+  start)
+      if is_os_ubuntu; then
+	  # by now, we are using OS xrdp - reuse its service manager
+	  # !!!! integrate when ps xrdp is used in ubuntu
+	  service xrdp start
+	  status=$?
+      else
+	check_root
+        exitval=0
+        log "${info} Starting xrdp " 
+	if [ -f ${pidfile} ]; then
+	    if is_running ${daemon} ${pidfile}; then
+		log "${warning} ${module} apparently already running"
+		exit 0
+	    else
+		# pid files were not removed on last stop - clean them
+		rm ${pidfile} ${spidfile}
+            fi
+	fi
+
+	# xrdp handles the pidfile itself
+	# daemon_start ${daemon} " " ${pidfile}
+	${daemon} 
+	status=$?
+	# xrdp-sesman handles the pidfile itself
+	# daemon_start ${sdaemon} " " ${spidfile}
+	if [ ${status} -eq 0 ]; then
+	    ${sdaemon}
+	    status=$?
+	fi
+        # Make pidfile readables for all users (for status to work)
+        [ -e ${spidfile} ] && chmod 0644 ${spidfile}
+        [ -e ${pidfile} ] && chmod 0644 ${pidfile}
+      fi
+      log_status ${status} "${module} started" "Problem starting ${module}"
+      ;;
+  stop)
+      if is_os_ubuntu; then
+	  service xrdp stop
+      else
+	check_root
+        log "${info} Stopping xrdp"
+
+	# !!!! xrdp has a -kill option. Maybe it is a better way to stop it?
+	[ -f ${spidfile} ] && kill $(cat ${spidfile})
+	[ -f ${pidfile} ] && kill $(cat ${pidfile})
+	if [ $? -eq 0 ]; then
+	    log "${info} xrdp stopped"
+	else
+	    log "${error} Problem stopping xrdp"
+	fi
+      fi 
+	;;
+  force-stop)
+	$0 stop
+	# because it doesn't always die the right way
+	force_stop
+	;;
+  restart)
+        check_root
+	$0 stop
+        # Wait for things to settle down
+        sleep 1
+	$0 start
+	;;
+  status)
+        exitval=0
+	if is_os_ubuntu; then
+	    service xrdp status
+	else
+            if is_running ${daemon} ${pidfile}; then
+		log "${info} ${DAEMON} running"
+            else
+		log "${warning} ${DAEMON} apparently not running"
+            fi
+	    if  is_running ${sdaemon} ${spidfile}; then
+		log "${info} ${SDAEMON} running"
+            else
+		log "${warning} ${SDAEMON} apparently not running"
+	    fi
+	fi
+        ;;
+  *)
+	echo "Usage: $0 {start|stop|force-stop|restart|status}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

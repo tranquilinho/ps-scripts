@@ -9,6 +9,9 @@ readonly pkg_version=1.5.4
 readonly url_base=http://apache.rediris.es/apr/
 
 install_prereq apr "mandatory"
+# !!!! is it libexpat also a prereq?
+# install_prereq libexpat1-dev "mandatory"
+
 
 build_preconditions
 

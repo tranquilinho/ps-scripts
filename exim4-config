@@ -11,18 +11,27 @@ readonly exim4_cfg=update-exim4.conf.conf
 readonly service_exim4_dir=${etc_dir}
 readonly system_exim4_dir=/etc/exim4
 
-if [ ! -s ${system_exim4_dir}/${exim4_cfg} ]; then 
-    ln -s ${service_exim4_dir}/${exim4_cfg} ${system_exim4_dir}
-    if [ $? -eq 0 ]; then
-	log "${success} ${exim4_cfg} installed"
-	if update-exim4.conf ; then
-	    log "${success} exim4 reconfigured"
-	else
-	    log "${critical} Problem reconfiguring exim4"
-	fi
+if [ -f ${etc_dir}/${exim4_cfg} ]; then
+    if [ -s ${system_exim4_dir}/${exim4_cfg} -a ! -f ${system_exim4_dir}/${exim4_cfg} ]; then 
+	log "${warning} ${exim4_cfg} already configured"
     else
-	log "${critical} Problem installing ${exim4_cfg}"
+	if [ -f ${system_exim4_dir}/${exim4_cfg} ]; then 
+	    log "${warning} replacing system ${exim4_cfg} with service cfg"
+	    mv ${system_exim4_dir}/${exim4_cfg} ${system_exim4_dir}/${exim4_cfg}-orig
+	fi
+	${scripts_base}/build/exim4
+	ln -s ${service_exim4_dir}/${exim4_cfg} ${system_exim4_dir}
+	if [ $? -eq 0 ]; then
+	    log "${success} ${exim4_cfg} installed"
+	    if update-exim4.conf ; then
+		log "${success} exim4 reconfigured"
+	    else
+		log "${critical} Problem reconfiguring exim4"
+	    fi
+	else
+	    log "${critical} Problem installing ${exim4_cfg}"
+	fi
     fi
 else
-    log "${warning} ${exim4_cfg} already installed"
+    log "${critical} exim4 config ${exim4_cfg} missing"
 fi

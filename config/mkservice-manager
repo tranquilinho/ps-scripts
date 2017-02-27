@@ -38,13 +38,20 @@ EOF
     ${scripts_base}/tomcat-service start
 EOF
 
+# !!!! solve interaction of vnc with xrdp...
+
 [ ${guacamole_enabled} -eq 1 ] && cat <<"EOF"
-    # the "client" is a .war that runs inside tomcat 
+    ${scripts_base}/guacamole-audit &
+    # save process group ID (so we can finish also log-audit children later)
+    echo $(ps -o pgid= $!) > ${run_dir}/log-audit.pid
+
     # by default, reset password every 7 days - unless guacamole_keep_pass=1 
-    [ "G${guacamole_keep_pass}" == "G1" ] || ${scripts_base}/guacamole-change-password 
+    [ "G${guacamole_keep_pass}" == "G1" ] || ${scripts_base}/guacamole-change-password -g ${guacamole_user} -o ${guac_os_user}
     ${scripts_base}/guacamole-service start
     # by default, run vnc service - unless vnc_on_demand=1 
-    [ "G${vnc_on_demand}" == "G1" ] || ${scripts_base}/vnc-service start
+    # Now with xrdp, we do not need to start vnc-service here
+    # [ "G${vnc_on_demand}" == "G1" ] || ${scripts_base}/vnc-service start
+    ${scripts_base}/xrdp-service start
 EOF
 
 [ ${apache_enabled} -eq 1 ] && cat <<"EOF"
@@ -70,8 +77,11 @@ EOF
 EOF
 
 [ ${guacamole_enabled} -eq 1 ] && cat <<"EOF"
+    ${scripts_base}/xrdp-service stop
     [ "G${vnc_on_demand}" == "G1" ] || ${scripts_base}/vnc-service stop
     ${scripts_base}/guacamole-service stop
+    # we want log-audit child processes to finish too - so we recur to process group
+    kill -- "-$(cat ${run_dir}/log-audit.pid)"
 EOF
 
 [ ${apache_enabled} -eq 1 ] && cat <<"EOF"

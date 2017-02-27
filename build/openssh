@@ -5,15 +5,20 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=openssh
-readonly pkg_version=7.1p1
+readonly pkg_version=7.3p1
 readonly url_base=http://mirror.switch.ch/ftp/pub/OpenBSD/OpenSSH/portable/
 
 build_preconditions
 
-install_prereq openssl "mandatory"
+# As of 7.3p1, only OpenSSL 1.0.X is supported...
+install_prereq openssl "mandatory" 1.0
 install_prereq zlib "mandatory"
 
-./configure --prefix=${prefix} --with-zlib=${usr_prefix}/zlib --with-ssl-dir=${usr_prefix}/openssl --without-openssl-header-check | logalize $(configure_log)
+export LD_LIBRARY_PATH=${usr_prefix}/openssl/lib/:${LD_LIBRARY_PATH}
+
+# !!!! sshd does not use ${etc_dir}/ssh/sshd_config ?
+
+./configure --prefix=${prefix} --with-zlib=${usr_prefix}/zlib --with-ssl-dir=${usr_prefix}/openssl --without-openssl-header-check --sysconfdir=${etc_dir} | logalize $(configure_log)
 
 standard_install
 

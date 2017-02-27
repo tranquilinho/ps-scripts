@@ -6,8 +6,8 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 
 readonly pkg_name=buildbot
-readonly pkg_version=
-readonly url_base=
+readonly pkg_version=0.9.0rc1
+readonly download_url=https://pypi.python.org/packages/1b/d0/419ec2d6e0e75e4fbeb766d662dedfd9c1186b1c87b54d1f93d511abe78c/buildbot-0.9.0rc1.tar.gz
 
 readonly python_bin=${usr_prefix}/Python/bin
 [ -z "${python}" ] && readonly python=${python_bin}/python
@@ -22,11 +22,20 @@ else
 
     # Buildbot dependencies
     # pycrypto: required for manhole
-    ${pip} install pysqlite
+    ${pip} install pysqlite  | logalize ${build_log}
     ${pip} install pycrypto pyasn1 | logalize ${build_log}
     ${pip} install twisted | logalize ${build_log}
 
-    ${pip} install buildbot | logalize ${build_log}
+    ${pip} install autobahn  | logalize ${build_log}
+
+    build_preconditions
+
+    ${python} setup.py install
+
+    # !!!! install buildbot plugins from source
+    ${pip} install buildbot-www | logalize ${build_log}    
+    ${pip} install buildbot-waterfall-view | logalize ${build_log}    
+    ${pip} install buildbot-console-view | logalize ${build_log}    
 
     if [ ! -x ${usr_prefix}/buildbot/bin/master ]; then
        # wrapper for calling buildbot (master)

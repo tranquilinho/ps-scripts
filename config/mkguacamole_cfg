@@ -13,6 +13,8 @@ readonly etc_guacamole=${etc_dir}/guacamole
 
 [ ! -d ${etc_guacamole} ] && mkdir  ${etc_guacamole}
 
+# Now we prefer xrdp by default
+create_vnc_mapping(){
 cat > ${etc_guacamole}/user-mapping.xml <<EOF
 <user-mapping>
     <!-- it is possible to use encoding parameter for authorize tag:
@@ -27,6 +29,29 @@ cat > ${etc_guacamole}/user-mapping.xml <<EOF
 
 </user-mapping>
 EOF
+}
+
+readonly random_pass=$(random_str)
+
+[ -z "${guacamole_user}" ] && guacamole_user="myuser"
+[ -z "${guac_os_user}" ] && guac_os_user=${guacamole_user}
+
+
+cat > ${etc_guacamole}/user-mapping.xml <<EOF
+<user-mapping>
+    <!-- it is possible to use encoding parameter for authorize tag:
+            <authorize ... encoding="md5">
+    -->
+    <authorize username="${guacamole_user}" password="${random_pass}">
+        <param name="hostname">localhost</param>
+	<param name="username">${guac_os_user}</param><param name="password">${random_pass}</param>
+        <protocol>rdp</protocol>
+	<param name="width">1400</param>
+	<param name="height">900</param>
+	<!-- <param name="initial-program">/services/guacamole/etc/kiosk-mode</param> -->
+    </authorize>
+</user-mapping>
+EOF
 
 cat > ${etc_guacamole}/guacamole.properties <<EOF
 # Hostname and port of guacamole proxy
@@ -38,7 +63,7 @@ auth-provider: net.sourceforge.guacamole.net.basic.BasicFileAuthenticationProvid
 basic-user-mapping: ${etc_dir}/guacamole/user-mapping.xml
 EOF
 
-[ "A${guacamole_logging}" == "A1" ] && cat > ${etc_guacamole}/logback.xml <<EOF
+[ -n "${guacamole_logging}" ] && [ ${guacamole_logging} -eq 1 ] && cat > ${etc_guacamole}/logback.xml <<EOF
 <!-- guacamole looks for GUACAMOLE_HOME/logback.xml -->
 <configuration>
     <!-- Appender for debugging -->

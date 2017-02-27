@@ -1,0 +1,106 @@
+#!/bin/bash
+
+
+
+
+# !!!! log recipe tasks & progress in log/recipe.log
+
+print_usage(){
+    echo "Configure portable service guacamole service"
+    echo "Syntax: $0 -g guacamole_user [-b services_basedir] [-S service_name] [-o os_user] [-s step] [-p]"
+    echo "Example: $0 -g jdoe -b /services -S guacamole -p"
+    exit 1
+}
+
+
+
+if [ "$#" -gt 0 ]; then
+    while getopts "s:g:o:r:S:i:hp" options; do
+	case "${options}" in
+            s)
+		step=${OPTARG}
+		;;
+	    g)
+		readonly guacamole_user=${OPTARG}
+		;;
+	    o) 
+		readonly guac_os_user=${OPTARG}
+		;;
+	    p)
+		readonly pause=1
+		;;
+	    b)
+		readonly services_dir=${OPTARG}
+		;;
+	    S)
+		readonly service=${OPTARG}
+		;;
+	    i)
+		readonly docker_image="-i ${OPTARG}"
+		;;
+	    h)
+		print_usage
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${guacamole_user}" ] && print_usage
+[ -z "${guac_os_user}" ] && readonly guac_os_user=ubuntu
+[ -z "${step}" ] && step=1
+[ -z "${service}" ] && readonly service=guacamole
+[ -z "${services_dir}" ] && readonly services_dir=/services
+readonly service_root=${services_dir}/${service}
+
+
+if [ ${step} -le 1 ]; then
+    # OS packages - none in this recipe ;-)
+    (( step ++ ))
+fi
+
+[ ! -d ${service_root} ] && mkdir -p ${service_root}
+cd ${service_root}
+
+# this step can be performed directly on docker host
+if [ ${step} -le 2 ]; then
+    [ ! -d scripts ] && git clone https://github.com/tranquilinho/ps-scripts.git scripts
+    mkdir etc
+    mkdir -p usr/bin usr/lib usr/src
+    mkdir -p data/${service}/ data/run/apache-tomcat
+    mkdir -p etc/apache2
+    # in log, it is better to keep the standard "guacamole" name, instead of the user-defined ${service}
+    mkdir -p log/apache2 log/guacamole
+    (( step ++ ))
+    [ -n "${pause}" ] && read
+fi
+
+# this step can be performed directly on docker host
+if [ ${step} -le 3 ]; then
+    # use default tomcat_http_port in mkservice_cfg (8080), for apache http_port=80
+    # if port 80 is busy, the user can choose another port in service.cfg
+    export http_port=80
+    # by default, use port 8022 to connect to the container via ssh
+    [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -s 8022 -i cron,guacamole,tomcat,apache,https -m http://biocomp.cnb.csic.es/packages  > ${service_root}/etc/service.cfg
+
+    [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
+    chmod u+x ${service_root}/etc/service-manager
+    # service-prereq
+    (( step ++ ))
+    [ -n "${pause}" ] && read
+fi
+
+if [ ${step} -le 4 ]; then
+    ${service_root}/scripts/config/mkdocker_cfg -n ${service} ${docker_image} > ${service_root}/etc/docker.cfg
+    ${service_root}/scripts/config/mkcontainer_init -n ${service} > ${service_root}/etc/container-init
+    chmod u+x  ${service_root}/etc/container-init
+    (( step ++ ))
+    [ -n "${pause}" ] && read
+fi
+
+

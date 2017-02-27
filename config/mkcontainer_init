@@ -33,7 +33,7 @@ EOF
 cat <<"EOF"
 readonly service_root=/services/${service}
 
-${service_root}/scripts/docker-service-fix
+${service_root}/scripts/docker-service-startup-fix
 
 ${service_root}/scripts/install_admin_key
 

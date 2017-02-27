@@ -1,0 +1,23 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly pkg_name=automake
+readonly pkg_version=1.9
+readonly url_base=ftp://ftp.rediris.es/mirror/GNU/gnu/automake/
+
+install_prereq autoconf "mandatory"
+
+build_preconditions
+
+export PATH=${usr_prefix}/autoconf/bin:${PATH}
+# it is simpler to collect all .m4 macros in a single dir (--datadir)
+# though this breaks the principle of versioning
+# !!!! version-friendly share directory
+./configure --prefix=${prefix} --datadir=${usr_prefix}/share
+
+standard_install
+
+

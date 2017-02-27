@@ -34,6 +34,16 @@ mysql_start(){
 	exit 2
     fi
 
+    [ ! -d ${data_dir}/run/mysqld ] && mkdir -p ${data_dir}/run/mysqld
+
+    chown -R mysql ${log_dir}/mysql ${data_dir}/mysql ${data_dir}/run/mysqld
+
+    if [ ! -d ${mysql_datadir}/mysql ]; then
+	echo "Missing data in ${mysql_datadir}"
+	echo "One option is to copy blank DB from ${default_mysql_datadir}.orig ;-)"
+	exit 3
+    fi
+
     # !!!! simple check - improve for the case of many mysql daemons running at the same time
     if /etc/init.d/mysql status | grep stopped; then
 	daemon_start ${daemon} "--defaults-file=${etc_dir}/mysql/my.cnf " ${pid_file}

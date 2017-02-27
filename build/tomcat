@@ -12,6 +12,8 @@ readonly url_base=http://apache.rediris.es/tomcat/tomcat-7/v${pkg_version}/bin/
 
 build_preconditions
 
+# Guacamole client
+# install_prereq maven "mandatory"
 install_prereq jdk "mandatory"
 
 # just link to source
@@ -20,8 +22,7 @@ ln -s ${usr_prefix}/${pkg_name}-${pkg_version} ${usr_prefix}/${pkg_name}
 # use service config
 mv ${usr_prefix}/${pkg_name}/conf ${usr_prefix}/${pkg_name}/conf.orig
 ln -s  ${etc_dir}/tomcat ${usr_prefix}/${pkg_name}/conf
-# user service log dir
-# ln -s  ${usr_prefix}/${pkg_name}/logs ${log_dir}/tomcat
+ln -s  ${usr_prefix}/${pkg_name}/logs ${log_dir}/tomcat
 
 cat <<"EOF"
 Set CATALINA variables in service.cfg:
