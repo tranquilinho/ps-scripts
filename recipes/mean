@@ -2,7 +2,7 @@
 
 # recipe to deploy MEAN stack
 
-[ -n "${service}" ] && export service=mean
+[ -z "${service}" ] && export service=mean
 readonly service_root=/services/${service}
 
 # !!!! log recipe tasks & progress in log/recipe.log
