@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# recipe to deploy MEAN stack
+
+[ -n "${service}" ] && export service=mean
+readonly service_root=/services/${service}
+
+# !!!! log recipe tasks & progress in log/recipe.log
+
+print_usage(){
+    echo "Deploy MEAN stack service"
+    echo "Syntax: $0 [-s step] [-p]"
+    exit 1
+}
+
+
+if [ "$#" -gt 0 ]; then
+    while getopts "s:hp" options; do
+	case "${options}" in
+            s)
+		step=${OPTARG}
+		;;
+	    p)
+		readonly pause=1
+		;;
+	    h)
+		print_usage
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${step}" ] && step=1
+
+if [ ${step} -le 1 ]; then
+    # OS packages - none in this recipe ;-)
+    (( step ++ ))
+fi
+
+[ ! -d ${service_root} ] && mkdir -p ${service_root}
+cd ${service_root}
+
+if [ ${step} -le 2 ]; then
+    # !!!! remove git checkout when the recipe works in master
+    [ ! -d scripts ] && git clone https://github.com/tranquilinho/ps-scripts.git scripts && cd scripts 
+    echo "Creating directories"
+    cd ${service_root}
+    mkdir etc
+    mkdir -p usr/bin usr/lib usr/src
+    mkdir -p data/${service}/ data/run/apache-tomcat
+    mkdir -p etc/apache2
+    mkdir -p log/apache2 log/${service}
+    (( step ++ ))
+    [ -n "${pause}" ] && read
+fi
+
+if [ ${step} -le 3 ]; then
+    echo "Creating configuration files"
+
+    export http_port=80
+    [ ! -f ${service_root}/etc/service.cfg ] && ${service_root}/scripts/config/mkservice_cfg -n ${service} -i cron,apache,https -m http://www.tranquilinho.com/packages  > ${service_root}/etc/service.cfg
+
+    [ ! -f ${service_root}/etc/service-manager ] && ${service_root}/scripts/config/mkservice-manager > ${service_root}/etc/service-manager
+    chmod u+x ${service_root}/etc/service-manager
+    # service-prereq
+    (( step ++ ))
+    [ -n "${pause}" ] && read
+fi
+
+
+. ${service_root}/etc/service.cfg
+
+# what users are needed?
+if [ ${step} -le 4 -a -n "${user_name}" ]; then
+    echo "Creating users"
+    # ${scripts_base}/create-user ${user_id} ${user_name} ${data_dir}/${service}
+    [ -n "${pause}" ] && read
+fi
+
+if [ ${step} -le 5  ]; then
+    echo "Installing software dependencies"
+    # Software dependencies
+    # ${scripts_base}/build/apache
+    [ -n "${pause}" ] && read
+fi
+
+if [ ${step} -le 6 ]; then    
+    echo "Creating config files"
+    # "final" config: apache...
+
+fi
