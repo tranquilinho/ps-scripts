@@ -1,0 +1,11 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+# by now, use OS version
+debian_install scons
+
+exit $?
+
