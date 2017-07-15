@@ -1,0 +1,61 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${log_dir}/django.log
+readonly module="meteor"
+readonly log_facility="${service}-${module}"
+readonly pidfile=${run_dir}/${module}.pid
+
+. ${scripts_base}/common
+
+meteor_start(){
+    log "${info} Starting ${module}"
+
+#    if [ -z "$(which python)" ]; then
+#	log "${info} Installing django"
+#	${scripts_base}/build/django
+#   fi
+
+    [ ! -f ${pidfile} ] && touch ${pidfile}
+    #chown ${gunicorn_user} ${pidfile}
+    [ ! -f ${log_file} ] && touch ${log_file}
+    #chown ${gunicorn_user} ${log_file}
+
+    # daemon_start stdbuf "-o0 python ${gunicorn_home}/manage.py runserver 0.0.0.0:${gunicorn_port} >> ${log_file} 2>&1" ${pidfile} ${gunicorn_user} || exit 2
+
+    cd /services/scm/data/mvp
+    meteor run --settings config.json
+    status=$? ; pid=$!
+    if [ ${status} -eq 0 ]; then
+	echo ${pid} > ${pidfile}
+	log "${success} ${module} started"
+    else
+	log "${critical} Problem starting ${module}"
+    fi
+}
+
+meteor_stop(){
+    log "${info} Stopping ${module}..."
+    daemon_stop ${pidfile}
+    log "${success} Stopped"
+}
+
+case "$1" in
+    "start")
+	meteor_start
+	;;
+    "stop")
+	meteor_stop
+	;;
+    "restart")
+	django_stop
+	django_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
