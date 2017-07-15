@@ -1,0 +1,21 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} && . ${scripts_base}/common
+
+
+readonly pkg_name=mongodb
+readonly pkg_version=3.4.6
+readonly pkg=${pkg_name}-src-r${pkg_version}.tar.gz
+readonly pkg_dir=${pkg_name}-src-r${pkg_version}
+readonly url_base=https://fastdl.mongodb.org/src
+
+install_prereq scons "mandatory"
+
+build_preconditions
+
+./configure --prefix=${prefix} --with-installbuilddir=${usr_prefix}/apache-build
+
+standard_install
+

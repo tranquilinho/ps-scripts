@@ -5,8 +5,9 @@ readonly pkg_name=meteor
 readonly pkg_version=1.4.4.2
 #readonly url_base=
 
-install_prereq nodejs "mandatory" 4.8.2
-install_prereq mongodb "mandatory" 3.2.12
+# !!!! are they really needed (or Meteor installs them)?
+# install_prereq nodejs "mandatory" 4.8.2
+# install_prereq mongodb "mandatory" 3.2.12
 
 # easy install
 run_it () {
