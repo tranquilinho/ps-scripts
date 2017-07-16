@@ -4,6 +4,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
+# Note: it needs 4 GB of disk to build...
 
 readonly pkg_name=mongodb
 readonly pkg_version=3.4.6

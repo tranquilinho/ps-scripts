@@ -5,9 +5,16 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=node
-#readonly pkg_version=
-#readonly url_base=
+readonly pkg_version=v6.11.1
+readonly url_base=https://nodejs.org/dist/${pkg_version}
 
 #install_prereq zlib "mandatory"
-debian_install nodejs
+#install_prereq clang "mandatory"
+
+# debian_install nodejs
+build_preconditions
+
+./configure --shared-openssl-libpath=${usr_prefix}/openssl/lib --shared-zlib-libpath=${usr_prefix}/zlib/lib
+
+standard_install
 
