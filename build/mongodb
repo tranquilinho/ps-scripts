@@ -12,10 +12,13 @@ readonly pkg=${pkg_name}-src-r${pkg_version}.tar.gz
 readonly pkg_dir=${pkg_name}-src-r${pkg_version}
 readonly url_base=https://fastdl.mongodb.org/src
 
-install_prereq scons "mandatory"
-debian_install libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev
+# build from source fails when linking mongoperf (??) - install OS version
 
-build_preconditions
+# install_prereq scons "mandatory"
+# debian_install libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev
 
-standard_install
+# build_preconditions
 
+# standard_install
+
+debian_install mongodb
