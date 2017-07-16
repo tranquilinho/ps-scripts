@@ -12,10 +12,9 @@ readonly pkg_dir=${pkg_name}-src-r${pkg_version}
 readonly url_base=https://fastdl.mongodb.org/src
 
 install_prereq scons "mandatory"
+debian_install libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev
 
 build_preconditions
-
-./configure --prefix=${prefix} --with-installbuilddir=${usr_prefix}/apache-build
 
 standard_install
 
