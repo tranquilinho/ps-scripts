@@ -14,7 +14,7 @@ readonly url_base=https://nodejs.org/dist/${pkg_version}
 # debian_install nodejs
 build_preconditions
 
-./configure --shared-openssl-libpath=${usr_prefix}/openssl/lib --shared-zlib-libpath=${usr_prefix}/zlib/lib
+./configure --prefix=${prefix} --shared-openssl-libpath=${usr_prefix}/openssl/lib --shared-zlib-libpath=${usr_prefix}/zlib/lib
 
 standard_install
 
