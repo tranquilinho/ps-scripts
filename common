@@ -170,12 +170,20 @@ standard_install(){
 	    fi
 	fi
     elif [ -f SConstruct ]; then
-	scons | logalize $(make_log)
+	scons ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
 
 	if [ ${PIPESTATUS[0]} -ne 0 ]; then
 	    log "${critical} Problem building ${pkg_name}"
 	    exit 8
 	fi
+	if [ "a$2" != "anoinstall" ]; then
+	    scons --prefix=${prefix} install 2>&1 | logalize $(make_log)
+	    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+		log "${warning} Issue installing ${pkg_name}. Check $(make_log)"
+	    fi
+	fi
+
+	
     else
 	log "${critical} No build file found"
 	exit 8
