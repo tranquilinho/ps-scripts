@@ -153,22 +153,33 @@ configure(){
 # $2 (noinstall)
 standard_install(){
     log "${info} standard install start (${ps_paralel}) ${pkg_name} ${pkg_version}"
-    
-    # make clean &&  
-    make $1 ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
-    if [ ${PIPESTATUS[0]} -ne 0 ]; then
-	log "${critical} Problem building ${pkg_name}"
+
+    if [ -f Makefile ]; then
+	# make clean &&  
+	make $1 ${ps_paralel:--j 2} 2>&1 | logalize $(make_log)
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then
+	    log "${critical} Problem building ${pkg_name}"
+	    exit 8
+	fi
+	
+	if [ "a$2" != "anoinstall" ]; then
+	    make install ${ps_paralel} 2>&1 | logalize $(make_log)
+	    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+		log "${warning} Issue installing ${pkg_name}. Check $(make_log)"
+		# exit 8
+	    fi
+	fi
+    elif [ -f SConstruct ]; then
+	scons | logalize $(make_log)
+
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then
+	    log "${critical} Problem building ${pkg_name}"
+	    exit 8
+	fi
+    else
+	log "${critical} No build file found"
 	exit 8
     fi
-
-    if [ "a$2" != "anoinstall" ]; then
-	make install ${ps_paralel} 2>&1 | logalize $(make_log)
-	if [ ${PIPESTATUS[0]} -ne 0 ]; then
-	    log "${warning} Issue installing ${pkg_name}. Check $(make_log)"
-	    # exit 8
-	fi
-    fi
-
     if [ -d ${prefix} ]; then
     # make sure the symlink points to what it was just installed,
     # instead to some random version (for example, in a different but similar service...)
@@ -210,16 +221,23 @@ install_prereq(){
 }
 
 debian_install(){
-    local my_package=$1
-    log "${info} installing ${my_package}"
+    log "${info} installing $@[*]"
     # http://www.microhowto.info/howto/perform_an_unattended_installation_of_a_debian_package.html
     export DEBIAN_FRONTEND="noninteractive"
-    dpkg -s ${my_package} > /dev/null  && log "${warning} Package ${my_package} already installed" && return 0
+    local return_status=0
     apt-get update -q
-    apt-get install -y ${my_package} 2>&1 | logalize ${log_dir}/apt.log
-    local my_status=${PIPESTATUS[0]}
-    log_status ${my_status} "${my_package} installed" "Problem installing ${my_package}"
-    return ${my_status}
+    for my_package in $@; do
+	dpkg -s ${my_package} > /dev/null
+	if [ $? -eq 0 ]; then
+	    log "${warning} Package ${my_package} already installed"
+	else
+	    apt-get install -y ${my_package} 2>&1 | logalize ${log_dir}/apt.log
+	    local my_status=${PIPESTATUS[0]}
+	    log_status ${my_status} "${my_package} installed" "Problem installing ${my_package}"
+	    [ my_status -ne 0 ] && return_status=1
+	fi
+    done
+    return ${return_status}
 }
 
 check_params(){
