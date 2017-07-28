@@ -9,6 +9,16 @@ readonly pkg_version=2.4.23
 # !!!! this mirror keeps only the latest stable version?
 readonly url_base=http://apache.rediris.es//httpd/
 
+readonly apache_bin=${usr_prefix}/httpd/bin
+[ -z "${apache}" ] && readonly apache=${apache_bin}/httpd
+
+readonly available_apache=$(${apache} -v | grep -i version 2>&1 )
+
+if [[ "${available_apache}" == *Apache/${pkg_version}* ]]; then
+    log "${warning} ${available_apache} (${apache}) already installed..."
+    exit 0
+fi
+
 log "${info} ${pkg_name} install started"
 
 # libxml2 is required by proxy-html 
