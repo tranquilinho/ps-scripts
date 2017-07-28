@@ -4,9 +4,12 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
+# !!!! ensure pkg_config is reachable (installed and on $PATH)
+# it is needed for zlib and openssl (at least)
+
 readonly pkg_name=ruby
-readonly pkg_version=1.9.3-p550
-readonly url_base=http://cache.ruby-lang.org/pub/ruby/1.9/
+readonly pkg_version=2.4.1
+readonly url_base=https://cache.ruby-lang.org/pub/ruby/2.4/
 
 install_prereq zlib "mandatory"
 install_prereq openssl "mandatory"
@@ -21,22 +24,29 @@ fi
 
 build_preconditions
 
-# export C_INCLUDE_PATH=/services/redmine/usr/include
-# export CFLAGS=-L/services/redmine/usr/lib
+export PATH=${PATH}:${usr_prefix}/pkg-config/bin
 
-./configure --prefix=${prefix} 
+# export C_INCLUDE_PATH=.../include
+# export CFLAGS=-L/.../lib
+
+./configure --prefix=${prefix} --with-zlib-dir=${usr_prefix}/zlib
 
 standard_install
 
-cd ext/openssl
-${prefix}/bin/ruby extconf.rb 
-make -j 2
-make install
+# modules are prepared automatically by standard_install
 
-cd ../..
-cd ext/zlib
-${prefix}/bin/ruby extconf.rb 
-make -j 2
-make install
+# openssl ext needs pkg-config
+#cd ext/openssl
+#${prefix}/bin/ruby extconf.rb 
+#make -j 2
+#make install
 
+# zlib searches for -lz only in default + --with-zlib-dir (no pkg-config)
+#cd ../..
+#cd ext/zlib
+#${prefix}/bin/ruby extconf.rb 
+#make -j 2
+#make install
 
+# test:
+#${prefix}/bin/ruby -ropenssl -rzlib -rreadline -e "puts :success"
