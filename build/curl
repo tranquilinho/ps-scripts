@@ -5,21 +5,17 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=curl
-readonly pkg_version=7.47.1
+readonly pkg_version=7.55.1
+readonly pkg_ext=tar.xz
 readonly url_base=https://curl.haxx.se/download/
+
 
 build_preconditions
 
 install_prereq zlib "mandatory"
-# trying to use openssl fails with errors like "undefined reference to 'SSL_get0_alpn_selected'"
-# install_prereq openssl "mandatory"
-# an alternative would be gnutls (when its installer works...)
+install_prereq openssl "mandatory"
 
-# ./configure --prefix=${prefix} --with-ssl=${usr_prefix}/openssl --with-zlib=${usr_prefix}/zlib
+./configure --prefix=${prefix} --with-ssl=${usr_prefix}/openssl --with-zlib=${usr_prefix}/zlib
 
-# standard_install
-
-# by now, use system curl
-
-debian_install libcurl4-openssl-dev
+standard_install
 

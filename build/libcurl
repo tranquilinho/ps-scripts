@@ -1,13 +1,1 @@
-#!/bin/bash
-
-readonly service_cfg=${0%/scripts*}/etc/service.cfg
-
-. ${service_cfg} && . ${scripts_base}/common
-
-log "${info} installing libcurl"
-
-debian_install libcurl4-openssl-dev && log "${success} libcurl installed" && exit 0
-
-log "${critical} problem installing libcurl"
-exit 2
-
+curl
