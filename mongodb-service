@@ -1,0 +1,80 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="mongodb"
+readonly log_facility="${service}-${module}"
+
+print_usage(){
+    echo "Syntax: $0 [-h] start|stop|restart"
+    exit 1
+}
+
+readonly pidfile=${run_dir}/${module}.pid
+. ${scripts_base}/common
+
+mongodb_start(){
+    log "${info} Starting ${module}"
+
+    # Set up everything that may be missing
+    id mongodb > /dev/null
+    if [ $? -ne 0 ]; then
+	${scripts_base}/create-user - mongodb ${run_dir}/mongodb /usr/sbin/nologin
+    fi
+
+    [ ! -f ${logdir}/mongodb.log ] && touch ${logdir}/mongodb.log
+    chown mongodb ${logdir}/mongodb.log
+
+    [ ! -d ${datadir}/db ] && mkdir ${datadir}/db
+    chown -R mongodb ${datadir}/db
+
+    # !!!! make --smallfiles configurable (service.cfg)
+    # when there is less than 4GB for journaling, smallfiles parameter is needed
+    mongod --config /services/scm/etc/mongodb.conf --smallfiles --fork
+    if [ $? -eq 0 ]; then
+	log "${success} ${daemon} started"
+    else
+	log "${critical} Problem starting ${daemon}"
+    fi
+}
+
+mongodb_stop(){
+    log "${info} Stopping ${module}..."
+    daemon_stop ${pidfile}
+    log "${success} Stopped"
+}
+
+readonly action=$1
+shift
+while getopts "h" options; do
+    case "${options}" in
+	h)
+	    print_usage
+		;;
+        *)
+	    echo "Unknow option" 1>&2 
+	    print_usage
+	    ;;
+	
+    esac
+done
+
+case "${action}" in
+    "start")
+	mongodb_start 
+	;;
+    "stop")
+	mongodb_stop
+	;;
+    "restart")
+	mongodb_stop
+	mongodb_start
+	;;
+    *)
+	echo "Syntax: $0 [start|stop|restart]"
+esac
+
+exit 0
