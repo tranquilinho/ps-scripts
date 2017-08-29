@@ -31,6 +31,7 @@ mongodb_start(){
     [ ! -d ${datadir}/db ] && mkdir ${datadir}/db
     chown -R mongodb ${datadir}/db
 
+    # !!!! use service.cfg: mongo_host, mongo_port
     # !!!! make --smallfiles configurable (service.cfg)
     # when there is less than 4GB for journaling, smallfiles parameter is needed
     mongod --config /services/scm/etc/mongodb.conf --smallfiles --fork
