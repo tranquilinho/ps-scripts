@@ -19,7 +19,10 @@ meteor_start(){
     [ -z "${meteor_app_dir}" ] && log "${critical} Define meteor_app_dir in service.cfg" && exit 7
     [ -z "${ROOT_URL}" ]  && log "${critical} Define ROOT_URL in service.cfg" && exit 7
     [ -z "${meteor_dbname}" ]  && log "${critical} Define meteor_dbname in service.cfg" && exit 7   
-
+    [ ! -f ${etc_dir}/config.json ] && log "${warning} Missing config.json"
+    
+    export PATH=${usr_prefix}/node/bin/:${PATH}
+    
     #    if [ -z "$(which node)" ]; then
 #	log "${info} Installing node"
 #	${scripts_base}/build/node
@@ -38,7 +41,7 @@ meteor_start(){
 
     # production
     cd programs/server
-    ${usr_prefix}/node/bin/npm install --production
+    npm install --production
     if [ $? -ne 0 ]; then
         log "${critical} Problem with npm install"
         exit 6
@@ -51,8 +54,9 @@ meteor_start(){
     [ -z "${mongo_port}" ] && readonly mongo_port=27017
     export MONGO_URL="mongodb://${mongo_host}:${mongo_port}/${meteor_dbname}"
     export PORT=${meteor_port:-3000}
+    export ROOT_URL
     # export MAIL_URL='smtp://user:password@mailhost:port/'
-    ${usr_prefix}/node/bin/node main.js --settings ${etc_dir}/config.json
+    node main.js --settings ${etc_dir}/config.json
     
     status=$? ; pid=$!
     if [ ${status} -eq 0 ]; then
