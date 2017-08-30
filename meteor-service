@@ -17,7 +17,8 @@ meteor_start(){
 
     [ -z "${meteor_app_dir}" ] && log "${critical} Define meteor_app_dir in service.cfg" && exit 7
     [ -z "${ROOT_URL}" ]  && log "${critical} Define ROOT_URL in service.cfg" && exit 7
-    [ -z "${meteor_dbname}" ]  && log "${critical} Define meteor_dbname in service.cfg" && exit 7   
+    [ -z "${meteor_dbname}" ]  && log "${critical} Define meteor_dbname in service.cfg" && exit 7
+    [ -z "${meteor_user}" ]  && log "${critical} Define meteor_user in service.cfg" && exit 7   
     [ ! -f ${meteor_config} ] && log "${warning} Missing ${meteor_config}"
 
     if [ -z "$(which node)" ]; then
@@ -63,7 +64,8 @@ meteor_start(){
     # ROOT_URL must be defined in service.cfg - here be just export it
     export ROOT_URL
     # export MAIL_URL='smtp://user:password@mailhost:port/'
-    forever start --pidFile ${pidfile} -a -l ${log_file} -o ${log_file} -e ${log_file} --minUptime 10000  main.js --settings ${meteor_config}
+    # we need to preserve cwd and PATH for forever command...
+    su ${meteor_user} -s /bin/bash -c "PATH=${PATH} forever start --pidFile ${pidfile} -a -l ${log_file} -o ${log_file} -e ${log_file} --minUptime 10000  main.js --settings ${meteor_config}"
 
     # We wait 10 seconds (--minUptime) to be sure main.js is working
     sleep 10
@@ -87,7 +89,7 @@ meteor_stop(){
 	fi
     fi
     cd ${meteor_app_dir}
-    forever stop -l ${log_file} main.js 
+    su ${meteor_user} -s /bin/bash -c "PATH=${PATH} forever stop -l ${log_file} main.js"
     log "${success} Stopped"
 }
 
@@ -101,7 +103,7 @@ meteor_status(){
 	fi
     fi
 
-    forever list | tail -1 | grep START
+    su ${meteor_user} -s /bin/bash -c "PATH=${PATH} forever list" | tail -1 | grep -v STOPPED > /dev/null
     return $?
 }
 
