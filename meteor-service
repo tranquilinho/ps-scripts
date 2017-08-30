@@ -1,15 +1,14 @@
 #!/bin/bash
-
-# Note: this script is intended to be run as the meteor_app_user 
-
 readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} 
 
-readonly log_file=${log_dir}/django.log
 readonly module="meteor"
+readonly log_file=${log_dir}/${module}.log
 readonly log_facility="${service}-${module}"
 readonly pidfile=${run_dir}/${module}.pid
+export PATH=${usr_prefix}/node/bin:${PATH}
+readonly meteor_config="${etc_dir}/config.json"
 
 . ${scripts_base}/common
 
@@ -19,30 +18,37 @@ meteor_start(){
     [ -z "${meteor_app_dir}" ] && log "${critical} Define meteor_app_dir in service.cfg" && exit 7
     [ -z "${ROOT_URL}" ]  && log "${critical} Define ROOT_URL in service.cfg" && exit 7
     [ -z "${meteor_dbname}" ]  && log "${critical} Define meteor_dbname in service.cfg" && exit 7   
-    [ ! -f ${etc_dir}/config.json ] && log "${warning} Missing config.json"
-    
-    export PATH=${usr_prefix}/node/bin/:${PATH}
-    
-    #    if [ -z "$(which node)" ]; then
-#	log "${info} Installing node"
-#	${scripts_base}/build/node
-#   fi
+    [ ! -f ${meteor_config} ] && log "${warning} Missing ${meteor_config}"
 
+    if [ -z "$(which node)" ]; then
+	log "${info} Installing node"
+	${scripts_base}/build/node
+    fi
+
+    if [ -z "$(which forever)" ]; then
+	log "${info} Installing forever.js"
+	npm install forever -g | logalize ${log_file} > /dev/null
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            log "${critical} Problem with forever.js install"
+            exit 6
+	fi
+    fi
+    
+    
     [ ! -f ${pidfile} ] && touch ${pidfile}
-    #chown ${gunicorn_user} ${pidfile}
+    chown ${meteor_user} ${pidfile}
     [ ! -f ${log_file} ] && touch ${log_file}
-    #chown ${gunicorn_user} ${log_file}
-
+    chown ${meteor_user} ${log_file}
 
 
     cd ${meteor_app_dir}
-    # development mode: enough to run meteor directly
-    # meteor run --settings config.json
+    # for development mode: enough to run meteor directly
+    # meteor run --settings ${meteor_config}
 
     # production
     cd programs/server
-    npm install --production
-    if [ $? -ne 0 ]; then
+    npm install --production | logalize ${log_file} > /dev/null
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
         log "${critical} Problem with npm install"
         exit 6
     fi
@@ -54,23 +60,49 @@ meteor_start(){
     [ -z "${mongo_port}" ] && readonly mongo_port=27017
     export MONGO_URL="mongodb://${mongo_host}:${mongo_port}/${meteor_dbname}"
     export PORT=${meteor_port:-3000}
+    # ROOT_URL must be defined in service.cfg - here be just export it
     export ROOT_URL
     # export MAIL_URL='smtp://user:password@mailhost:port/'
-    node main.js --settings ${etc_dir}/config.json
-    
-    status=$? ; pid=$!
-    if [ ${status} -eq 0 ]; then
-	echo ${pid} > ${pidfile}
+    forever start --pidFile ${pidfile} -a -l ${log_file} -o ${log_file} -e ${log_file} --minUptime 10000  main.js --settings ${meteor_config}
+
+    # We wait 10 seconds (--minUptime) to be sure main.js is working
+    sleep 10
+    meteor_status
+    if [ ${$?} -eq 0 ]; then
 	log "${success} ${module} started"
     else
 	log "${critical} Problem starting ${module}"
-    fi
+	exit 2
+    fi                
 }
 
 meteor_stop(){
     log "${info} Stopping ${module}..."
-    daemon_stop ${pidfile}
+    if [ -z "$(which forever)" ]; then
+	log "${info} Installing forever.js"
+	npm install forever -g | logalize ${log_file} > /dev/null
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            log "${critical} Problem with forever.js install"
+            exit 6
+	fi
+    fi
+    cd ${meteor_app_dir}
+    forever stop -l ${log_file} main.js 
     log "${success} Stopped"
+}
+
+meteor_status(){
+    if [ -z "$(which forever)" ]; then
+	log "${info} Installing forever.js"
+	npm install forever -g | logalize ${log_file} > /dev/null
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            log "${critical} Problem with forever.js install"
+            exit 6
+	fi
+    fi
+
+    forever list | tail -1 | grep START
+    return $?
 }
 
 case "$1" in
@@ -83,6 +115,10 @@ case "$1" in
     "restart")
 	meteor_stop
 	meteor_start
+	;;
+    "status")
+	meteor_status
+	exit $?
 	;;
     *)
 	echo "Syntax: $0 [start|stop|restart]"
