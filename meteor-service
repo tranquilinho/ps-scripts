@@ -12,6 +12,8 @@ readonly meteor_config="${etc_dir}/config.json"
 
 . ${scripts_base}/common
 
+# !!!! make explicit mongodb dependency (first thing meteor does is try to connect to the DB...)
+
 meteor_start(){
     log "${info} Starting ${module}"
 
