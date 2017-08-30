@@ -8,10 +8,10 @@ readonly pkg_name=node
 readonly pkg_version=v6.11.1
 readonly url_base=https://nodejs.org/dist/${pkg_version}
 
-#install_prereq zlib "mandatory"
+install_prereq zlib "mandatory"
+install_prereq openssl "mandatory"
 #install_prereq clang "mandatory"
 
-# debian_install nodejs
 build_preconditions
 
 ./configure --prefix=${prefix} --shared-openssl-libpath=${usr_prefix}/openssl/lib --shared-zlib-libpath=${usr_prefix}/zlib/lib
