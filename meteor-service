@@ -66,8 +66,11 @@ meteor_start(){
     # ROOT_URL must be defined in service.cfg - here be just export it
     export ROOT_URL
     # export MAIL_URL='smtp://user:password@mailhost:port/'
+    # Other ways of passing settings:
+    # https://stackoverflow.com/questions/34761577/how-to-config-meteor-on-aws-ebs-using-meteor-settings-environment-variable/34774239#34774239
     # we need to preserve cwd and PATH for forever command...
-    su ${meteor_user} -s /bin/bash -c "PATH=${PATH} forever start --pidFile ${pidfile} -a -l ${log_file} -o ${log_file} -e ${log_file} --minUptime 10000  main.js --settings ${meteor_config}"
+    readonly ms="$(cat ${meteor_config})"
+    su ${meteor_user} -s /bin/bash -c "PATH=${PATH} METEOR_SETTINGS='${ms}' forever start --pidFile ${pidfile} -a -l ${log_file} -o ${log_file} -e ${log_file} --minUptime 10000  main.js"
 
     # We wait 10 seconds (--minUptime) to be sure main.js is working
     sleep 10
