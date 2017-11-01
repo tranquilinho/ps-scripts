@@ -13,6 +13,7 @@ print_usage(){
     echo "Syntax: $0 [-h] start|stop|restart"
     exit 1
 }
+# !!!! create script to generate mongodb.conf from service.cfg
 
 readonly pidfile=${run_dir}/${module}.pid
 . ${scripts_base}/common
@@ -37,9 +38,10 @@ mongodb_start(){
 
     [ ! -f ${mongo_log} ] && touch ${mongo_log}
     chown mongodb ${mongo_log}
-
-    [ ! -d ${datadir}/db ] && mkdir ${datadir}/db
-    chown -R mongodb ${datadir}/db
+    
+    [ -z "${mongodb_path}" ] && readonly mongodb_path=${data_dir}/db
+    [ ! -d ${mongodb_path} ] && mkdir ${mongodb_path}
+    chown -R mongodb ${mongodb_path}
 
     # !!!! make --smallfiles configurable (service.cfg)
     # when there is less than 4GB for journaling, smallfiles parameter is needed
