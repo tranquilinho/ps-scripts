@@ -7,14 +7,15 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 readonly pkg_name=apache-tomcat
 # readonly pkg_version=6.0.45
 # Websockets support (for windows clients) requires Tomcat 7.0.37 or newer
-readonly pkg_version=7.0.69
+readonly pkg_version=7.0.85
 readonly url_base=http://apache.rediris.es/tomcat/tomcat-7/v${pkg_version}/bin/
 
 build_preconditions
 
 # Guacamole client
 # install_prereq maven "mandatory"
-install_prereq jdk "mandatory"
+#install_prereq jdk "mandatory"
+spack load --dependencies jdk
 
 # just link to source
 ln -s ${usr_prefix}/src/${pkg_name}-${pkg_version} ${prefix}
