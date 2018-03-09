@@ -8,9 +8,14 @@ readonly pkg_name=php
 readonly pkg_version=5.5.13
 readonly url_base="http://es1.php.net/distributions/"
 
-install_prereq zlib "mandatory"
-install_prereq pcre "mandatory"
-install_prereq libxml2 "mandatory"
+spack load --dependencies openssl
+spack load --dependencies pcre
+spack load --dependencies zlib
+spack load --dependencies libxml2${libxml2_version}
+
+# install_prereq zlib "mandatory"
+# install_prereq pcre "mandatory"
+# install_prereq libxml2 "mandatory"
 install_prereq httpd "mandatory"
 
 build_preconditions
@@ -37,7 +42,7 @@ export PGSQL_LIBDIR=${usr_prefix}/postgresql/lib
 # !!!! by default, pear installs things at php root, which it is not in the default include path (usr/php/lib/php)
 # One option is to move all (PEAR*, Mail, etc) to usr/php/lib/php
 
-./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs --with-libxml-dir=${usr_prefix}/libxml2 --with-openssl=${usr_prefix}/openssl --with-pcre-regex=${usr_prefix}/pcre --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir=${usr_prefix}/zlib --with-config-file-path=${etc_dir} --enable-mbstring --with-pgsql=${usr_prefix}/postgresql/ --with-pear=${prefix}
+./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs  --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-config-file-path=${etc_dir} --enable-mbstring --with-pgsql=${usr_prefix}/postgresql/ --with-pear=${prefix}
 
 # if apache-build libtool fails, replace it with php one
 standard_install
