@@ -50,7 +50,7 @@ download_pkg(){
     local status=0
     local downloaded=1
 
-    [ -z "$(which wget)" ] && debian_install wget
+    [ -z "$(which wget)" ] && os_install wget
 
     if [ -n "${mirror_base}" ]; then
 	local download_url=${mirror_base}/${pkg}
@@ -208,6 +208,25 @@ install_prereq(){
 	log "${warning} Prereq ${prereq} already installed"
     fi
 }
+
+os_install(){
+    [ -z "${distro}" ] && readonly distro="centos"
+    if [ ${distro} == "debian" ]; then
+	debian_install $*
+    else
+	centos_install $*
+    fi
+}
+
+centos_install(){
+    local my_package=$1
+    log "${info} installing ${my_package}"
+    yum install -y ${my_package} 2>&1 | logalize ${log_dir}/apt.log
+    local my_status=${PIPESTATUS[0]}
+    log_status ${my_status} "${my_package} installed" "Problem installing ${my_package}"
+    return ${my_status}
+}
+
 
 debian_install(){
     local my_package=$1
