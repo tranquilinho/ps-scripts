@@ -9,7 +9,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 log "${info} installing libxml2"
 
 #  libexpat1-dev is required in Ubuntu 14.04
-debian_install libxml2-dev && debian_install libexpat1-dev && log "${success} libxml2 installed" && exit 0
+os_install libxml2-dev && os_install libexpat1-dev && log "${success} libxml2 installed" && exit 0
 
 log "${critical} problem installing libxml2"
 exit 2
