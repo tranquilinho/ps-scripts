@@ -23,6 +23,7 @@ spack load --dependencies libxml2${libxml2_version}
 spack load --dependencies openssl
 install_prereq apr-util "mandatory"
 spack load --dependencies pcre
+spack load --dependencies zlib
 # install_prereq pcre "mandatory"
 
 readonly os_aux=$(grep "^ID=" /etc/os-release)
