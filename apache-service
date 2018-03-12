@@ -27,7 +27,8 @@ fi
 . ${APACHE_ENVVARS}
 
 ENV="env -i LANG=C PATH=/usr/local/bin:/usr/bin:/bin"
-export LD_LIBRARY_PATH=${usr_prefix}/openssl/lib/
+# spack openssl
+# export LD_LIBRARY_PATH=${usr_prefix}/openssl/lib/
 readonly APACHE2CTL=${APACHE_BIN}/apachectl
 # readonly APACHE_CONFDIR=${apache_cfg_dir}
 #readonly SERVER=$(hostname)
