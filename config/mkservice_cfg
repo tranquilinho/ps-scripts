@@ -99,7 +99,7 @@ EOF
 
 user_wants https && cat <<EOF
 readonly https_enabled=1
-readonly http_port=${http_port}
+readonly https_port=${https_port}
 EOF
 
 user_wants php && cat <<"EOF"
