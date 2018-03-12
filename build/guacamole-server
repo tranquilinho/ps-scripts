@@ -5,29 +5,44 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=guacamole-server
-readonly pkg_version=0.9.9
-readonly url_base=http://downloads.sourceforge.net/project/guacamole/current/source/
+readonly pkg_version=0.9.14
+readonly url_base=http://ftp.cixug.es/apache/guacamole/${pkg_version}/source/
+
 
 build_preconditions
 
-install_prereq pkg-config "mandatory"
-install_prereq libpng "mandatory"
-# use OS packages by now
-# !!!! in Debian, there is no libjpeg-turbo8-dev...
-debian_install libjpeg-turbo8-dev
-debian_install libcairo2-dev
-debian_install libossp-uuid-dev
+# os_install libcairo2-dev
+# !!!! debian libossp-uuid-dev, centos uiid-devel
+os_install uuid-devel
 # RDP support: library & xrdp server
-debian_install libfreerdp-dev
-install_prereq xrdp "mandatory"
+# !!!! debian libfreerdp-dev, centos freerdp-devel
+os_install freerdp-devel
+
 # Even when using only RDP, vnc is used in the backstage (by xrdp)
-debian_install libvncserver-dev
+# !!!! debian libvncserver-dev, centos libvncserver-devel
+os_install libvncserver-devel
 # !!!! libguac
 # As lightweight desktop environment, we currently use XFCE
-debian_install xfce4
+os_install xfce4
+
+install_prereq xrdp "mandatory"
+
+os_install libXrandr-devel
+
+# install_prereq pkg-config "mandatory"
+spack load --dependencies pkgconf
+spack load --dependencies libpng
+#install_prereq libpng "mandatory"
+# use OS packages by now
+# !!!! in Debian, there is no libjpeg-turbo8-dev...
+#debian_install libjpeg-turbo8-dev
+spack load --dependencies libjpeg-turbo
+spack load --dependencies cairo
+
+# librfxcodec -> nasm
 
 # it seems configure only uses pkg-config to detect pango...
-CPPFLAGS=-I${usr_prefix}/libpng/include LDFLAGS=-L${usr_prefix}/libpng/lib  ./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole --with-rdp
+./configure --prefix=${prefix} --with-init-dir=${etc_dir}/init.d --sysconfdir=${etc_dir}/guacamole --with-rdp | logalize $(configure_log)
 
 standard_install
 

@@ -4,12 +4,13 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
 . ${service_cfg} && . ${scripts_base}/common
 
-
+# !!!! guacamole-server already installs xfce
 # light desktop -> LXDE
-debian_install lxde
+# debian_install lxde
 # by now, use OS vnc
-debian_install tightvncserver
-
+# on centos, xrdp installs tigervnc-server-minimal
+# debian_install tightvncserver
+centos_install tigervnc-server-minimal
 
 exit 0
 

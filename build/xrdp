@@ -5,28 +5,36 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=xrdp
-readonly pkg_version=0.6.1
-readonly url_base=http://netix.dl.sourceforge.net/project/xrdp/xrdp/${pkg_version}
-readonly pkg=xrdp-v0.6.1.tar.gz
-readonly pkg_dir=xrdp-v0.6.1
+readonly pkg_version=0.9.3.1
+readonly url_base=https://github.com/neutrinolabs/xrdp/releases/download/v${pkg_version}/
+#readonly pkg=xrdp-.6.1.tar.gz
+#readonly pkg_dir=xrdp-v0.6.1
 
 build_preconditions
 
-debian_install libpam0g-dev
-debian_install autoconf
-debian_install libx11-dev
-debian_install libxfixes-dev
+# debian libpam0g-dev, centos pam-devel
+os_install pam-devel
+# debian libxfixes-dev, centos libXfixes-devel
+os_install libXfixes-devel
+
+# debian_install libx11-dev
+spack load --dependencies libx11
+# debian_install autoconf
+spack load --dependencies autoconf
+
+spack load --dependencies libtool
+
 #install_prereq pkg-config "mandatory"
 #install_prereq zlib "mandatory"
 
-export PATH=${usr_prefix}/pkg-config/bin:${PATH}
+# export PATH=${usr_prefix}/pkg-config/bin:${PATH}
 
 # In Ubuntu it is easier to go with OS package
 if is_os_ubuntu; then
    debian_install xrdp
 elif is_os_debian; then
     # in Debian, libtool-bin is also needed...
-    debian_install libtool
+    # debian_install libtool
 
     # base - xrdp itself
     ./bootstrap
@@ -39,6 +47,25 @@ elif is_os_debian; then
     #cd xorg/X11R7.6
     #./buildx.sh ${usr_prefix}/X11rdp
     # ln -s /opt/X11rdp/bin/X11rdp /usr/local/bin/X11rdp
+elif is_os_centos; then
+    # in , libtool-bin is also needed...
+    # centos_install libtool
+
+    # spack cairo install fails - use OS package
+    centos_install xrdp
+
+    # base - xrdp itself
+    #./bootstrap
+    #./configure --prefix=${prefix} --localstatedir=${data_dir} --sysconfdir=${etc_dir} --enable-xrdpdebug
+    #standard_install
+
+    # X11rdp building (optional)
+    # debian packages needed
+    # flex bison libxml2-dev intltool xsltproc xutils-dev python-libxml2 g++ xutils
+    #cd xorg/X11R7.6
+    #./buildx.sh ${usr_prefix}/X11rdp
+    # ln -s /opt/X11rdp/bin/X11rdp /usr/local/bin/X11rdp
+
 else
     log "${critical} Unsupported OS"
 fi
