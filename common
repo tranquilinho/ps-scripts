@@ -468,6 +468,11 @@ is_os_debian(){
     grep "NAME" /etc/os-release | grep "Debian" > /dev/null
 }
 
+is_os_centos(){
+    grep "NAME" /etc/os-release | grep "CentOS" > /dev/null
+}
+
+
 # return the Nth field of a string, starting at 0
 field(){
     local -a fields
