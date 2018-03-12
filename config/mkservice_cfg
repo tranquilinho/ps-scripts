@@ -135,7 +135,8 @@ readonly gfadmin_password_file=${etc_dir}/gfadmin.password
 readonly gfdeployer_password_file=${etc_dir}/gfdeployer.password
 
 # Java stuff
-export JAVA_HOME=${usr_prefix}/jdk
+# !!!! use spack jdk
+# export JAVA_HOME=${usr_prefix}/jdk
 # If glassfish is installed with this JAVA_HOME, it's not mandatory
 # to update PATH (unless other programs need to find java binaries)
 
