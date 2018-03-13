@@ -16,6 +16,12 @@ readonly guacd_log_level="debug"
 
 . ${scripts_base}/common
 
+# dependencies - see guacamole-server installer
+spack load --dependencies pkgconf
+spack load --dependencies libpng
+spack load --dependencies libjpeg-turbo
+spack load --dependencies cairo
+
 
 service_start(){
     log "${info} Starting ${module}"

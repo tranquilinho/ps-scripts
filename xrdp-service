@@ -67,6 +67,7 @@ force_stop() {
 
 case "$1" in
   start)
+	# !!!! adapt to centos
       if is_os_ubuntu; then
 	  # by now, we are using OS xrdp - reuse its service manager
 	  # !!!! integrate when ps xrdp is used in ubuntu

@@ -10,6 +10,8 @@ readonly log_facility="${service}-${module}"
 
 . ${scripts_base}/common
 
+spack load jdk
+
 service_start(){
     local daemon=${usr_prefix}/apache-tomcat/bin/startup.sh
     log "${info} Starting ${module}"

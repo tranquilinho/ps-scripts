@@ -21,8 +21,9 @@ if grep ${login} ${plain_db} > /dev/null; then
 fi
 
 # db load command comes from  db5.1-util package (by now)
-which db5.1_load > /dev/null || debian_install db5.1-util
-which mkpasswd > /dev/null || debian_install whois
+# !!!! adapt to centos
+# which db5.1_load > /dev/null || debian_install db5.1-util
+# which mkpasswd > /dev/null || debian_install whois
 
 log "${info} Creating xrdp user account ${login}"
 
@@ -38,7 +39,7 @@ echo ${cryptpass} >> ${plain_db}
 chown root.root ${plain_db} ${berkeley_db}
 chmod 600 ${plain_db} ${berkeley_db}
 
-db5.1_load -T -t hash -f ${plain_db} ${berkeley_db}
+db_load -T -t hash -f ${plain_db} ${berkeley_db}
 
 if [ $? -eq 0 ]; then
     log "${success} Xrdp user account ${login} created"
