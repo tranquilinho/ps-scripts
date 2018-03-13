@@ -1,0 +1,4 @@
+#!/bin/env perl 
+while (<>) {
+    print crypt($_,"ha9odhf2x") . "\n"; 
+}
