@@ -1,0 +1,84 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+
+
+print_usage(){
+    echo "Syntax: $0 -g guacamole_user -o os_user -e hours_limit [-h (help)]"
+}
+
+init_db(){
+    echo "CREATE TABLE sessions(osname,guacname,guacpass,vncpass,vncport,hours_limit);" | sqlite3 ${db}
+    if [ $? -eq 0 ]; then
+	log "${info} DB created"
+    else
+	log "${critical} Problem creating DB"
+    fi
+}
+
+# by default, change the password only if at least
+# 7 days passed since last change
+readonly change_frequency=604800
+readonly log_file=${log_dir}/service.log
+readonly log_facility="guac-sessions"
+readonly db=${etc_dir}/sessions.db
+
+readonly cfg_file=${etc_dir}/guacamole/user-mapping.xml
+
+
+force_change=0
+
+while getopts "g:o:e:h" options; do
+    case "${options}" in
+        g)
+	    my_guacamole_user="${OPTARG}"
+	    ;;
+        o)
+	    os_user="${OPTARG}"
+	    ;;
+	e)
+	    hours_limit="${OPTARG}"
+	    ;;
+	h)
+	    print_usage
+	    exit 0
+	    ;;
+    esac
+done
+
+log "${info} $0"
+
+[ ! -f ${db} ] && init_db
+
+[ -z "${my_guacamole_user}" ] && echo "Missing web user" && print_usage && exit 2
+
+[ -z "${os_user}" ] && echo "Missing system user " && print_usage && exit 2
+
+[ -z "${hours_limit}" ] && echo "Missing hours limit" && print_usage && exit 2
+
+id "${os_user}" > /dev/null
+[ $? -ne 0 ] && log "${critical} OS user ${os_user} does not exist" && exit 4
+
+readonly now=$(date +%s)
+readonly expiration=$(( ${now} + ( ${hours_limit} * 3600 )))
+
+readonly random_pass=$( random_str )
+[ -z "${guac_pass}" ] && readonly guac_pass=${random_pass}
+[ -z "${vnc_pass}" ] && readonly vnc_pass=${random_pass}
+
+# !!!! allow custom geometry as parameter
+# using $! requires running the command in background..., using shell + exec returns a pid different from the final pid of xvn
+# readonly vncpid=$(bash -c "echo $$; exec vncserver -geometry 1400x900 > /dev/null" | head -1)
+#readonly vncdisplay=$(vncserver -list | grep ${vncpid} | cut -f 1)
+readonly vncdisplay=$(vncserver -geometry 1400x900 2>&1 | grep desktop | cut -d: -f 3)
+[ -z "${vncdisplay}" ] && echo "Problem starting desktop for session" && exit 2
+readonly vncport=$(( 5900 + ${vncdisplay} ))
+
+# !!!! sudo
+echo "INSERT INTO sessions values ('${os_user}','${my_guacamole_user}','${guac_pass}','${vnc_pass}','${vncport}','${expiration}');" | sqlite3 ${db}
+
+log "${info} guacamole session created (${os_user},${my_guacamole_user},${vncport},${expiration})"
+
