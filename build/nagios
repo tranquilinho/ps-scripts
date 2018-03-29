@@ -5,7 +5,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=nagios
-readonly pkg_version=4.1.1
+readonly pkg_version=4.3.4
 readonly url_base=https://assets.nagios.com/downloads/nagioscore/releases/
 
 # log "${info} ${pkg_name} install started"
@@ -15,11 +15,12 @@ ${scripts_base}/nagios-user
 
 install_prereq nagios-plugins "mandatory"
 install_prereq nrpe "mandatory"
-install_prereq php "mandatory"
-debian_install unzip
+# !!!! php is a requirement of nagios, or of the UI (apache)?
+# install_prereq php "mandatory"
+os_install unzip
 
 build_preconditions
 
-./configure --prefix=${prefix} --sysconfdir=${etc_dir}/nagios --with-nagios-user=nagios --with-nagios-group=nagios | logalize $(configure_log)
+./configure --prefix=${prefix} --sysconfdir=${etc_dir}/nagios --with-nagios-user=${service_user} --with-nagios-group=${service_user} | logalize $(configure_log)
 
 standard_install all

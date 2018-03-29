@@ -5,14 +5,15 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=nagios-plugins
-readonly pkg_version=2.0.3
+readonly pkg_version=2.2.1
 readonly url_base="http://nagios-plugins.org/download/"
-readonly expected_hash=29b6183ab9d796299dc17c395eef493415d1e9d6
 
 build_preconditions
 
 # !!!! check_ping fails while trying to spopen ping command. Running it with -vvv revelas that the command is empty (???)
 
-./configure --prefix=${prefix} --sysconfdir=${etc_dir} --with-nagios-user=nagios --with-nagios-group=nagios --with-openssl=${usr_prefix}/openssl | logalize $(configure_log)
+spack load --dependencies openssl
+
+./configure --prefix=${prefix} --sysconfdir=${etc_dir} --with-nagios-user=${service_user} --with-nagios-group=nagios | logalize $(configure_log)
 
 standard_install

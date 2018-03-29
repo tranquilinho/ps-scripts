@@ -1,7 +1,25 @@
 #!/bin/bash
 
-readonly user=nagios
-grep ${user} /etc/group || groupadd -g 1102 ${user}
-grep ${user} /etc/passwd || useradd -u 1102 -g 1102 ${user}
+# read uid and name from service.cfg
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
 
+. ${service_cfg} && . ${scripts_base}/common
+
+readonly log_file=${log_dir}/service.log
+
+log "${info} nagios-user"
+
+if grep ${service_user} /etc/group; then
+    log "${warning} Group ${service_user} already available"
+else
+    groupadd -g ${service_gid} ${service_user} 
+    log "${info} Group ${service_user} created"
+fi
+
+if grep ${service_user} /etc/passwd; then
+    log "${warning} User ${service_user} already available"
+else
+    useradd -u ${service_uid} -g ${service_gid} ${service_user}
+    log "${info} User ${service_user} created"
+fi
 

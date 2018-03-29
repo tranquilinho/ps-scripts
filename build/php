@@ -16,7 +16,7 @@ spack load --dependencies libxml2${libxml2_version}
 # install_prereq zlib "mandatory"
 # install_prereq pcre "mandatory"
 # install_prereq libxml2 "mandatory"
-install_prereq httpd "mandatory"
+install_prereq apache "mandatory"
 
 build_preconditions
 
