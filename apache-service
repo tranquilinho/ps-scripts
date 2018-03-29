@@ -28,6 +28,7 @@ fi
 
 ENV="env -i LANG=C PATH=/usr/local/bin:/usr/bin:/bin"
 # spack openssl
+spack load --dependencies openssl
 # export LD_LIBRARY_PATH=${usr_prefix}/openssl/lib/
 readonly APACHE2CTL=${APACHE_BIN}/apachectl
 # readonly APACHE_CONFDIR=${apache_cfg_dir}

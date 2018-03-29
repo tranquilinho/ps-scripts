@@ -11,6 +11,7 @@ different "server", be it a Docker container, a real server, or a virtual machin
 Features
 ========
 
+   - !!!! integration with spack and anaconda
    - Run your service in a Docker container, in a virtual machine or in real hardware. No need to worry about
      the environment.
    - Everything shares a single root, so it is trivial to move the service with all its dependencies.
