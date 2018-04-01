@@ -19,17 +19,11 @@ init_db(){
     fi
 }
 
-# by default, change the password only if at least
-# 7 days passed since last change
-readonly change_frequency=604800
 readonly log_file=${log_dir}/service.log
 readonly log_facility="guac-sessions"
 readonly db=${etc_dir}/sessions.db
 
-readonly cfg_file=${etc_dir}/guacamole/user-mapping.xml
-
-
-force_change=0
+# check for sqlite3 availability
 
 while getopts "g:o:e:h" options; do
     case "${options}" in
@@ -77,8 +71,10 @@ readonly vncdisplay=$(vncserver -geometry 1400x900 2>&1 | grep desktop | cut -d:
 [ -z "${vncdisplay}" ] && echo "Problem starting desktop for session" && exit 2
 readonly vncport=$(( 5900 + ${vncdisplay} ))
 
-# !!!! sudo
-echo "INSERT INTO sessions values ('${os_user}','${my_guacamole_user}','${guac_pass}','${vnc_pass}','${vncport}','${expiration}');" | sqlite3 ${db}
-
-log "${info} guacamole session created (${os_user},${my_guacamole_user},${vncport},${expiration})"
+sudo ${scripts_base}/guacamole-insert-session "${os_user}" "${my_guacamole_user}" "${guac_pass}" "${vnc_pass}" "${vncport}" "${expiration}" 
+if [ $? -eq 0 ]; then 
+    log "${info} guacamole session created (${os_user},${my_guacamole_user},${vncport},${expiration})"
+else
+    log "${critical} Error registering session"
+fi
 
