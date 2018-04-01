@@ -24,3 +24,7 @@ build_preconditions
 ./configure --prefix=${prefix} --sysconfdir=${etc_dir}/nagios --with-nagios-user=${service_user} --with-nagios-group=${service_user} | logalize $(configure_log)
 
 standard_install all
+
+# !!!! config creator?
+echo "To customize URL, edit both usr/nagios/share/config.inc.php (cgi_base_url), etc/nagios/cgi.cfg (url_html_path) and etc/apache2/service.conf"
+echo "@see config/mknagios_cfg"

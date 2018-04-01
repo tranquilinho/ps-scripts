@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# !!!! Apache integration -> service.conf
+# PHP & cgi handlers
+# !!!! custom URL
+# usr/nagios/share/config.inc.php (cgi_base_url)
+# etc/nagios/cgi.cfg (url_html_path) 
+# etc/apache2/service.conf
+# !!!!  Nagios authorization
+# etc/nagios/cgi.cfg (authorized_for_all_services, authorized_for_all_hosts ...)
+) 
+
+print_usage(){
+    echo "Prepare nagios config"
+    echo "Syntax: $0 -n service_name [-i logdir1,logdir2,...]"
+    exit 1
+}
+
+if [ "$#" -gt 0 ]; then
+    while getopts "i:n:" options; do
+	case "${options}" in
+            i)
+		readonly includes=${OPTARG}
+		;;
+	    n)
+		readonly service=${OPTARG}
+		;;
+            *)
+		echo "Unknow option" 1>&2 
+		print_usage
+		;;
+
+	esac
+    done
+    shift $((OPTIND-1))
+fi
+
+[ -z "${service}" ] && print_usage
+
+readonly service_root="/services/${service}"
+
+
+
