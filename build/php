@@ -5,8 +5,9 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} && . ${scripts_base}/common
 
 readonly pkg_name=php
-readonly pkg_version=5.5.13
-readonly url_base="http://es1.php.net/distributions/"
+readonly pkg_ext=tar.xz
+readonly pkg_version=7.2.4
+readonly url_base=http://ca1.php.net/distributions/
 
 spack load --dependencies openssl
 spack load --dependencies pcre
@@ -38,11 +39,15 @@ fi
 export PGSQL_INCLUDE=${usr_prefix}/postgresql/include
 export PGSQL_LIBDIR=${usr_prefix}/postgresql/lib
 
+# !!!! allow optional use of mysql and postgres
+readonly mysqlopts="--with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
+readonly postgresopts="--with-pgsql=${usr_prefix}/postgresql/"
+
 # pear packages, like mail, are used by apps like mediawiki
 # !!!! by default, pear installs things at php root, which it is not in the default include path (usr/php/lib/php)
 # One option is to move all (PEAR*, Mail, etc) to usr/php/lib/php
 
-./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs  --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-config-file-path=${etc_dir} --enable-mbstring --with-pgsql=${usr_prefix}/postgresql/ --with-pear=${prefix}
+./configure --prefix=${prefix} --with-apxs2=${usr_prefix}/httpd/bin/apxs   --with-config-file-path=${etc_dir} --enable-mbstring  --with-pear=${prefix}
 
 # if apache-build libtool fails, replace it with php one
 standard_install
