@@ -111,6 +111,10 @@ readonly apache_enabled=1
 readonly web_home=${data_dir}/htdocs
 EOF
 
+user_wants cgi && cat <<EOF
+readonly cgi_enabled=1
+EOF
+
 [ -n "${ssh_port}" ] && cat <<EOF
 readonly ssh_port=${ssh_port}
 EOF
