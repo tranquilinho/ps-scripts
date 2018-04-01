@@ -12,7 +12,6 @@ install_prereq apr "mandatory"
 # !!!! is it libexpat also a prereq?
 # install_prereq libexpat1-dev "mandatory"
 
-
 build_preconditions
 
 ./configure --prefix=${prefix}  --with-apr=${usr_prefix}/apr

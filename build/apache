@@ -13,7 +13,13 @@ readonly url_base=http://apache.rediris.es//httpd/
 
 log "${info} ${pkg_name} install started"
 
-[ -z "${spack_modules}" ] && echo "Spack modules directory undefined" && exit 2
+[ -z "$(spack -V)" ] && echo "Spack not found" && exit 2
+
+# !!!! debian: uuid-dev, centos uuid-devel
+os_install uuid-devel
+install_prereq apr-util "mandatory"
+# [ -n "${php_enabled}" -a ${php_enabled} -eq 1 ] && install_prereq php "mandatory"
+
 
 # libxml2 is required by proxy-html 
 # !!!! spack
@@ -23,18 +29,12 @@ spack load --dependencies libxml2${libxml2_version}
 # !!!! remove 1.0 when 1.1 or newer is supported
 #[ "${https_enabled}" == "1" ] && install_prereq openssl "mandatory" 1.0
 spack load --dependencies openssl
-install_prereq apr-util "mandatory"
 spack load --dependencies pcre
 spack load --dependencies zlib
 # install_prereq pcre "mandatory"
 
 readonly os_aux=$(grep "^ID=" /etc/os-release)
 readonly os=${os_aux##ID=}
-
-# !!!! debian: uuid-dev, centos uuid-devel
-os_install uuid-devel
-
-[ -n "${php_enabled}" -a ${php_enabled} -eq 1 ] && install_prereq php "mandatory"
 
 build_preconditions
 
@@ -53,13 +53,14 @@ cat ${scripts_base}/build/apache-portable.layout >> config.layout
 [ "${https_enabled}" == "1" ] && ssl_param="--enable-ssl"
 
 
-
 # !!!! with-libz
 
 # after loading module, LD_LIBRARY_PATH contains the path to its library
-readonly xml2lib=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep libxml2)
+readonly xml2lib=$(echo ${LD_LIBRARY_PATH} | tr ':' '\n' | grep libxml2)
+readonly xml2versions=$(echo "${xml2lib}" | wc -l)
+[ ${xml2versions} -gt 1 ] && echo "Multiple libxml2 found in spack. Please specify libxml2_version=@X.Y%gcc@Z in service.cfg" && exit 3
 readonly xml2dir=${xml2lib%%lib}
-readonly zlib=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep zlib)
+readonly zlib=$(echo ${LD_LIBRARY_PATH} | tr ':' '\n' | grep zlib)
 readonly zlibdir=${zlib%%lib}
 
 ./configure --prefix=${prefix} --enable-layout=Portable --datadir=${data_dir} --localstatedir=${service_root} --enable-pie -enable-authn-dbm --enable-authz-dbm --enable-ratelimit --enable-log-debug ${cgi_param} ${ssl_param} --with-apr=${usr_prefix}/apr --with-apr-util=${usr_prefix}/apr-util  --enable-proxy-html --with-libxml2=${xml2dir}/include/libxml2 --with-z=${zlibdir} | logalize $(configure_log)
