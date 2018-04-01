@@ -1,5 +1,8 @@
 #!/bin/bash
 
-. /services/${service}/etc/service.cfg
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+. ${service_cfg} 
 
-nagios -v ${nagios_cfg}
+[ -z "${nagios_cfg}" ] && readonly nagios_cfg=${etc_dir}/nagios/nagios.cfg
+
+${usr_prefix}/nagios/bin/nagios -v ${nagios_cfg}
