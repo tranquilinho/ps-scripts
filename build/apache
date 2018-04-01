@@ -9,6 +9,8 @@ readonly pkg_version=2.4.29
 # !!!! this mirror keeps only the latest stable version?
 readonly url_base=http://apache.rediris.es//httpd/
 
+[ -d ${usr_prefix}/httpd/bin ] && log "${warning} ${pkg_name} already installed" && exit 0
+
 log "${info} ${pkg_name} install started"
 
 [ -z "${spack_modules}" ] && echo "Spack modules directory undefined" && exit 2
