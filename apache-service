@@ -77,6 +77,13 @@ apache_stop(){
     log "${success} Stopped"
 }
 
+apache_status(){
+    # !!!! status command complains "connection refused"
+    ${APACHE2CTL} status 
+    ${APACHE2CTL} -M
+}
+
+
 case "$1" in
     "start")
 	apache_start
@@ -87,6 +94,9 @@ case "$1" in
     "restart")
 	apache_stop
 	apache_start
+	;;
+    "status")
+	apache_status
 	;;
     reload)
 	${APACHE2CTL} graceful
