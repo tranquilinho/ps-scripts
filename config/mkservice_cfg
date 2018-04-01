@@ -5,7 +5,10 @@
 
 print_usage(){
     echo Make a service.cfg file into stdout
-    echo "Syntax: $0 -n service_name [-i feature1,feature2,...] [-m mirror] [-s ssh_port]"
+    echo "Syntax: [PORTS] $0 -n service_name [-i feature1,feature2,...] [-m mirror] [-s ssh_port] [-H virtualhostname] [-U username -u uid -g gid] [-j build_cores]"
+    echo "You can prepend port numbers as env variables"
+    echo "Example: http_port=8080 $0 -n myweb -i apache,https"
+    echo
     echo "Features available:"
     grep _enabled $0 | gawk '{ if (match($0, /^readonly (.*)_enabled.*/, matches)) print matches[1]}' | sort
     exit 1
@@ -18,7 +21,7 @@ user_wants(){
 }
 
 if [ "$#" -gt 0 ]; then
-    while getopts "i:n:m:s:" options; do
+    while getopts "i:n:m:s:H:U:u:g:j:" options; do
 	case "${options}" in
             i)
 		readonly includes=${OPTARG}
@@ -31,6 +34,21 @@ if [ "$#" -gt 0 ]; then
 		;;
 	    s)
 		readonly ssh_port=${OPTARG}
+		;;
+	    H)
+		readonly default_server=${OPTARG}
+		;;
+	    U)
+		readonly username=${OPTARG}
+		;;
+	    u)
+		readonly uid=${OPTARG}
+		;;
+	    g) 
+		readonly gid=${OPTARG}
+		;;
+	    j)
+		readonly build_cores=${OPTARG}
 		;;
             *)
 		echo "Unknow option" 1>&2 
@@ -74,13 +92,15 @@ else
     echo "readonly mirror_base=${mirror_base}"
 fi
 
-cat<<"EOF"
-# default value for paralelism (-j option in make, etc)
-readonly ps_paralel="-j 2"
+[ -z "${build_cores}" ] && readonly build_cores=2
 
-# other useful variables (under specific circumstances)
-# readonly user=repo
-# readonly id=1103
+cat<<EOF
+# default value for paralelism (-j option in make, etc)
+readonly ps_paralel="-j ${build_cores}"
+
+readonly service_user=${username}
+readonly service_uid=${uid}
+readonly service_gid=${gid}
 EOF
 
 [ -z "${http_port}" ] && readonly http_port=8080
@@ -89,11 +109,14 @@ EOF
 user_wants apache && cat <<"EOF"
 readonly apache_enabled=1
 readonly web_home=${data_dir}/htdocs
-
-readonly default_server=default.kewl.com
 EOF
-user_wants apache && cat <<EOF
+
+[ -n "${ssh_port}" ] && cat <<EOF
 readonly ssh_port=${ssh_port}
+EOF
+
+user_wants apache && cat <<EOF
+readonly default_server=${default_server}
 readonly http_port=${http_port}
 EOF
 
