@@ -5,6 +5,7 @@ readonly service_cfg=${0%/scripts*}/etc/service.cfg
 . ${service_cfg} 
 . ${scripts_base}/common
 
+# it is simpler to run this command with sudo, than running the subcommands with su/sudo
 
 print_usage(){
     echo "Syntax: $0 -g guacamole_user -o os_user -e hours_limit [-h (help)]"
@@ -23,7 +24,9 @@ readonly log_file=${log_dir}/service.log
 readonly log_facility="guac-sessions"
 readonly db=${etc_dir}/sessions.db
 
-# check for sqlite3 availability
+[ $(id -u) -ne 0 ] && echo "You should run this command with sudo" && exit 2
+
+# !!!! check for sqlite3 availability
 
 while getopts "g:o:e:h" options; do
     case "${options}" in
@@ -63,18 +66,39 @@ readonly random_pass=$( random_str )
 [ -z "${guac_pass}" ] && readonly guac_pass=${random_pass}
 [ -z "${vnc_pass}" ] && readonly vnc_pass=${random_pass}
 
-# !!!! allow custom geometry as parameter
+
 # using $! requires running the command in background..., using shell + exec returns a pid different from the final pid of xvn
 # readonly vncpid=$(bash -c "echo $$; exec vncserver -geometry 1400x900 > /dev/null" | head -1)
 #readonly vncdisplay=$(vncserver -list | grep ${vncpid} | cut -f 1)
-readonly vncdisplay=$(vncserver -geometry 1400x900 2>&1 | grep desktop | cut -d: -f 3)
-[ -z "${vncdisplay}" ] && echo "Problem starting desktop for session" && exit 2
-readonly vncport=$(( 5900 + ${vncdisplay} ))
 
-sudo ${scripts_base}/guacamole-insert-session "${os_user}" "${my_guacamole_user}" "${guac_pass}" "${vnc_pass}" "${vncport}" "${expiration}" 
-if [ $? -eq 0 ]; then 
-    log "${info} guacamole session created (${os_user},${my_guacamole_user},${vncport},${expiration})"
+# VNC commands apply to the system account (os_user)
+su - ${os_user} -c "[ ! -d ~${os_user}/.vnc/ ] && mkdir ~/.vnc/"
+su - ${os_user} -c "[ ! -f ~${os_user}/.vnc/xstartup ] && cp ${etc_dir}/xstartup ~/.vnc/"
+# !!!! allow different password for each session
+su - ${os_user} -c "printf '${vnc_pass}\n${vnc_pass}\n\n' | vncpasswd"
+
+# if there is already a matching session (guac_user/os_user), update it
+readonly row=$(echo "SELECT * FROM sessions where osname='${os_user}' and guacname='${my_guacamole_user}';" | sqlite3 ${db})
+
+# !!!! refine test
+if [ "${row}" == "" ]; then
+    # !!!! allow custom geometry as parameter
+    readonly vncdisplay=$(su - ${os_user} -c "vncserver -geometry 1400x900 2>&1" | grep desktop | cut -d: -f 3)
+    [ -z "${vncdisplay}" ] && echo "Problem starting desktop for session" && exit 2
+    readonly vncport=$(( 5900 + ${vncdisplay} ))
+
+    # ${scripts_base}/guacamole-insert-session "${os_user}" "${my_guacamole_user}" "${guac_pass}" "${vnc_pass}" "${vncport}" "${expiration}" 
+    echo "INSERT INTO sessions values ('${os_user}','${my_guacamole_user}','${guac_pass}','${vnc_pass}','${vncport}','${expiration}');" | sqlite3 ${db}
+    if [ $? -eq 0 ]; then 
+	log "${info} guacamole session created (${os_user},${my_guacamole_user},${vncport},${expiration})"
+    else
+	log "${critical} Error registering session"
+    fi
 else
-    log "${critical} Error registering session"
+    echo "UPDATE sessions SET guacpass='$3', vncpass='$4',vncport='$5',hours_limit='$6' WHERE osname = '$1' AND guacname = '$2';" | sqlite3 ${db}
+    if [ ${PIPESTATUS[1]} -eq 0 ]; then 
+	log "${info} guacamole session updated (${os_user},${my_guacamole_user},${vncport},${expiration})"
+    else
+	log "${critical} Error updating session"
+    fi
 fi
-
