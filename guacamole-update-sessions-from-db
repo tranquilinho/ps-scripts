@@ -1,0 +1,46 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+
+# check for sqlite3 availability
+
+readonly log_file=${log_dir}/service.log
+readonly log_facility="guac-sessions"
+
+readonly db=${etc_dir}/sessions.db
+readonly tmpfile=${etc_dir}/guacamole/user-mapping.tmp
+readonly now=$(date +%s)
+
+cat > ${tmpfile} <<EOF
+<user-mapping>
+EOF
+
+echo "SELECT * FROM sessions WHERE hours_limit > ${now};" | sqlite3 ${db} | tr "|" " " |  while read osname guacname guacpass vncpass vncport hours_limit; do
+cat  >> ${tmpfile} <<EOF
+    <authorize username="${guacname}" password="${guacpass}">
+        <protocol>vnc</protocol>
+        <param name="hostname">localhost</param>
+	<param name="username">${osname}</param><param name="password">${vncpass}</param>
+	<param name="port">${vncport}</param>
+    </authorize>
+EOF
+done
+
+cat  >> ${tmpfile} <<EOF
+</user-mapping>
+EOF
+
+chmod 600 ${tmpfile}
+mv ${tmpfile} ${etc_dir}/guacamole/user-mapping.xml
+
+
+echo "SELECT * FROM sessions WHERE hours_limit <= ${now};" | sqlite3 ${db} | tr "|" " " |  while read osname guacname guacpass vncpass vncport hours_limit; do
+    readonly disp=$(( ${vncport} - 5900 ))
+    su - ${osname} -c "vncserver -kill :${disp}"
+    log "${info} Session ${osname} ${vncport} finished"
+done
+
+echo "DELETE FROM sessions WHERE hours_limit <= ${now};" | sqlite3 ${db}    

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+. ${scripts_base}/common
+
+print_usage(){
+    echo "Syntax: $0 -e hours_limit [-g guacamole_user -p guacamole_password -h (help)]"
+}
+
+
+while getopts "g:e:p:h" options; do
+    case "${options}" in
+        g)
+	    my_guacamole_user="${OPTARG}"
+	    ;;
+	e)
+	    hours_limit="${OPTARG}"
+	    ;;
+	p) 
+	    guac_pass="-p ${OPTARG}"
+	    ;;
+	h)
+	    print_usage
+	    exit 0
+	    ;;
+    esac
+done
+
+[ -z "${my_guacamole_user}" ] && my_guacamole_user=${SUDO_USER}
+
+[ -z "${hours_limit}" ] && echo "Missing hours limit" && print_usage && exit 2
+
+${scripts_base}/guacamole-new-session -o ${SUDO_USER} -g ${my_guacamole_user} -e ${hours_limit} ${guac_pass}
