@@ -38,7 +38,7 @@ mv ${tmpfile} ${etc_dir}/guacamole/user-mapping.xml
 
 
 echo "SELECT * FROM sessions WHERE hours_limit <= ${now};" | sqlite3 ${db} | tr "|" " " |  while read osname guacname guacpass vncpass vncport hours_limit; do
-    readonly disp=$(( ${vncport} - 5900 ))
+    disp=$(( ${vncport} - 5900 ))
     su - ${osname} -c "vncserver -kill :${disp}"
     log "${info} Session ${osname} ${vncport} finished"
 done
