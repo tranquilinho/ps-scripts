@@ -12,7 +12,7 @@ print_usage(){
 }
 
 init_db(){
-    echo "CREATE TABLE sessions(osname,guacname,guacpass,vncpass,vncport,hours_limit);" | sqlite3 ${db}
+    echo "CREATE TABLE sessions(osname,guacname,guacpass,vncpass,vncport,hours_limit INTEGER);" | sqlite3 ${db}
     if [ $? -eq 0 ]; then
 	log "${info} DB created"
     else
@@ -93,14 +93,14 @@ if [ "${row}" == "" ]; then
     readonly vncport=$(( 5900 + ${vncdisplay} ))
 
     # ${scripts_base}/guacamole-insert-session "${os_user}" "${my_guacamole_user}" "${guac_pass}" "${vnc_pass}" "${vncport}" "${expiration}" 
-    echo "INSERT INTO sessions values ('${os_user}','${my_guacamole_user}','${guac_pass}','${vnc_pass}','${vncport}','${expiration}');" | sqlite3 ${db}
+    echo "INSERT INTO sessions values ('${os_user}','${my_guacamole_user}','${guac_pass}','${vnc_pass}','${vncport}',${expiration});" | sqlite3 ${db}
     if [ $? -eq 0 ]; then 
 	log "${info} guacamole session created (${os_user},${my_guacamole_user},${vncport},${expiration})"
     else
 	log "${critical} Error registering session"
     fi
 else
-    echo "UPDATE sessions SET guacpass='$3', vncpass='$4',vncport='$5',hours_limit='$6' WHERE osname = '$1' AND guacname = '$2';" | sqlite3 ${db}
+    echo "UPDATE sessions SET guacpass='${guac_pass}', vncpass='${vnc_pass}',vncport='${vncport}',hours_limit=${expiration} WHERE osname = '${os_user}' AND guacname = '${my_guacamole_user}';" | sqlite3 ${db}
     if [ ${PIPESTATUS[1]} -eq 0 ]; then 
 	log "${info} guacamole session updated (${os_user},${my_guacamole_user},${vncport},${expiration})"
     else
