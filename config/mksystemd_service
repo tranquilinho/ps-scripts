@@ -1,0 +1,21 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+[ ! -f ${service_cfg} ] && echo "${service_cfg} not found" && exit 2
+
+. ${service_cfg} 
+
+cat <<EOF
+[Unit]
+Description=${service} portable service
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=${etc_dir}/service-manager start
+ExecStop=${etc_dir}/service-manager stop
+
+[Install]
+WantedBy=multi-user.target
+EOF

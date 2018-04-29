@@ -1,0 +1,21 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg} 
+
+readonly log_file=${service_log}
+readonly module="systemd"
+
+. ${scripts_base}/common
+
+readonly service_file=$1
+
+[ $# -ne 1 ] && echo "Syntax: $0 service_file" && exit 2
+
+[ ! -f ${service_file} ] && echo "Missing ${service_file}" && exit 4
+
+cp ${service_file} /etc/systemd/system/
+systemctl daemon-reload
+
+exit 0
