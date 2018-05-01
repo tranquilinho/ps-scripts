@@ -1,0 +1,28 @@
+#!/bin/bash
+
+readonly service_cfg=${0%/scripts*}/etc/service.cfg
+
+. ${service_cfg}
+
+readonly backup_cfg_dir=${etc_dir}/backup
+
+readonly log_file=${backup_log}
+readonly log_facility="${service}-backup"
+
+. ${scripts_base}/common
+
+readonly backup_dir=${data_dir}/mongodb-backup
+
+log "${info} MongoDB BACKUP STARTED"
+
+[ ! -d ${backup_dir} ] && mkdir -p ${backup_dir}
+
+cd ${backup_dir}
+mongodump --out=${backup_dir}/$(date +%s).archive 2>&1 | logalize ${log_file} > /dev/null
+status=$?
+
+if [ ${status} -eq 0 ]; then
+    log "${success} MongoDB BACKUP FINISHED"
+else
+    log "${critical} Error backing up MongoDB"
+fi
